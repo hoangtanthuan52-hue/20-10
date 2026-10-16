@@ -3438,6 +3438,11 @@ if (btnOpenRoster) {
           openOriginalPhotoLightbox(g, photoUrl);
         };
       }
+      card.title = "Bấm để mở trình chiếu bạn này (hoặc bấm ảnh để phóng to)";
+      card.onclick = () => {
+        modal.classList.remove('show');
+        openCinematicTour(idx);
+      };
       grid.appendChild(card);
     });
 
@@ -4191,18 +4196,21 @@ function runStage6CinematicTimeline() {
 // ==========================================================
 let tourCurrentIndex = 0;
 let tourProgressTimer = null;
+let tourSlideTimeout = null;
 let tourIsPlaying = false;
 let tourProgressPercent = 0;
-const TOUR_SLIDE_DURATION = 5000; // 5 giây mỗi bạn
+const TOUR_SLIDE_DURATION = 5500; // 5.5 giây cho mỗi bạn nữ đọc trọn vẹn lời chúc
 
 function openCinematicTour(startIndex = 0) {
   const modal = document.getElementById('cinematicTourModal');
   if (!modal) return;
+  stopTourTimer();
+  resetTourProgress();
   tourCurrentIndex = (startIndex >= 0 && startIndex < FEMALE_STUDENTS.length) ? startIndex : 0;
   modal.classList.add('active');
   tourIsPlaying = true;
   updateTourPlayPauseBtn();
-  renderTourStudent(tourCurrentIndex);
+  renderTourStudent(tourCurrentIndex, 'next');
   startTourTimer();
 
   try {
@@ -4216,7 +4224,12 @@ function closeCinematicTour() {
   const modal = document.getElementById('cinematicTourModal');
   if (modal) modal.classList.remove('active');
   stopTourTimer();
+  resetTourProgress();
   tourIsPlaying = false;
+  if (tourSlideTimeout) {
+    clearTimeout(tourSlideTimeout);
+    tourSlideTimeout = null;
+  }
 }
 
 function renderTourStudent(idx, direction = 'next') {
@@ -4254,8 +4267,6 @@ function renderTourStudent(idx, direction = 'next') {
         window.FX.spawnBlossomShower(window.innerWidth / 2, window.innerHeight * 0.4, 12);
       }
     } catch (e) {}
-
-    resetTourProgress();
   };
 
   if (!cardStage) {
@@ -4263,12 +4274,18 @@ function renderTourStudent(idx, direction = 'next') {
     return;
   }
 
+  if (tourSlideTimeout) {
+    clearTimeout(tourSlideTimeout);
+    tourSlideTimeout = null;
+  }
+  cardStage.classList.remove('tour-slide-leave-prev', 'tour-slide-leave-next', 'tour-slide-enter-prev', 'tour-slide-enter-next');
+
   // Chuyển động lướt có hướng mượt mà
   const leaveClass = (direction === 'prev') ? 'tour-slide-leave-prev' : 'tour-slide-leave-next';
   const enterClass = (direction === 'prev') ? 'tour-slide-enter-prev' : 'tour-slide-enter-next';
 
   cardStage.classList.add(leaveClass);
-  setTimeout(() => {
+  tourSlideTimeout = setTimeout(() => {
     updateFields();
     cardStage.classList.remove(leaveClass);
     cardStage.classList.add(enterClass);
@@ -4277,6 +4294,7 @@ function renderTourStudent(idx, direction = 'next') {
     void cardStage.offsetWidth;
 
     cardStage.classList.remove(enterClass);
+    tourSlideTimeout = null;
   }, 180);
 }
 
@@ -4286,11 +4304,19 @@ function resetTourProgress() {
   tourProgressPercent = 0;
 }
 
+function stopTourTimer() {
+  if (tourProgressTimer) {
+    clearInterval(tourProgressTimer);
+    tourProgressTimer = null;
+  }
+}
+
 function startTourTimer() {
   stopTourTimer();
+  resetTourProgress();
   if (!tourIsPlaying) return;
 
-  const stepInterval = 50; // Cập nhật progress bar mỗi 50ms
+  const stepInterval = 40; // Cập nhật progress bar mỗi 40ms mượt mà
   const stepIncrement = (stepInterval / TOUR_SLIDE_DURATION) * 100;
   const fill = document.getElementById('tourProgressFill');
 
@@ -4299,35 +4325,43 @@ function startTourTimer() {
     if (fill) fill.style.width = `${Math.min(100, tourProgressPercent)}%`;
 
     if (tourProgressPercent >= 100) {
-      nextTourStudent();
+      stopTourTimer();
+      resetTourProgress();
+      nextTourStudent(true);
     }
   }, stepInterval);
 }
 
-function stopTourTimer() {
-  if (tourProgressTimer) {
-    clearInterval(tourProgressTimer);
-    tourProgressTimer = null;
-  }
-}
+function nextTourStudent(isAuto = false) {
+  stopTourTimer();
+  resetTourProgress();
 
-function nextTourStudent() {
   if (tourCurrentIndex < FEMALE_STUDENTS.length - 1) {
     tourCurrentIndex++;
     renderTourStudent(tourCurrentIndex, 'next');
     if (tourIsPlaying) startTourTimer();
   } else {
-    // Đã chiếu hết 23 bạn nữ -> Đại tiệc pháo hoa chúc mừng!
-    closeCinematicTour();
-    try {
-      if (window.FX?.launchGrandFinaleBarrage) {
-        window.FX.launchGrandFinaleBarrage();
-      }
-    } catch (e) {}
+    if (isAuto) {
+      // Đã chiếu xong trọn vẹn đủ 23 bạn nữ không sót một ai
+      closeCinematicTour();
+      try {
+        if (window.FX?.launchGrandFinaleBarrage) {
+          window.FX.launchGrandFinaleBarrage();
+        }
+      } catch (e) {}
+    } else {
+      // Bấm nút Tiếp theo ở bạn cuối: quay vòng lại bạn số 1
+      tourCurrentIndex = 0;
+      renderTourStudent(tourCurrentIndex, 'next');
+      if (tourIsPlaying) startTourTimer();
+    }
   }
 }
 
 function prevTourStudent() {
+  stopTourTimer();
+  resetTourProgress();
+
   if (tourCurrentIndex > 0) {
     tourCurrentIndex--;
   } else {
