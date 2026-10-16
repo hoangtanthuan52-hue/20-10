@@ -611,7 +611,11 @@ let galaxyAnimFrame = null;
 let photoGalaxyAnimId = null;
 let stage6AnimId = null;
 
+let isStageSwitching = false;
+
 function switchStage(stageNumber) {
+  if (isStageSwitching && stageNumber === currentActiveStage) return;
+  const prevStageNum = currentActiveStage;
   currentActiveStage = stageNumber;
   window.currentActiveStage = stageNumber;
   window.switchStage = switchStage;
@@ -644,18 +648,6 @@ function switchStage(stageNumber) {
   if (typeof clearStage6Timeline === 'function') clearStage6Timeline();
   window.stage4AutoTransitioned = false;
 
-  // Cập nhật DOM của các stage (1 -> 6)
-  for (let i = 1; i <= 6; i++) {
-    const stageEl = document.getElementById(`stage${i}`);
-    if (stageEl) {
-      if (i === stageNumber) {
-        stageEl.classList.add('stage-active');
-      } else {
-        stageEl.classList.remove('stage-active');
-      }
-    }
-  }
-
   // Cập nhật Stepper Timeline trên Header
   document.querySelectorAll('.step-node').forEach(node => {
     const s = parseInt(node.getAttribute('data-stage'));
@@ -663,7 +655,47 @@ function switchStage(stageNumber) {
     else node.classList.remove('active');
   });
 
-  // Gọi hàm kích hoạt logic riêng cho từng stage
+  const prevStageEl = prevStageNum ? document.getElementById(`stage${prevStageNum}`) : null;
+  const nextStageEl = document.getElementById(`stage${stageNumber}`);
+  const veil = document.getElementById('cosmicTransitionVeil');
+
+  // Lần load ban đầu hoặc chuyển cùng stage: set trực tiếp
+  if (!prevStageEl || prevStageNum === stageNumber) {
+    for (let i = 1; i <= 6; i++) {
+      const stageEl = document.getElementById(`stage${i}`);
+      if (stageEl) {
+        stageEl.classList.toggle('stage-active', i === stageNumber);
+        stageEl.classList.remove('stage-leaving');
+      }
+    }
+    activateStageLogic(stageNumber);
+    return;
+  }
+
+  // Chuyển cảnh mượt mà giữa 2 stage (Cosmic Veil + Crossfade Dissolve)
+  isStageSwitching = true;
+  if (veil) veil.classList.add('active');
+
+  prevStageEl.classList.remove('stage-active');
+  prevStageEl.classList.add('stage-leaving');
+
+  if (nextStageEl) {
+    nextStageEl.classList.add('stage-active');
+  }
+
+  activateStageLogic(stageNumber);
+
+  setTimeout(() => {
+    if (veil) veil.classList.remove('active');
+  }, 220);
+
+  setTimeout(() => {
+    if (prevStageEl) prevStageEl.classList.remove('stage-leaving');
+    isStageSwitching = false;
+  }, 480);
+}
+
+function activateStageLogic(stageNumber) {
   if (stageNumber === 1) initStage1();
   else if (stageNumber === 2) initStage2();
   else if (stageNumber === 3) initStage3();
@@ -4133,47 +4165,65 @@ function closeCinematicTour() {
   tourIsPlaying = false;
 }
 
-function renderTourStudent(idx) {
+function renderTourStudent(idx, direction = 'next') {
   if (idx < 0 || idx >= FEMALE_STUDENTS.length) return;
+  const cardStage = document.getElementById('tourCardStage');
   const student = FEMALE_STUDENTS[idx];
   const photoUrl = getStudentPhoto(student, idx);
 
-  const idxText = document.getElementById('tourCurrentIndex');
-  const numberTag = document.getElementById('tourNumberTag');
-  const nameEl = document.getElementById('tourStudentName');
-  const titleEl = document.getElementById('tourStudentTitle');
-  const dobEl = document.getElementById('tourStudentDob');
-  const wishEl = document.getElementById('tourStudentWish');
-  const imgEl = document.getElementById('tourPhotoImg');
-  const heartCountEl = document.getElementById('tourHeartCount');
+  const updateFields = () => {
+    const idxText = document.getElementById('tourCurrentIndex');
+    const numberTag = document.getElementById('tourNumberTag');
+    const nameEl = document.getElementById('tourStudentName');
+    const titleEl = document.getElementById('tourStudentTitle');
+    const dobEl = document.getElementById('tourStudentDob');
+    const wishEl = document.getElementById('tourStudentWish');
+    const imgEl = document.getElementById('tourPhotoImg');
+    const heartCountEl = document.getElementById('tourHeartCount');
 
-  if (idxText) idxText.textContent = `${idx + 1}`;
-  if (numberTag) numberTag.textContent = `ĐÓA HOA SỐ ${String(idx + 1).padStart(2, '0')}`;
-  if (nameEl) nameEl.textContent = student.name;
-  if (titleEl) titleEl.textContent = `✨ ${student.title}`;
-  if (dobEl) dobEl.innerHTML = `<i class="fa-regular fa-calendar"></i> ${student.dob || '20/10/2026'}`;
-  if (wishEl) wishEl.textContent = student.wish || 'Luôn rạng rỡ và hạnh phúc nhé!';
-  if (imgEl) {
-    imgEl.style.opacity = '0';
-    imgEl.style.transform = 'scale(0.95)';
-    imgEl.src = photoUrl;
-    imgEl.onload = () => {
-      imgEl.style.opacity = '1';
-      imgEl.style.transform = 'scale(1)';
-    };
-  }
-  if (heartCountEl) {
-    heartCountEl.textContent = `${20 + ((idx * 7) % 35)}`;
-  }
-
-  // Hiệu ứng cánh hoa rơi nhẹ tôn vinh bạn nữ
-  try {
-    if (window.FX?.spawnBlossomShower) {
-      window.FX.spawnBlossomShower(window.innerWidth / 2, window.innerHeight * 0.4, 12);
+    if (idxText) idxText.textContent = `${idx + 1}`;
+    if (numberTag) numberTag.textContent = `ĐÓA HOA SỐ ${String(idx + 1).padStart(2, '0')}`;
+    if (nameEl) nameEl.textContent = student.name;
+    if (titleEl) titleEl.textContent = `✨ ${student.title}`;
+    if (dobEl) dobEl.innerHTML = `<i class="fa-regular fa-calendar"></i> ${student.dob || '20/10/2026'}`;
+    if (wishEl) wishEl.textContent = student.wish || 'Luôn rạng rỡ và hạnh phúc nhé!';
+    if (imgEl) {
+      imgEl.src = photoUrl;
     }
-  } catch (e) {}
+    if (heartCountEl) {
+      heartCountEl.textContent = `${20 + ((idx * 7) % 35)}`;
+    }
 
-  resetTourProgress();
+    // Hiệu ứng cánh hoa rơi nhẹ tôn vinh bạn nữ
+    try {
+      if (window.FX?.spawnBlossomShower) {
+        window.FX.spawnBlossomShower(window.innerWidth / 2, window.innerHeight * 0.4, 12);
+      }
+    } catch (e) {}
+
+    resetTourProgress();
+  };
+
+  if (!cardStage) {
+    updateFields();
+    return;
+  }
+
+  // Chuyển động lướt có hướng mượt mà
+  const leaveClass = (direction === 'prev') ? 'tour-slide-leave-prev' : 'tour-slide-leave-next';
+  const enterClass = (direction === 'prev') ? 'tour-slide-enter-prev' : 'tour-slide-enter-next';
+
+  cardStage.classList.add(leaveClass);
+  setTimeout(() => {
+    updateFields();
+    cardStage.classList.remove(leaveClass);
+    cardStage.classList.add(enterClass);
+
+    // Force reflow
+    void cardStage.offsetWidth;
+
+    cardStage.classList.remove(enterClass);
+  }, 180);
 }
 
 function resetTourProgress() {
@@ -4210,7 +4260,7 @@ function stopTourTimer() {
 function nextTourStudent() {
   if (tourCurrentIndex < FEMALE_STUDENTS.length - 1) {
     tourCurrentIndex++;
-    renderTourStudent(tourCurrentIndex);
+    renderTourStudent(tourCurrentIndex, 'next');
     if (tourIsPlaying) startTourTimer();
   } else {
     // Đã chiếu hết 23 bạn nữ -> Đại tiệc pháo hoa chúc mừng!
@@ -4229,7 +4279,7 @@ function prevTourStudent() {
   } else {
     tourCurrentIndex = FEMALE_STUDENTS.length - 1;
   }
-  renderTourStudent(tourCurrentIndex);
+  renderTourStudent(tourCurrentIndex, 'prev');
   if (tourIsPlaying) startTourTimer();
 }
 

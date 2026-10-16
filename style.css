@@ -350,6 +350,25 @@ body.universe-body {
   overflow: hidden;
 }
 
+/* ==========================================================
+   LỚP MÀN CHUYỂN CẢNH VŨ TRỤ MƯỢT MÀ (COSMIC TRANSITION VEIL)
+   ========================================================== */
+.cosmic-transition-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 99998;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgba(168, 85, 247, 0.28) 0%, rgba(244, 63, 94, 0.22) 45%, rgba(11, 2, 22, 0.72) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cosmic-transition-veil.active {
+  opacity: 1;
+}
+
 .stage-section {
   position: absolute;
   top: 0;
@@ -372,34 +391,82 @@ body.universe-body {
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  opacity: 1;
-  visibility: visible;
-  transform: scale(1);
-  pointer-events: all;
-  animation: stageEnterFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: scale(1) !important;
+  pointer-events: all !important;
+  animation: stageSmoothEnter 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes stageEnterFade {
-  from {
+.stage-section.stage-leaving {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0 !important;
+  visibility: visible !important;
+  transform: scale(1.03) !important;
+  filter: blur(8px) !important;
+  pointer-events: none !important;
+  animation: stageSmoothLeave 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes stageSmoothEnter {
+  0% {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.97);
+    filter: blur(6px);
   }
-  to {
+  100% {
     opacity: 1;
     transform: scale(1);
+    filter: blur(0px);
   }
 }
 
-/* Tối ưu 60fps cho các màn WebGL Three.js toàn màn hình: Không animate CSS scale/blur trên container */
+@keyframes stageSmoothLeave {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.03);
+    filter: blur(8px);
+  }
+}
+
+/* Tối ưu 60fps cho các màn Three.js toàn màn hình: crossfade mượt mà */
 .stage-fullscreen-flower.stage-active,
 .stage-photo-galaxy.stage-active,
 .stage-heart-names.stage-active {
   display: block !important;
-  animation: none !important;
+  animation: stageCanvasFadeIn 0.5s ease forwards !important;
   transform: none !important;
   opacity: 1 !important;
   visibility: visible !important;
   padding: 0 !important;
+}
+
+.stage-fullscreen-flower.stage-leaving,
+.stage-photo-galaxy.stage-leaving,
+.stage-heart-names.stage-leaving {
+  display: block !important;
+  animation: stageCanvasFadeOut 0.45s ease forwards !important;
+  transform: none !important;
+  filter: blur(6px) !important;
+  padding: 0 !important;
+}
+
+@keyframes stageCanvasFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes stageCanvasFadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 .stage-container {
@@ -3557,6 +3624,34 @@ body.universe-body {
   gap: 36px;
   min-height: 360px;
   margin-bottom: 22px;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.3s ease;
+  will-change: transform, opacity;
+}
+
+.tour-card-stage.tour-slide-leave-next {
+  opacity: 0;
+  transform: translateX(-24px) scale(0.96);
+  filter: blur(6px);
+}
+
+.tour-card-stage.tour-slide-leave-prev {
+  opacity: 0;
+  transform: translateX(24px) scale(0.96);
+  filter: blur(6px);
+}
+
+.tour-card-stage.tour-slide-enter-next {
+  opacity: 0;
+  transform: translateX(24px) scale(0.96);
+  filter: blur(6px);
+}
+
+.tour-card-stage.tour-slide-enter-prev {
+  opacity: 0;
+  transform: translateX(-24px) scale(0.96);
+  filter: blur(6px);
 }
 
 .tour-photo-side {
