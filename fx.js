@@ -569,13 +569,96 @@ class WillowSparkleParticle {
 
 const fireworkParticles = [];
 
+// Pháo hoa bung nở hình TRÁI TIM (Heart-Shaped Firework)
+class HeartFireworkParticle {
+  constructor(x, y, vx, vy, color) {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.vx = vx;
+    this.vy = vy;
+    this.damping = 0.965;
+    this.gravity = 0.04;
+    this.alpha = 1;
+    this.decay = Math.random() * 0.014 + 0.011;
+    this.size = Math.random() * 2.2 + 1.6;
+    this.history = [];
+  }
+
+  update() {
+    this.history.push({ x: this.x, y: this.y });
+    if (this.history.length > 5) this.history.shift();
+
+    this.vx *= this.damping;
+    this.vy = this.vy * this.damping + this.gravity;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.alpha -= this.decay;
+  }
+
+  draw() {
+    if (this.alpha <= 0) return;
+    fxCtx.save();
+    fxCtx.globalAlpha = Math.max(0, this.alpha);
+
+    if (this.history.length > 1) {
+      fxCtx.strokeStyle = this.color;
+      fxCtx.lineWidth = 1.8;
+      fxCtx.beginPath();
+      fxCtx.moveTo(this.history[0].x, this.history[0].y);
+      for (let i = 1; i < this.history.length; i++) {
+        fxCtx.lineTo(this.history[i].x, this.history[i].y);
+      }
+      fxCtx.stroke();
+    }
+
+    fxCtx.fillStyle = '#ffffff';
+    fxCtx.beginPath();
+    fxCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    fxCtx.fill();
+    fxCtx.restore();
+  }
+}
+
+function triggerHeartFirework(x, y, scale = 1.0) {
+  const spawnX = x || Math.random() * (width * 0.6) + width * 0.2;
+  const spawnY = y || Math.random() * (height * 0.35) + height * 0.12;
+  const colors = ['#ff1493', '#ff69b4', '#ffd700', '#f43f5e', '#fff0f5', '#fb7185'];
+  const col = colors[Math.floor(Math.random() * colors.length)];
+
+  try {
+    if (window.audioManager && window.audioManager.playFireworkSound) {
+      window.audioManager.playFireworkSound();
+    }
+  } catch (e) {}
+
+  const count = 68;
+  const baseSpeed = (Math.random() * 0.6 + 1.8) * scale;
+  for (let i = 0; i < count; i++) {
+    const t = (i / count) * Math.PI * 2;
+    const hx = 16 * Math.pow(Math.sin(t), 3);
+    const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+    const speed = baseSpeed * (0.85 + Math.random() * 0.3);
+    const vx = (hx / 16) * 4.5 * speed;
+    const vy = (hy / 16) * 4.5 * speed;
+
+    fireworkParticles.push(new HeartFireworkParticle(spawnX, spawnY, vx, vy, col));
+  }
+}
+
 function triggerWillowFirework(x, y) {
   const spawnX = x || Math.random() * (width * 0.7) + width * 0.15;
   const spawnY = y || Math.random() * (height * 0.4) + height * 0.1;
   const colors = ['#f7e7ce', '#ffd700', '#ff69b4', '#b76e79', '#ffffff', '#ff9bb6'];
   const col = colors[Math.floor(Math.random() * colors.length)];
 
-  for (let i = 0; i < 55; i++) {
+  try {
+    if (window.audioManager && window.audioManager.playFireworkSound) {
+      window.audioManager.playFireworkSound();
+    }
+  } catch (e) {}
+
+  for (let i = 0; i < 65; i++) {
     fireworkParticles.push(new WillowSparkleParticle(spawnX, spawnY, col));
   }
 }
@@ -645,7 +728,7 @@ function renderFxLoop() {
     fallingPetals.forEach(fp => { fp.update(); fp.draw(); });
   }
 
-  // 3. Vẽ pháo hoa vật lý willow
+  // 3. Vẽ pháo hoa vật lý willow và pháo hoa trái tim
   for (let i = fireworkParticles.length - 1; i >= 0; i--) {
     fireworkParticles[i].update();
     fireworkParticles[i].draw();
@@ -674,6 +757,50 @@ function launchFireworkBarrage(count = 5) {
   }
 }
 
+// Đại tiệc pháo hoa bùng nổ đa tầng (Grand Climax Multi-Wave Barrage)
+function launchGrandFinaleBarrage() {
+  const totalWaves = 9;
+  for (let wave = 0; wave < totalWaves; wave++) {
+    setTimeout(() => {
+      const isHeart = (wave % 2 === 0);
+      const rx = Math.random() * (width * 0.7) + width * 0.15;
+      const ry = Math.random() * (height * 0.38) + height * 0.08;
+
+      if (isHeart) {
+        triggerHeartFirework(rx, ry, 1.15);
+      } else {
+        triggerWillowFirework(rx, ry);
+      }
+
+      // Confetti bung tỏa ở các wave 1, 4, 7
+      if (wave === 1 || wave === 4 || wave === 7) {
+        if (window.confetti) {
+          window.confetti({
+            particleCount: 55,
+            angle: 60,
+            spread: 70,
+            origin: { x: 0.1, y: 0.65 },
+            colors: ['#ffd700', '#ff69b4', '#ffffff', '#e11d48']
+          });
+          window.confetti({
+            particleCount: 55,
+            angle: 120,
+            spread: 70,
+            origin: { x: 0.9, y: 0.65 },
+            colors: ['#ffd700', '#ff69b4', '#ffffff', '#e11d48']
+          });
+        }
+      }
+
+      // Rung màn hình nhẹ nhàng ở wave 0 và wave 5
+      if (wave === 0 || wave === 5) {
+        document.body.classList.add('camera-shake');
+        setTimeout(() => document.body.classList.remove('camera-shake'), 350);
+      }
+    }, wave * 380);
+  }
+}
+
 // Tung thêm chùm cánh hoa rơi tại tọa độ
 function spawnBlossomShower(x, y, count = 20) {
   const originX = x || width / 2;
@@ -690,7 +817,9 @@ function spawnBlossomShower(x, y, count = 20) {
 // Export các hàm điều khiển cho main.js
 window.FX = {
   triggerFirework: triggerWillowFirework,
+  triggerHeartFirework: triggerHeartFirework,
   launchBarrage: launchFireworkBarrage,
+  launchGrandFinaleBarrage: launchGrandFinaleBarrage,
   spawnBlossomShower: spawnBlossomShower,
   startClimax: activateClimaxBalloons
 };

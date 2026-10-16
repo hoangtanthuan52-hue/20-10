@@ -298,25 +298,42 @@ body.universe-body {
 
 .audio-wave-bars {
   position: absolute;
-  bottom: 6px;
+  bottom: 5px;
   display: flex;
-  gap: 2px;
+  align-items: flex-end;
+  gap: 2.5px;
+  height: 14px;
 }
 
 .audio-wave-bars span {
-  width: 2px;
-  height: 6px;
-  background: #ffd700;
-  border-radius: 1px;
-  animation: waveBar 0.8s infinite alternate;
+  width: 2.5px;
+  height: 4px;
+  background: linear-gradient(180deg, #ffd700 0%, #ff69b4 100%);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(255, 105, 180, 0.7);
+  transition: height 0.25s ease, opacity 0.25s ease;
 }
 
-.audio-wave-bars span:nth-child(2) { animation-delay: 0.2s; height: 10px; }
-.audio-wave-bars span:nth-child(3) { animation-delay: 0.4s; height: 5px; }
+.audio-wave-bars.is-playing span {
+  animation: neonEqualizer 0.75s infinite ease-in-out alternate;
+}
 
-@keyframes waveBar {
-  0% { transform: scaleY(0.4); }
-  100% { transform: scaleY(1.3); }
+.audio-wave-bars.is-playing span:nth-child(1) { animation-delay: 0.1s; height: 9px; }
+.audio-wave-bars.is-playing span:nth-child(2) { animation-delay: 0.35s; height: 13px; }
+.audio-wave-bars.is-playing span:nth-child(3) { animation-delay: 0.15s; height: 7px; }
+.audio-wave-bars.is-playing span:nth-child(4) { animation-delay: 0.45s; height: 12px; }
+.audio-wave-bars.is-playing span:nth-child(5) { animation-delay: 0.25s; height: 8px; }
+
+.audio-wave-bars.is-paused span {
+  height: 2px !important;
+  opacity: 0.35;
+  animation: none !important;
+}
+
+@keyframes neonEqualizer {
+  0% { transform: scaleY(0.3); opacity: 0.6; }
+  50% { transform: scaleY(1.0); opacity: 1; filter: drop-shadow(0 0 4px #ffd700); }
+  100% { transform: scaleY(0.4); opacity: 0.7; }
 }
 
 /* ==========================================================
@@ -3396,5 +3413,488 @@ body.universe-body {
   50% {
     transform: translateX(-50%) translateY(-3px) scale(1.03);
     box-shadow: 0 12px 35px rgba(225, 29, 72, 0.8), 0 0 30px rgba(255, 215, 0, 0.7);
+  }
+}
+
+/* ==========================================================
+   NÚT BẤM ĐIỆN ẢNH & PHÁO HOA GIAI ĐOẠN CUỐI
+   ========================================================== */
+.btn-primary-lux {
+  background: linear-gradient(135deg, #e11d48 0%, #ff1493 50%, #b76e79 100%) !important;
+  border: 1px solid rgba(255, 215, 0, 0.7) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(225, 29, 72, 0.5), 0 0 10px rgba(255, 215, 0, 0.35) !important;
+}
+
+.btn-primary-lux:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 0 25px rgba(255, 20, 147, 0.8), 0 0 15px rgba(255, 215, 0, 0.6) !important;
+}
+
+.btn-firework-lux {
+  background: linear-gradient(135deg, #ffd700 0%, #f59e0b 50%, #ff69b4 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  color: #2b061e !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.6), 0 0 12px rgba(255, 105, 180, 0.4) !important;
+}
+
+.btn-firework-lux:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 0 28px rgba(255, 215, 0, 0.9), 0 0 20px rgba(255, 105, 180, 0.7) !important;
+  color: #000000 !important;
+}
+
+/* ==========================================================
+   CHẾ ĐỘ TRÌNH CHIẾU ĐIỆN ẢNH 23 ĐÓA HOA (CINEMATIC TOUR)
+   ========================================================== */
+.cinematic-tour-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.45s ease;
+}
+
+.cinematic-tour-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tour-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(32, 6, 42, 0.94) 0%, rgba(8, 2, 14, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.tour-container {
+  position: relative;
+  z-index: 2;
+  width: 90vw;
+  max-width: 920px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(26, 8, 38, 0.85);
+  border: 1.5px solid rgba(255, 215, 0, 0.45);
+  border-radius: 28px;
+  padding: 24px 32px 28px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 45px rgba(255, 105, 180, 0.3), inset 0 0 30px rgba(255, 215, 0, 0.08);
+  transform: scale(0.92);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.cinematic-tour-modal.active .tour-container {
+  transform: scale(1);
+}
+
+.tour-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.tour-badge {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  padding: 5px 16px;
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+}
+
+.tour-progress-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fce7f3;
+  letter-spacing: 1px;
+}
+
+.tour-progress-text span {
+  color: #ffd700;
+  font-size: 1.4rem;
+}
+
+.tour-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: #ffd700;
+  font-size: 26px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.25s ease;
+}
+
+.tour-close-btn:hover {
+  background: #e11d48;
+  color: #ffffff;
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 0 15px rgba(225, 29, 72, 0.8);
+}
+
+.tour-card-stage {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  min-height: 360px;
+  margin-bottom: 22px;
+}
+
+.tour-photo-side {
+  flex: 0 0 320px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tour-photo-frame {
+  position: relative;
+  width: 300px;
+  height: 380px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 215, 0, 0.7);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 105, 180, 0.45);
+  background: #0f0318;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.tour-photo-frame:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 215, 0, 0.6);
+}
+
+.tour-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  transition: opacity 0.35s ease, transform 0.5s ease;
+}
+
+.tour-photo-overlay-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 65%, rgba(15, 3, 24, 0.85) 100%);
+  pointer-events: none;
+}
+
+.tour-info-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+}
+
+.tour-number-tag {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #ff69b4;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.tour-student-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(1.8rem, 2.6vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.25;
+  background: linear-gradient(135deg, #ffffff 0%, #ffe4e6 45%, #ffd700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 2px 8px rgba(255, 105, 180, 0.3));
+}
+
+.tour-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tour-pill {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-pill-title {
+  background: rgba(255, 20, 147, 0.15);
+  border: 1px solid rgba(255, 105, 180, 0.45);
+  color: #fbcfe8;
+}
+
+.tour-pill-dob {
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: #fef08a;
+}
+
+.tour-divider {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, #ff69b4, #ffd700, transparent);
+  margin-bottom: 16px;
+}
+
+.tour-wish-quote {
+  position: relative;
+  background: rgba(18, 5, 26, 0.7);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 16px;
+  padding: 16px 22px;
+  margin-bottom: 20px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.quote-mark {
+  color: rgba(255, 215, 0, 0.35);
+  font-size: 1rem;
+}
+
+.quote-mark-left {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+}
+
+.quote-mark-right {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+}
+
+.tour-wish-text {
+  font-family: 'Montserrat', 'Be Vietnam Pro', sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: #ffffff;
+  font-style: italic;
+  margin: 0;
+  padding: 0 10px;
+}
+
+.tour-cheer-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tour-heart-btn {
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.25), rgba(255, 20, 147, 0.35));
+  border: 1px solid rgba(255, 105, 180, 0.6);
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tour-heart-btn i {
+  color: #ff3b5c;
+  transition: transform 0.2s ease;
+}
+
+.tour-heart-btn:hover {
+  background: linear-gradient(135deg, #e11d48, #ff1493);
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(255, 20, 147, 0.6);
+}
+
+.tour-heart-btn:active i {
+  transform: scale(1.4);
+}
+
+.tour-heart-btn strong {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: #ffd700;
+}
+
+/* Thanh tiến trình & cụm nút điều khiển */
+.tour-controls-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.tour-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tour-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #ff1493, #ffd700);
+  border-radius: 999px;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  transition: width 0.1s linear;
+}
+
+.tour-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.tour-ctrl-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  color: #ffd700;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tour-ctrl-btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+  color: #ffffff;
+  transform: scale(1.12);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
+}
+
+.tour-ctrl-play {
+  width: 52px;
+  height: 52px;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, #ff1493 0%, #e11d48 100%);
+  border: 1.5px solid #ffd700;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 20, 147, 0.6);
+}
+
+.tour-ctrl-play:hover {
+  background: linear-gradient(135deg, #ffd700 0%, #ff1493 100%);
+  color: #120224;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.85);
+}
+
+/* Lightbox Wish Box */
+.lightbox-wish-box {
+  position: relative;
+  margin-top: 12px;
+  padding: 12px 28px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 14px;
+  max-width: 540px;
+}
+
+.lightbox-wish-box i {
+  position: absolute;
+  color: rgba(255, 215, 0, 0.4);
+  font-size: 0.8rem;
+}
+
+.lightbox-wish-box i.fa-quote-left {
+  top: 8px;
+  left: 10px;
+}
+
+.lightbox-wish-box i.fa-quote-right {
+  bottom: 8px;
+  right: 10px;
+}
+
+.lightbox-wish-box p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #fff0f5;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Responsive cho Tour Điện ảnh trên Mobile */
+@media (max-width: 768px) {
+  .tour-container {
+    width: 95vw;
+    padding: 18px 16px 20px;
+    max-height: 94vh;
+    overflow-y: auto;
+  }
+  .tour-card-stage {
+    flex-direction: column;
+    gap: 18px;
+    min-height: auto;
+  }
+  .tour-photo-side {
+    flex: 0 0 auto;
+  }
+  .tour-photo-frame {
+    width: 220px;
+    height: 270px;
+  }
+  .tour-student-name {
+    font-size: 1.55rem;
+    text-align: center;
+  }
+  .tour-info-side {
+    text-align: center;
+    align-items: center;
+  }
+  .tour-meta-badges {
+    justify-content: center;
+  }
+  .tour-divider {
+    margin: 0 auto 14px auto;
+  }
+  .tour-wish-quote {
+    padding: 12px 16px;
+  }
+  .tour-wish-text {
+    font-size: 0.88rem;
+  }
+  .stage6-action-overlay {
+    flex-wrap: wrap;
+    justify-content: center;
+    bottom: 8px !important;
+    right: 8px !important;
+    left: 8px !important;
   }
 }

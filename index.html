@@ -98,8 +98,8 @@
       </a>
       <button id="btnAudioToggle" class="cosmic-icon-btn" title="Bật/Tắt nhạc nền lãng mạn">
         <i class="fa-solid fa-music"></i>
-        <span class="audio-wave-bars">
-          <span></span><span></span><span></span>
+        <span class="audio-wave-bars is-playing">
+          <span></span><span></span><span></span><span></span><span></span>
         </span>
       </button>
       <label class="cosmic-icon-btn" title="Nạp bài hát MP3 từ máy tính của bạn">
@@ -430,13 +430,19 @@
         </div>
       </div>
 
-      <!-- Bước 4.4: Hai nút bấm góc dưới phải (hiện khi gõ xong lời chúc) -->
+      <!-- Bước 4.4: Bảng điều khiển góc dưới (hiện khi gõ xong lời chúc) -->
       <div class="stage6-action-overlay" id="stage6ActionOverlay">
-        <button class="luxury-btn btn-secondary-lux" id="btnReplayAll">
-          <i class="fa-solid fa-rotate-left"></i> <span>Xem lại từ đầu</span>
+        <button class="luxury-btn btn-primary-lux" id="btnCinematicTour">
+          <i class="fa-solid fa-clapperboard"></i> <span>🎬 Trình chiếu 23 bạn nữ</span>
+        </button>
+        <button class="luxury-btn btn-firework-lux" id="btnLaunchFirework">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> <span>🎆 Bắn pháo hoa</span>
         </button>
         <button class="luxury-btn btn-secondary-lux" id="btnOpenRoster">
-          <i class="fa-solid fa-address-book"></i> <span>Danh sách 23 bạn nữ</span>
+          <i class="fa-solid fa-address-book"></i> <span>Danh sách 23 bạn</span>
+        </button>
+        <button class="luxury-btn btn-secondary-lux" id="btnReplayAll">
+          <i class="fa-solid fa-rotate-left"></i> <span>Xem lại từ đầu</span>
         </button>
       </div>
       
@@ -461,6 +467,61 @@
   </div>
 
   <!-- ========================================================
+       CHẾ ĐỘ TRÌNH CHIẾU ĐIỆN ẢNH 23 ĐÓA HOA (CINEMATIC TOUR)
+       ======================================================== -->
+  <div class="cinematic-tour-modal" id="cinematicTourModal">
+    <div class="tour-backdrop" id="tourBackdrop"></div>
+    <div class="tour-container">
+      <div class="tour-header">
+        <div class="tour-badge">✦ BẢN GIAO HƯỞNG THANH XUÂN • 12B1 ✦</div>
+        <div class="tour-progress-text"><span id="tourCurrentIndex">1</span> / 23</div>
+        <button class="tour-close-btn" id="btnCloseTour" title="Đóng trình chiếu">&times;</button>
+      </div>
+
+      <div class="tour-card-stage" id="tourCardStage">
+        <div class="tour-photo-side">
+          <div class="tour-photo-frame">
+            <img id="tourPhotoImg" src="" alt="" class="tour-photo-img">
+            <div class="tour-photo-overlay-glow"></div>
+          </div>
+        </div>
+
+        <div class="tour-info-side">
+          <div class="tour-number-tag" id="tourNumberTag">ĐÓA HOA SỐ 01</div>
+          <h2 class="tour-student-name" id="tourStudentName">Trịnh Phan Bình An</h2>
+          <div class="tour-meta-badges">
+            <span class="tour-pill tour-pill-title" id="tourStudentTitle">✨ Tâm Hồn Dịu Êm</span>
+            <span class="tour-pill tour-pill-dob" id="tourStudentDob"><i class="fa-regular fa-calendar"></i> 19/05/2009</span>
+          </div>
+          <div class="tour-divider"></div>
+          <div class="tour-wish-quote">
+            <i class="fa-solid fa-quote-left quote-mark quote-mark-left"></i>
+            <p id="tourStudentWish" class="tour-wish-text"></p>
+            <i class="fa-solid fa-quote-right quote-mark quote-mark-right"></i>
+          </div>
+          <div class="tour-cheer-row">
+            <button class="tour-heart-btn" id="btnTourHeart">
+              <i class="fa-solid fa-heart"></i> <span>Thả tim cho bạn</span> <strong id="tourHeartCount">23</strong>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh tiến trình & cụm nút bấm -->
+      <div class="tour-controls-bar">
+        <div class="tour-progress-bar">
+          <div class="tour-progress-fill" id="tourProgressFill"></div>
+        </div>
+        <div class="tour-actions-row">
+          <button class="tour-ctrl-btn" id="btnTourPrev" title="Bạn trước đó"><i class="fa-solid fa-backward-step"></i></button>
+          <button class="tour-ctrl-btn tour-ctrl-play" id="btnTourPlayPause" title="Tạm dừng / Tiếp tục"><i class="fa-solid fa-pause"></i></button>
+          <button class="tour-ctrl-btn" id="btnTourNext" title="Bạn tiếp theo"><i class="fa-solid fa-forward-step"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
        LIGHTBOX MODAL: XEM ẢNH GỐC NGUYÊN BẢN (KHÔNG BIẾN DẠNG)
        ======================================================== -->
   <div class="photo-lightbox-modal" id="photoLightboxModal">
@@ -474,6 +535,11 @@
         <h3 id="lightboxName"></h3>
         <p id="lightboxTitle"></p>
         <span id="lightboxDob" class="lightbox-dob"></span>
+        <div class="lightbox-wish-box" id="lightboxWishBox">
+          <i class="fa-solid fa-quote-left"></i>
+          <p id="lightboxWish"></p>
+          <i class="fa-solid fa-quote-right"></i>
+        </div>
       </div>
     </div>
   </div>

@@ -364,6 +364,86 @@ class LuxuryAudioManager {
     } catch (e) {}
   }
 
+  // Âm thanh pháo hoa bùng nổ chân thực: Tiếng rít vút lên -> Tiếng nổ trầm vang (Bass Boom) -> Tiếng lách tách kim tuyến
+  playFireworkSound() {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      const t = this.ctx.currentTime;
+
+      // 1. Tiếng rít vút lên (Whistle)
+      const whistle = this.ctx.createOscillator();
+      const whistleGain = this.ctx.createGain();
+      whistle.type = 'sine';
+      whistle.frequency.setValueAtTime(450, t);
+      whistle.frequency.exponentialRampToValueAtTime(1400, t + 0.32);
+      whistleGain.gain.setValueAtTime(0.04, t);
+      whistleGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+      whistle.connect(whistleGain);
+      whistleGain.connect(this.ctx.destination);
+      whistle.start(t);
+      whistle.stop(t + 0.33);
+
+      // 2. Tiếng nổ trầm vang (Bass Boom) ở t + 0.30s
+      const boomT = t + 0.28;
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(130, boomT);
+      osc.frequency.exponentialRampToValueAtTime(32, boomT + 0.45);
+      oscGain.gain.setValueAtTime(0.32, boomT);
+      oscGain.gain.exponentialRampToValueAtTime(0.0001, boomT + 0.48);
+      osc.connect(oscGain);
+      oscGain.connect(this.ctx.destination);
+      osc.start(boomT);
+      osc.stop(boomT + 0.49);
+
+      // Tiếng nổ bung hạt (Noise burst)
+      const burstSize = Math.floor(this.ctx.sampleRate * 0.22);
+      const burstBuf = this.ctx.createBuffer(1, burstSize, this.ctx.sampleRate);
+      const bData = burstBuf.getChannelData(0);
+      for (let i = 0; i < burstSize; i++) {
+        bData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.055));
+      }
+      const burstSrc = this.ctx.createBufferSource();
+      burstSrc.buffer = burstBuf;
+      const bFilter = this.ctx.createBiquadFilter();
+      bFilter.type = 'lowpass';
+      bFilter.frequency.setValueAtTime(750, boomT);
+      const burstGain = this.ctx.createGain();
+      burstGain.gain.setValueAtTime(0.22, boomT);
+      burstGain.gain.exponentialRampToValueAtTime(0.0001, boomT + 0.22);
+      burstSrc.connect(bFilter);
+      bFilter.connect(burstGain);
+      burstGain.connect(this.ctx.destination);
+      burstSrc.start(boomT);
+
+      // 3. Tiếng lách tách kim tuyến (Crackles)
+      for (let i = 0; i < 6; i++) {
+        const delayMs = (0.32 + 0.12 + i * 0.065 + Math.random() * 0.04) * 1000;
+        setTimeout(() => {
+          try {
+            if (!this.ctx) return;
+            const now = this.ctx.currentTime;
+            const cOsc = this.ctx.createOscillator();
+            const cGain = this.ctx.createGain();
+            cOsc.type = 'square';
+            cOsc.frequency.setValueAtTime(2400 + Math.random() * 1600, now);
+            cGain.gain.setValueAtTime(0.025, now);
+            cGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.02);
+            cOsc.connect(cGain);
+            cGain.connect(this.ctx.destination);
+            cOsc.start(now);
+            cOsc.stop(now + 0.022);
+          } catch (e) {}
+        }, delayMs);
+      }
+    } catch (e) {}
+  }
+
   // Tương thích ngược với các lời gọi cũ
   playTypeKeySound(char = '') {
     this.playTypewriterASMR(char);
@@ -404,10 +484,10 @@ function updateAudioButtonUI(active) {
   const btn = document.getElementById('btnAudioToggle');
   if (!btn) return;
   if (active) {
-    btn.innerHTML = '<i class="fa-solid fa-music"></i><span class="audio-wave-bars"><span></span><span></span><span></span></span>';
+    btn.innerHTML = '<i class="fa-solid fa-music"></i><span class="audio-wave-bars is-playing"><span></span><span></span><span></span><span></span><span></span></span>';
     btn.title = 'Tạm dừng nhạc nền';
   } else {
-    btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+    btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i><span class="audio-wave-bars is-paused"><span></span><span></span><span></span><span></span><span></span></span>';
     btn.title = 'Bật nhạc nền lãng mạn';
   }
 }
@@ -3312,6 +3392,8 @@ function openOriginalPhotoLightbox(student, photoUrl) {
   const nameEl = document.getElementById('lightboxName');
   const titleEl = document.getElementById('lightboxTitle');
   const dobEl = document.getElementById('lightboxDob');
+  const wishEl = document.getElementById('lightboxWish');
+  const wishBox = document.getElementById('lightboxWishBox');
 
   if (!modal || !img) return;
 
@@ -3320,6 +3402,14 @@ function openOriginalPhotoLightbox(student, photoUrl) {
   if (nameEl) nameEl.textContent = student ? student.name : '';
   if (titleEl) titleEl.textContent = student ? `✨ ${student.title}` : '';
   if (dobEl) dobEl.innerHTML = student && student.dob ? `<i class="fa-regular fa-calendar"></i> Sinh nhật: ${student.dob}` : '';
+  if (wishEl) {
+    if (student && student.wish) {
+      wishEl.textContent = student.wish;
+      if (wishBox) wishBox.style.display = 'block';
+    } else {
+      if (wishBox) wishBox.style.display = 'none';
+    }
+  }
 
   modal.classList.add('active');
 }
@@ -3993,15 +4083,233 @@ function runStage6CinematicTimeline() {
             }
           } catch (e) {}
           if (cursor) cursor.classList.add('hide');
-          // Bước 4.4: Hai nút điều khiển ở góc dưới phải nhẹ nhàng hiện lên
+          // Bước 4.4: Bảng điều khiển góc dưới nhẹ nhàng hiện lên
           if (actionOverlay) {
             actionOverlay.classList.add('show');
           }
+          // BÙNG NỔ ĐẠI TIỆC PHÁO HOA TRÁI TIM & KIM TUYẾN KHI KẾT THÚC THÔNG ĐIỆP
+          try {
+            if (window.FX && window.FX.launchGrandFinaleBarrage) {
+              window.FX.launchGrandFinaleBarrage();
+            }
+          } catch (e) {}
         }
       }
     }
     typeQuoteChar();
   }, 15200));
+}
+
+// ==========================================================
+// 8.5. CHẾ ĐỘ TRÌNH CHIẾU ĐIỆN ẢNH 23 ĐÓA HOA (CINEMATIC TOUR)
+// ==========================================================
+let tourCurrentIndex = 0;
+let tourProgressTimer = null;
+let tourIsPlaying = false;
+let tourProgressPercent = 0;
+const TOUR_SLIDE_DURATION = 5000; // 5 giây mỗi bạn
+
+function openCinematicTour(startIndex = 0) {
+  const modal = document.getElementById('cinematicTourModal');
+  if (!modal) return;
+  tourCurrentIndex = (startIndex >= 0 && startIndex < FEMALE_STUDENTS.length) ? startIndex : 0;
+  modal.classList.add('active');
+  tourIsPlaying = true;
+  updateTourPlayPauseBtn();
+  renderTourStudent(tourCurrentIndex);
+  startTourTimer();
+
+  try {
+    if (window.audioManager?.playCrystalChime) {
+      window.audioManager.playCrystalChime();
+    }
+  } catch (e) {}
+}
+
+function closeCinematicTour() {
+  const modal = document.getElementById('cinematicTourModal');
+  if (modal) modal.classList.remove('active');
+  stopTourTimer();
+  tourIsPlaying = false;
+}
+
+function renderTourStudent(idx) {
+  if (idx < 0 || idx >= FEMALE_STUDENTS.length) return;
+  const student = FEMALE_STUDENTS[idx];
+  const photoUrl = getStudentPhoto(student, idx);
+
+  const idxText = document.getElementById('tourCurrentIndex');
+  const numberTag = document.getElementById('tourNumberTag');
+  const nameEl = document.getElementById('tourStudentName');
+  const titleEl = document.getElementById('tourStudentTitle');
+  const dobEl = document.getElementById('tourStudentDob');
+  const wishEl = document.getElementById('tourStudentWish');
+  const imgEl = document.getElementById('tourPhotoImg');
+  const heartCountEl = document.getElementById('tourHeartCount');
+
+  if (idxText) idxText.textContent = `${idx + 1}`;
+  if (numberTag) numberTag.textContent = `ĐÓA HOA SỐ ${String(idx + 1).padStart(2, '0')}`;
+  if (nameEl) nameEl.textContent = student.name;
+  if (titleEl) titleEl.textContent = `✨ ${student.title}`;
+  if (dobEl) dobEl.innerHTML = `<i class="fa-regular fa-calendar"></i> ${student.dob || '20/10/2026'}`;
+  if (wishEl) wishEl.textContent = student.wish || 'Luôn rạng rỡ và hạnh phúc nhé!';
+  if (imgEl) {
+    imgEl.style.opacity = '0';
+    imgEl.style.transform = 'scale(0.95)';
+    imgEl.src = photoUrl;
+    imgEl.onload = () => {
+      imgEl.style.opacity = '1';
+      imgEl.style.transform = 'scale(1)';
+    };
+  }
+  if (heartCountEl) {
+    heartCountEl.textContent = `${20 + ((idx * 7) % 35)}`;
+  }
+
+  // Hiệu ứng cánh hoa rơi nhẹ tôn vinh bạn nữ
+  try {
+    if (window.FX?.spawnBlossomShower) {
+      window.FX.spawnBlossomShower(window.innerWidth / 2, window.innerHeight * 0.4, 12);
+    }
+  } catch (e) {}
+
+  resetTourProgress();
+}
+
+function resetTourProgress() {
+  const fill = document.getElementById('tourProgressFill');
+  if (fill) fill.style.width = '0%';
+  tourProgressPercent = 0;
+}
+
+function startTourTimer() {
+  stopTourTimer();
+  if (!tourIsPlaying) return;
+
+  const stepInterval = 50; // Cập nhật progress bar mỗi 50ms
+  const stepIncrement = (stepInterval / TOUR_SLIDE_DURATION) * 100;
+  const fill = document.getElementById('tourProgressFill');
+
+  tourProgressTimer = setInterval(() => {
+    tourProgressPercent += stepIncrement;
+    if (fill) fill.style.width = `${Math.min(100, tourProgressPercent)}%`;
+
+    if (tourProgressPercent >= 100) {
+      nextTourStudent();
+    }
+  }, stepInterval);
+}
+
+function stopTourTimer() {
+  if (tourProgressTimer) {
+    clearInterval(tourProgressTimer);
+    tourProgressTimer = null;
+  }
+}
+
+function nextTourStudent() {
+  if (tourCurrentIndex < FEMALE_STUDENTS.length - 1) {
+    tourCurrentIndex++;
+    renderTourStudent(tourCurrentIndex);
+    if (tourIsPlaying) startTourTimer();
+  } else {
+    // Đã chiếu hết 23 bạn nữ -> Đại tiệc pháo hoa chúc mừng!
+    closeCinematicTour();
+    try {
+      if (window.FX?.launchGrandFinaleBarrage) {
+        window.FX.launchGrandFinaleBarrage();
+      }
+    } catch (e) {}
+  }
+}
+
+function prevTourStudent() {
+  if (tourCurrentIndex > 0) {
+    tourCurrentIndex--;
+  } else {
+    tourCurrentIndex = FEMALE_STUDENTS.length - 1;
+  }
+  renderTourStudent(tourCurrentIndex);
+  if (tourIsPlaying) startTourTimer();
+}
+
+function toggleTourPlayPause() {
+  tourIsPlaying = !tourIsPlaying;
+  updateTourPlayPauseBtn();
+  if (tourIsPlaying) {
+    startTourTimer();
+  } else {
+    stopTourTimer();
+  }
+}
+
+function updateTourPlayPauseBtn() {
+  const btn = document.getElementById('btnTourPlayPause');
+  if (!btn) return;
+  if (tourIsPlaying) {
+    btn.innerHTML = '<i class="fa-solid fa-pause"></i>';
+    btn.title = 'Tạm dừng trình chiếu';
+  } else {
+    btn.innerHTML = '<i class="fa-solid fa-play"></i>';
+    btn.title = 'Tiếp tục trình chiếu';
+  }
+}
+
+function addTourHeart() {
+  const countEl = document.getElementById('tourHeartCount');
+  if (countEl) {
+    countEl.textContent = parseInt(countEl.textContent || '0') + 1;
+  }
+  try {
+    if (window.audioManager?.playBellSound) {
+      window.audioManager.playBellSound(1318.5, 0.4);
+    }
+    if (window.FX?.spawnBlossomShower) {
+      window.FX.spawnBlossomShower(window.innerWidth * 0.65, window.innerHeight * 0.6, 16);
+    }
+  } catch (e) {}
+}
+
+// Gắn sự kiện cho các nút điều khiển Tour Điện Ảnh
+function initCinematicTourEvents() {
+  const btnOpenTour = document.getElementById('btnCinematicTour');
+  if (btnOpenTour) btnOpenTour.onclick = () => openCinematicTour(0);
+
+  const btnFirework = document.getElementById('btnLaunchFirework');
+  if (btnFirework) btnFirework.onclick = () => {
+    try {
+      if (window.FX?.launchGrandFinaleBarrage) {
+        window.FX.launchGrandFinaleBarrage();
+      }
+    } catch (e) {}
+  };
+
+  const btnClose = document.getElementById('btnCloseTour');
+  if (btnClose) btnClose.onclick = closeCinematicTour;
+
+  const backdrop = document.getElementById('tourBackdrop');
+  if (backdrop) backdrop.onclick = closeCinematicTour;
+
+  const btnNext = document.getElementById('btnTourNext');
+  if (btnNext) btnNext.onclick = nextTourStudent;
+
+  const btnPrev = document.getElementById('btnTourPrev');
+  if (btnPrev) btnPrev.onclick = prevTourStudent;
+
+  const btnPlay = document.getElementById('btnTourPlayPause');
+  if (btnPlay) btnPlay.onclick = toggleTourPlayPause;
+
+  const btnHeart = document.getElementById('btnTourHeart');
+  if (btnHeart) btnHeart.onclick = addTourHeart;
+
+  window.addEventListener('keydown', (e) => {
+    const modal = document.getElementById('cinematicTourModal');
+    if (!modal || !modal.classList.contains('active')) return;
+    if (e.key === 'ArrowRight') nextTourStudent();
+    if (e.key === 'ArrowLeft') prevTourStudent();
+    if (e.key === ' ') { e.preventDefault(); toggleTourPlayPause(); }
+    if (e.key === 'Escape') closeCinematicTour();
+  });
 }
 
 function initStage6HeartNames() {
@@ -4035,6 +4343,7 @@ window.addEventListener('resize', () => {
 // 9. KHỞI TẠO ỨNG DỤNG (INITIALIZATION)
 // ==========================================================
 window.addEventListener('DOMContentLoaded', () => {
+  initCinematicTourEvents();
   const urlParams = new URLSearchParams(window.location.search);
   const hashMatch = window.location.hash.match(/stage(\d+)/i);
   const startStage = parseInt(urlParams.get('stage')) || (hashMatch ? parseInt(hashMatch[1]) : 1);
