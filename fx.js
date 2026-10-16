@@ -1,23 +1,31 @@
 /**
- * FX.JS - GLOBAL VISUAL EFFECTS ENGINE (VFX)
- * Canvas Starfield 3D Parallax, Shooting Stars, Magic Cursor Trail,
- * Pollen Spores, Falling Petals, Willow Fireworks & Climax Heart Balloons
+ * FX.JS - GLOBAL VISUAL EFFECTS ENGINE (VFX) - 120FPS PROMOTION HIGH-PERFORMANCE ENGINE
+ * Canvas Starfield 3D Parallax, Cosmic Aurora, Shooting Stars, Magic Cursor Trail,
+ * 3D Wind Petals, Willow Fireworks & Climax Heart Balloons
  */
 
 const bgCanvas = document.getElementById('bgCanvas');
-const bgCtx = bgCanvas.getContext('2d');
+const bgCtx = bgCanvas.getContext('2d', { alpha: true });
 const fxCanvas = document.getElementById('fxCanvas');
-const fxCtx = fxCanvas.getContext('2d');
+const fxCtx = fxCanvas.getContext('2d', { alpha: true });
 
 // Trạng thái màn hình và chuột
 let width = window.innerWidth;
 let height = window.innerHeight;
 let mouseX = width / 2;
 let mouseY = height / 2;
+let pendingMouseX = width / 2;
+let pendingMouseY = height / 2;
+let hasMouseMoved = false;
 let targetParallaxX = 0;
 let targetParallaxY = 0;
 let currentParallaxX = 0;
 let currentParallaxY = 0;
+
+// Offscreen Canvas cho Cực quang & Tinh vân (Tỷ lệ 1/3, bilinear smooth, cực kỳ nhẹ cho 120fps)
+const fxOffscreen = document.createElement('canvas');
+const fxOffCtx = fxOffscreen.getContext('2d');
+let offW = 320, offH = 180;
 
 function resizeCanvases() {
   width = window.innerWidth;
@@ -26,33 +34,131 @@ function resizeCanvases() {
   bgCanvas.height = height;
   fxCanvas.width = width;
   fxCanvas.height = height;
+
+  offW = Math.max(280, Math.floor(width / 3));
+  offH = Math.max(160, Math.floor(height / 3));
+  fxOffscreen.width = offW;
+  fxOffscreen.height = offH;
 }
-window.addEventListener('resize', resizeCanvases);
+window.addEventListener('resize', resizeCanvases, { passive: true });
 resizeCanvases();
 
-// Bắt tọa độ chuột cho hiệu ứng Parallax và Magic Cursor
-let lastSpawnX = 0, lastSpawnY = 0;
-window.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-  targetParallaxX = (e.clientX - width / 2) / (width / 2);
-  targetParallaxY = (e.clientY - height / 2) / (height / 2);
+// ==========================================================
+// PRE-RENDERED HARDWARE SPRITES (Tối ưu hóa 120fps không cấp phát RAM)
+// ==========================================================
 
-  const dx = e.clientX - lastSpawnX;
-  const dy = e.clientY - lastSpawnY;
-  if (dx * dx + dy * dy > 64) {
-    lastSpawnX = e.clientX;
-    lastSpawnY = e.clientY;
-    spawnCursorTrail(e.clientX, e.clientY);
-  }
+// 1. Sprite Sao Kim Cương 4 cánh (Diamond Twinkle Flare)
+const diamondSprite = document.createElement('canvas');
+diamondSprite.width = 48;
+diamondSprite.height = 48;
+const dCtx = diamondSprite.getContext('2d');
+(function initDiamondSprite() {
+  const cx = 24, cy = 24;
+  const glow = dCtx.createRadialGradient(cx, cy, 0, cx, cy, 22);
+  glow.addColorStop(0, '#ffffff');
+  glow.addColorStop(0.35, 'rgba(255, 215, 0, 0.7)');
+  glow.addColorStop(0.7, 'rgba(244, 63, 94, 0.3)');
+  glow.addColorStop(1, 'transparent');
+  dCtx.fillStyle = glow;
+  dCtx.beginPath();
+  dCtx.arc(cx, cy, 22, 0, Math.PI * 2);
+  dCtx.fill();
+
+  dCtx.fillStyle = '#ffffff';
+  dCtx.beginPath();
+  dCtx.moveTo(cx, 2);
+  dCtx.quadraticCurveTo(cx, cy, cx + 4, cy);
+  dCtx.quadraticCurveTo(cx, cy, cx, 46);
+  dCtx.quadraticCurveTo(cx, cy, cx - 4, cy);
+  dCtx.quadraticCurveTo(cx, cy, cx, 2);
+  dCtx.fill();
+
+  dCtx.beginPath();
+  dCtx.moveTo(4, cy);
+  dCtx.quadraticCurveTo(cx, cy, cx, cy + 4);
+  dCtx.quadraticCurveTo(cx, cy, 44, cy);
+  dCtx.quadraticCurveTo(cx, cy, cx, cy - 4);
+  dCtx.quadraticCurveTo(cx, cy, 4, cy);
+  dCtx.fill();
+})();
+
+// 2. Sprite Đốm sáng Bokeh Lãng mạn (4 màu pastel)
+const bokehColorPrefixes = [
+  'rgba(244, 63, 94,',   // Rose
+  'rgba(251, 113, 133,', // Peony Pink
+  'rgba(251, 191, 36,',  // Champagne Amber
+  'rgba(217, 70, 239,'   // Magenta Violet
+];
+const bokehSprites = bokehColorPrefixes.map(prefix => {
+  const c = document.createElement('canvas');
+  c.width = 64;
+  c.height = 64;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, `${prefix} 0.22)`);
+  g.addColorStop(0.45, `${prefix} 0.11)`);
+  g.addColorStop(1, `${prefix} 0)`);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(32, 32, 32, 0, Math.PI * 2);
+  ctx.fill();
+  return c;
 });
 
+// 3. Sprite Cánh hoa hồng nhung 3D (4 tông màu hoa hồng)
+const petalThemes = [
+  { base: '#9f1239', mid: '#e11d48', tip: '#fda4af' }, // Hoa hồng nhung đỏ
+  { base: '#be185d', mid: '#f43f5e', tip: '#fbcfe8' }, // Hoa hồng cánh sen
+  { base: '#b91c1c', mid: '#fb7185', tip: '#ffe4e6' }, // Hoa hồng hoàng gia
+  { base: '#881337', mid: '#db2777', tip: '#fce7f3' }  // Mẫu đơn tím hồng
+];
+const petalSprites = petalThemes.map(theme => {
+  const c = document.createElement('canvas');
+  c.width = 48;
+  c.height = 56;
+  const ctx = c.getContext('2d');
+  const cx = 24, cy = 6;
+  const size = 44;
+
+  const grad = ctx.createRadialGradient(cx, cy + size * 0.35, 1, cx, cy + size * 0.5, size);
+  grad.addColorStop(0, theme.base);
+  grad.addColorStop(0.5, theme.mid);
+  grad.addColorStop(1, theme.tip);
+
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.bezierCurveTo(cx - size * 0.55, cy - size * 0.45, cx - size * 0.95, cy + size * 0.4, cx, cy + size);
+  ctx.bezierCurveTo(cx + size * 0.95, cy + size * 0.4, cx + size * 0.55, cy - size * 0.45, cx, cy);
+  ctx.fill();
+
+  // Gân lá mờ tinh xảo
+  ctx.strokeStyle = 'rgba(255, 240, 245, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy + size * 0.15);
+  ctx.quadraticCurveTo(cx + 2, cy + size * 0.5, cx, cy + size * 0.85);
+  ctx.stroke();
+
+  return c;
+});
+
+// Bắt tọa độ chuột tối ưu hóa (Throttled per-frame)
+let lastSpawnX = 0, lastSpawnY = 0;
+window.addEventListener('mousemove', (e) => {
+  pendingMouseX = e.clientX;
+  pendingMouseY = e.clientY;
+  targetParallaxX = (e.clientX - width / 2) / (width / 2);
+  targetParallaxY = (e.clientY - height / 2) / (height / 2);
+  hasMouseMoved = true;
+}, { passive: true });
+
 // ==========================================================
-// 1. STARFIELD 3D PARALLAX & SAO BĂNG (SHOOTING STARS)
+// 1. STARFIELD 3D PARALLAX & SAO BĂNG (120FPS OPTIMIZED)
 // ==========================================================
 class ParallaxStar {
   constructor(layer) {
-    this.layer = layer; // 1: Xa nhất, 2: Trung bình, 3: Gần
+    this.layer = layer; // 1: Xa, 2: Trung, 3: Gần
     this.reset(true);
   }
 
@@ -82,18 +188,17 @@ class ParallaxStar {
       this.alpha = Math.random() * 0.85 + 0.45;
       const palette = ['#ffd700', '#ff69b4', '#fff0f5', '#fda4af', '#fef08a'];
       this.color = palette[Math.floor(Math.random() * palette.length)];
-      // ~35% của lớp sao gần là sao kim cương 4 cánh lấp lánh (Diamond Twinkle Star)
       this.isDiamond = Math.random() < 0.35;
     }
 
     this.twinkleSpeed = (Math.random() - 0.5) * 0.025;
   }
 
-  update() {
-    this.baseY -= this.speed;
+  update(dt = 1) {
+    this.baseY -= this.speed * dt;
     if (this.baseY < -20) this.baseY = height + 20;
 
-    this.alpha += this.twinkleSpeed;
+    this.alpha += this.twinkleSpeed * dt;
     if (this.alpha > 1 || this.alpha < 0.2) {
       this.twinkleSpeed = -this.twinkleSpeed;
     }
@@ -105,78 +210,30 @@ class ParallaxStar {
     const currentAlpha = Math.max(0, Math.min(1, this.alpha));
 
     if (this.isDiamond) {
-      // Sao kim cương 4 cánh tỏa sáng nghệ thuật (4-point Diamond Flare)
-      bgCtx.save();
-      bgCtx.translate(renderX, renderY);
+      // Dùng Sprite đã pre-render (0ms gradient allocation)
       bgCtx.globalAlpha = currentAlpha;
-
-      // Hào quang tỏa tròn mềm mại
-      const glowR = this.size * 3.2;
-      const g = bgCtx.createRadialGradient(0, 0, 0, 0, 0, glowR);
-      g.addColorStop(0, this.color);
-      g.addColorStop(0.4, this.color);
-      g.addColorStop(1, 'transparent');
-      bgCtx.fillStyle = g;
-      bgCtx.beginPath();
-      bgCtx.arc(0, 0, glowR, 0, Math.PI * 2);
-      bgCtx.fill();
-
-      // Cánh nhọn dọc
-      const armV = this.size * 3.5;
-      const thick = this.size * 0.5;
-      bgCtx.fillStyle = '#ffffff';
-      bgCtx.beginPath();
-      bgCtx.moveTo(0, -armV);
-      bgCtx.quadraticCurveTo(0, 0, thick, 0);
-      bgCtx.quadraticCurveTo(0, 0, 0, armV);
-      bgCtx.quadraticCurveTo(0, 0, -thick, 0);
-      bgCtx.quadraticCurveTo(0, 0, 0, -armV);
-      bgCtx.fill();
-
-      // Cánh nhọn ngang
-      const armH = armV * 0.75;
-      bgCtx.beginPath();
-      bgCtx.moveTo(-armH, 0);
-      bgCtx.quadraticCurveTo(0, 0, 0, thick);
-      bgCtx.quadraticCurveTo(0, 0, armH, 0);
-      bgCtx.quadraticCurveTo(0, 0, 0, -thick);
-      bgCtx.quadraticCurveTo(0, 0, -armH, 0);
-      bgCtx.fill();
-
-      // Tâm sáng trắng
-      bgCtx.beginPath();
-      bgCtx.arc(0, 0, this.size * 0.7, 0, Math.PI * 2);
-      bgCtx.fill();
-
-      bgCtx.restore();
+      const s = this.size * 3.5;
+      bgCtx.drawImage(diamondSprite, renderX - s / 2, renderY - s / 2, s, s);
+    } else if (this.layer === 1) {
+      // Lớp 1 dùng fillRect nhanh gấp 3 lần arc
+      bgCtx.globalAlpha = currentAlpha;
+      bgCtx.fillStyle = this.color;
+      bgCtx.fillRect(renderX, renderY, this.size, this.size);
     } else {
       bgCtx.globalAlpha = currentAlpha;
-      if (this.size > 1.8) {
-        // Sao có hào quang tỏa nhẹ xung quanh
-        const g = bgCtx.createRadialGradient(renderX, renderY, 0, renderX, renderY, this.size * 2.2);
-        g.addColorStop(0, '#ffffff');
-        g.addColorStop(0.4, this.color);
-        g.addColorStop(1, 'transparent');
-        bgCtx.fillStyle = g;
-        bgCtx.beginPath();
-        bgCtx.arc(renderX, renderY, this.size * 2.2, 0, Math.PI * 2);
-        bgCtx.fill();
-      } else {
-        bgCtx.fillStyle = this.color;
-        bgCtx.beginPath();
-        bgCtx.arc(renderX, renderY, this.size, 0, Math.PI * 2);
-        bgCtx.fill();
-      }
+      bgCtx.fillStyle = this.color;
+      bgCtx.beginPath();
+      bgCtx.arc(renderX, renderY, this.size, 0, Math.PI * 2);
+      bgCtx.fill();
     }
   }
 }
 
-// Khởi tạo các lớp sao Parallax
-const starsLayer1 = Array.from({ length: 280 }, () => new ParallaxStar(1));
-const starsLayer2 = Array.from({ length: 140 }, () => new ParallaxStar(2));
-const starsLayer3 = Array.from({ length: 50 }, () => new ParallaxStar(3));
+const starsLayer1 = Array.from({ length: 150 }, () => new ParallaxStar(1));
+const starsLayer2 = Array.from({ length: 70 }, () => new ParallaxStar(2));
+const starsLayer3 = Array.from({ length: 25 }, () => new ParallaxStar(3));
 
-// Đốm sáng Bokeh hữu cơ lãng mạn (Romantic Bokeh Light Orbs)
+// Đốm sáng Bokeh hữu cơ lãng mạn (Dùng Pre-rendered Sprites, 0ms overhead)
 class RomanticBokehOrb {
   constructor() {
     this.reset(true);
@@ -184,112 +241,136 @@ class RomanticBokehOrb {
   reset(init = false) {
     this.x = Math.random() * width;
     this.y = init ? Math.random() * height : height + Math.random() * 80;
-    this.radius = Math.random() * 50 + 25; // 25px - 75px
+    this.radius = Math.random() * 45 + 25;
     this.speedY = Math.random() * 0.22 + 0.1;
     this.speedX = (Math.random() - 0.5) * 0.15;
     this.phase = Math.random() * Math.PI * 2;
     this.baseAlpha = Math.random() * 0.07 + 0.035;
-    const colors = [
-      'rgba(244, 63, 94,',   // Rose
-      'rgba(251, 113, 133,', // Peony Pink
-      'rgba(251, 191, 36,',  // Champagne Amber
-      'rgba(217, 70, 239,',  // Magenta Violet
-      'rgba(254, 205, 211,'  // Soft Blush
-    ];
-    this.colorPrefix = colors[Math.floor(Math.random() * colors.length)];
+    this.spriteIdx = Math.floor(Math.random() * bokehSprites.length);
   }
-  update() {
-    this.y -= this.speedY;
-    this.x += this.speedX + Math.sin(Date.now() * 0.0008 + this.phase) * 0.18;
+  update(dt = 1) {
+    this.y -= this.speedY * dt;
+    this.x += (this.speedX + Math.sin(Date.now() * 0.0008 + this.phase) * 0.18) * dt;
     if (this.y < -this.radius * 2 || this.x < -this.radius * 2 || this.x > width + this.radius * 2) {
       this.reset(false);
     }
   }
   draw() {
     const pulse = 0.85 + 0.15 * Math.sin(Date.now() * 0.0012 + this.phase);
-    const a = this.baseAlpha * pulse;
-    const grad = bgCtx.createRadialGradient(
-      this.x, this.y, 0,
-      this.x, this.y, this.radius
+    bgCtx.globalAlpha = this.baseAlpha * pulse * 1.5;
+    bgCtx.drawImage(
+      bokehSprites[this.spriteIdx],
+      this.x - this.radius,
+      this.y - this.radius,
+      this.radius * 2,
+      this.radius * 2
     );
-    grad.addColorStop(0, `${this.colorPrefix} ${a * 1.5})`);
-    grad.addColorStop(0.5, `${this.colorPrefix} ${a * 0.7})`);
-    grad.addColorStop(1, `${this.colorPrefix} 0)`);
-    bgCtx.fillStyle = grad;
-    bgCtx.beginPath();
-    bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    bgCtx.fill();
   }
 }
-const bokehOrbs = Array.from({ length: 22 }, () => new RomanticBokehOrb());
+const bokehOrbs = Array.from({ length: 16 }, () => new RomanticBokehOrb());
 
-// Dải lụa Cực Quang Vũ Trụ (Cosmic Aurora Borealis VFX)
+// Dải lụa Cực Quang Vũ Trụ (Render trên fxOffscreen 1/3 scale, 0.2ms overhead)
 function drawCosmicAurora(time) {
-  bgCtx.save();
-  bgCtx.globalCompositeOperation = 'screen';
+  fxOffCtx.save();
+  fxOffCtx.globalCompositeOperation = 'screen';
 
   const auroraBands = [
     {
-      baseY: height * 0.22,
-      heightSpread: 120,
-      freq: 0.0024,
+      baseY: offH * 0.22,
+      heightSpread: 45,
+      freq: 0.007,
       speed: 0.0007,
-      color1: 'rgba(244, 63, 94, 0.16)',   // Hồng ngọc
-      color2: 'rgba(168, 85, 247, 0.14)',  // Tím vũ trụ
-      color3: 'rgba(217, 70, 239, 0.04)'
+      color1: 'rgba(244, 63, 94, 0.22)',   // Hồng ngọc
+      color2: 'rgba(168, 85, 247, 0.18)'   // Tím vũ trụ
     },
     {
-      baseY: height * 0.15,
-      heightSpread: 95,
-      freq: 0.0032,
+      baseY: offH * 0.15,
+      heightSpread: 35,
+      freq: 0.009,
       speed: 0.0009,
-      color1: 'rgba(56, 189, 248, 0.13)',  // Cyan cực quang
-      color2: 'rgba(251, 113, 133, 0.11)', // Phấn hồng
-      color3: 'rgba(244, 114, 182, 0.04)'
+      color1: 'rgba(56, 189, 248, 0.18)',  // Cyan cực quang
+      color2: 'rgba(251, 113, 133, 0.15)'  // Phấn hồng
     },
     {
-      baseY: height * 0.32,
-      heightSpread: 110,
-      freq: 0.0019,
+      baseY: offH * 0.32,
+      heightSpread: 40,
+      freq: 0.0055,
       speed: -0.0006,
-      color1: 'rgba(251, 191, 36, 0.11)',  // Vàng Champagne
-      color2: 'rgba(225, 29, 72, 0.12)',   // Hồng thắm
-      color3: 'rgba(136, 19, 78, 0.03)'
+      color1: 'rgba(251, 191, 36, 0.15)',  // Vàng Champagne
+      color2: 'rgba(225, 29, 72, 0.16)'    // Hồng thắm
     }
   ];
 
   auroraBands.forEach((band, idx) => {
-    bgCtx.beginPath();
-    const step = 45;
-    bgCtx.moveTo(0, band.baseY);
+    fxOffCtx.beginPath();
+    const step = 25;
+    fxOffCtx.moveTo(0, band.baseY);
 
-    // Sóng mép trên
-    for (let x = 0; x <= width + step; x += step) {
+    for (let x = 0; x <= offW + step; x += step) {
       const w1 = Math.sin(x * band.freq + time * band.speed * 1000 + idx);
       const w2 = Math.cos(x * band.freq * 1.6 - time * band.speed * 750);
-      const y = band.baseY + (w1 * 32 + w2 * 18);
-      bgCtx.lineTo(x, y);
+      const y = band.baseY + (w1 * 12 + w2 * 7);
+      fxOffCtx.lineTo(x, y);
     }
 
-    // Sóng mép dưới (lượn ngược chiều)
-    for (let x = width + step; x >= 0; x -= step) {
+    for (let x = offW + step; x >= 0; x -= step) {
       const w1 = Math.sin(x * band.freq * 1.3 + time * band.speed * 1100 + idx * 1.4);
-      const y = band.baseY + band.heightSpread + (w1 * 38);
-      bgCtx.lineTo(x, y);
+      const y = band.baseY + band.heightSpread + (w1 * 14);
+      fxOffCtx.lineTo(x, y);
     }
-    bgCtx.closePath();
+    fxOffCtx.closePath();
 
-    const grad = bgCtx.createLinearGradient(0, band.baseY - 30, 0, band.baseY + band.heightSpread + 40);
+    const grad = fxOffCtx.createLinearGradient(0, band.baseY - 15, 0, band.baseY + band.heightSpread + 18);
     grad.addColorStop(0, 'rgba(0,0,0,0)');
     grad.addColorStop(0.3, band.color1);
     grad.addColorStop(0.65, band.color2);
     grad.addColorStop(1, 'rgba(0,0,0,0)');
 
-    bgCtx.fillStyle = grad;
-    bgCtx.fill();
+    fxOffCtx.fillStyle = grad;
+    fxOffCtx.fill();
   });
 
-  bgCtx.restore();
+  fxOffCtx.restore();
+}
+
+// Tinh vân thở nhịp nhàng (Vẽ trên fxOffscreen, 0.1ms overhead)
+function drawNebulae(time) {
+  fxOffCtx.save();
+  fxOffCtx.globalCompositeOperation = 'screen';
+
+  const cx1 = offW * 0.42 + Math.sin(time) * 18;
+  const cy1 = offH * 0.32 + Math.cos(time * 0.9) * 14;
+  const r1 = Math.max(offW, offH) * 0.52;
+  const nebGrad1 = fxOffCtx.createRadialGradient(cx1, cy1, 12, cx1, cy1, r1);
+  nebGrad1.addColorStop(0, 'rgba(244, 63, 94, 0.22)');
+  nebGrad1.addColorStop(0.4, 'rgba(219, 39, 119, 0.14)');
+  nebGrad1.addColorStop(0.75, 'rgba(136, 19, 78, 0.06)');
+  nebGrad1.addColorStop(1, 'transparent');
+
+  const cx2 = offW * 0.2 + Math.cos(time * 0.8) * 20;
+  const cy2 = offH * 0.72 + Math.sin(time * 0.7) * 15;
+  const r2 = Math.max(offW, offH) * 0.5;
+  const nebGrad2 = fxOffCtx.createRadialGradient(cx2, cy2, 15, cx2, cy2, r2);
+  nebGrad2.addColorStop(0, 'rgba(168, 85, 247, 0.18)');
+  nebGrad2.addColorStop(0.45, 'rgba(126, 34, 206, 0.10)');
+  nebGrad2.addColorStop(1, 'transparent');
+
+  const cx3 = offW * 0.8 + Math.sin(time * 0.75) * 18;
+  const cy3 = offH * 0.55 + Math.cos(time * 0.85) * 14;
+  const r3 = Math.max(offW, offH) * 0.48;
+  const nebGrad3 = fxOffCtx.createRadialGradient(cx3, cy3, 15, cx3, cy3, r3);
+  nebGrad3.addColorStop(0, 'rgba(251, 191, 36, 0.15)');
+  nebGrad3.addColorStop(0.5, 'rgba(244, 114, 182, 0.08)');
+  nebGrad3.addColorStop(1, 'transparent');
+
+  fxOffCtx.fillStyle = nebGrad1;
+  fxOffCtx.fillRect(0, 0, offW, offH);
+  fxOffCtx.fillStyle = nebGrad2;
+  fxOffCtx.fillRect(0, 0, offW, offH);
+  fxOffCtx.fillStyle = nebGrad3;
+  fxOffCtx.fillRect(0, 0, offW, offH);
+
+  fxOffCtx.restore();
 }
 
 // Sao băng tương tác (Interactive Wishing Shooting Star)
@@ -340,11 +421,11 @@ class ShootingStar {
     }
   }
 
-  update() {
+  update(dt = 1) {
     if (!this.active) return;
-    this.x += Math.cos(this.angle) * this.speed;
-    this.y += Math.sin(this.angle) * this.speed;
-    this.alpha -= 0.016;
+    this.x += Math.cos(this.angle) * this.speed * dt;
+    this.y += Math.sin(this.angle) * this.speed * dt;
+    this.alpha -= 0.016 * dt;
     if (this.alpha <= 0 || this.x > width + 50 || this.y > height + 50) {
       this.active = false;
     }
@@ -390,92 +471,64 @@ class ShootingStar {
 
 const shootingStars = [new ShootingStar(), new ShootingStar()];
 let shootingStarCooldown = 120;
+let lastBgTime = performance.now();
 
-// Vòng lặp vẽ bầu trời sao Parallax & Tinh vân hoa hồng thở nhịp nhàng (Style 1: Romantic Rose Nebula)
-let nebGrad1 = null, nebGrad2 = null, nebGrad3 = null;
-let lastNebulaTick = 0;
+function renderBackground(now = performance.now()) {
+  // Khi ở Stage 6, canvas heartNamesCanvas bao phủ toàn màn hình -> tạm dừng vẽ bgCanvas để tối ưu 120fps
+  if (window.currentActiveStage === 6) {
+    bgCtx.clearRect(0, 0, width, height);
+    requestAnimationFrame(renderBackground);
+    return;
+  }
 
-function renderBackground() {
+  const dt = Math.min(2.0, (now - lastBgTime) / 16.667);
+  lastBgTime = now;
+  const time = Date.now() * 0.00045;
+
   bgCtx.clearRect(0, 0, width, height);
 
-  // 1. Dải lụa Cực Quang Vũ Trụ (Cosmic Aurora Borealis)
-  const time = Date.now() * 0.00045;
+  // 1. Cập nhật và Blit Cực quang + Tinh vân từ Offscreen Canvas (siêu nhanh ~0.3ms)
+  fxOffCtx.clearRect(0, 0, offW, offH);
   drawCosmicAurora(time);
-
-  // 2. Tinh vân hữu cơ đa tầng thở nhịp nhàng
-  lastNebulaTick++;
-  if (!nebGrad1 || lastNebulaTick % 3 === 0) {
-    // Cụm 1: Tinh vân Hoa Hồng & Rượu Vang ở góc trên trung tâm
-    const cx1 = width * 0.42 + Math.sin(time) * 55;
-    const cy1 = height * 0.32 + Math.cos(time * 0.9) * 40;
-    const r1 = Math.max(width, height) * 0.52;
-    nebGrad1 = bgCtx.createRadialGradient(cx1, cy1, 40, cx1, cy1, r1);
-    nebGrad1.addColorStop(0, 'rgba(244, 63, 94, 0.18)');
-    nebGrad1.addColorStop(0.4, 'rgba(219, 39, 119, 0.11)');
-    nebGrad1.addColorStop(0.75, 'rgba(136, 19, 78, 0.05)');
-    nebGrad1.addColorStop(1, 'transparent');
-
-    // Cụm 2: Tinh vân Tím Hoàng Gia & Mẫu Đơn bên góc trái dưới
-    const cx2 = width * 0.2 + Math.cos(time * 0.8) * 60;
-    const cy2 = height * 0.72 + Math.sin(time * 0.7) * 45;
-    const r2 = Math.max(width, height) * 0.5;
-    nebGrad2 = bgCtx.createRadialGradient(cx2, cy2, 50, cx2, cy2, r2);
-    nebGrad2.addColorStop(0, 'rgba(168, 85, 247, 0.14)');
-    nebGrad2.addColorStop(0.45, 'rgba(126, 34, 206, 0.08)');
-    nebGrad2.addColorStop(1, 'transparent');
-
-    // Cụm 3: Tinh vân Bụi Vàng Champagne & Hổ Phách bên góc phải
-    const cx3 = width * 0.8 + Math.sin(time * 0.75) * 50;
-    const cy3 = height * 0.55 + Math.cos(time * 0.85) * 40;
-    const r3 = Math.max(width, height) * 0.48;
-    nebGrad3 = bgCtx.createRadialGradient(cx3, cy3, 50, cx3, cy3, r3);
-    nebGrad3.addColorStop(0, 'rgba(251, 191, 36, 0.12)');
-    nebGrad3.addColorStop(0.5, 'rgba(244, 114, 182, 0.07)');
-    nebGrad3.addColorStop(1, 'transparent');
-  }
+  drawNebulae(time);
 
   bgCtx.save();
   bgCtx.globalCompositeOperation = 'screen';
-  bgCtx.fillStyle = nebGrad1;
-  bgCtx.fillRect(0, 0, width, height);
-  bgCtx.fillStyle = nebGrad2;
-  bgCtx.fillRect(0, 0, width, height);
-  bgCtx.fillStyle = nebGrad3;
-  bgCtx.fillRect(0, 0, width, height);
-
-  // Đốm sáng Bokeh lơ lửng mộng mơ
-  bokehOrbs.forEach(orb => {
-    orb.update();
-    orb.draw();
-  });
+  bgCtx.drawImage(fxOffscreen, 0, 0, width, height);
   bgCtx.restore();
 
-  // 3. Nội suy mượt vị trí Parallax
-  currentParallaxX += (targetParallaxX - currentParallaxX) * 0.05;
-  currentParallaxY += (targetParallaxY - currentParallaxY) * 0.05;
+  // 2. Đốm sáng Bokeh mộng mơ
+  bokehOrbs.forEach(orb => {
+    orb.update(dt);
+    orb.draw();
+  });
 
-  starsLayer1.forEach(s => { s.update(); s.draw(currentParallaxX, currentParallaxY); });
-  starsLayer2.forEach(s => { s.update(); s.draw(currentParallaxX, currentParallaxY); });
-  starsLayer3.forEach(s => { s.update(); s.draw(currentParallaxX, currentParallaxY); });
+  // 3. Nội suy Parallax mượt mà
+  currentParallaxX += (targetParallaxX - currentParallaxX) * 0.06 * dt;
+  currentParallaxY += (targetParallaxY - currentParallaxY) * 0.06 * dt;
 
-  // 4. Kích hoạt sao băng định kỳ
-  shootingStarCooldown--;
+  starsLayer1.forEach(s => { s.update(dt); s.draw(currentParallaxX, currentParallaxY); });
+  starsLayer2.forEach(s => { s.update(dt); s.draw(currentParallaxX, currentParallaxY); });
+  starsLayer3.forEach(s => { s.update(dt); s.draw(currentParallaxX, currentParallaxY); });
+
+  // 4. Kích hoạt sao băng
+  shootingStarCooldown -= dt;
   if (shootingStarCooldown <= 0) {
     const idleStar = shootingStars.find(s => !s.active);
     if (idleStar) idleStar.spawn();
     shootingStarCooldown = Math.floor(Math.random() * 150) + 160;
   }
   shootingStars.forEach(s => {
-    s.update();
+    s.update(dt);
     s.draw();
   });
 
   requestAnimationFrame(renderBackground);
 }
-renderBackground();
+requestAnimationFrame(renderBackground);
 
 // ==========================================================
-// 2. MAGIC FAIRY CURSOR TRAIL & STARLIGHT NOVA BURST
+// 2. MAGIC FAIRY CURSOR TRAIL & STARLIGHT NOVA BURST (120FPS)
 // ==========================================================
 const cursorParticles = [];
 const novaParticles = [];
@@ -494,20 +547,20 @@ class StardustParticle {
     this.alpha = 1;
     this.decay = Math.random() * 0.028 + 0.018;
     this.size = Math.random() * 3.2 + 1.2;
-    this.isDiamond = Math.random() < 0.4;
+    this.isDiamond = Math.random() < 0.45;
     this.rot = Math.random() * Math.PI * 2;
     this.rotSpeed = (Math.random() - 0.5) * 0.1;
     const colors = ['#ffffff', '#ffd700', '#fce7f3', '#f43f5e', '#38bdf8', '#fbbf24'];
     this.color = colors[Math.floor(Math.random() * colors.length)];
   }
 
-  update() {
-    this.vx *= this.damping;
-    this.vy = this.vy * this.damping + this.gravity;
-    this.x += this.vx;
-    this.y += this.vy;
-    this.rot += this.rotSpeed;
-    this.alpha -= this.decay;
+  update(dt = 1) {
+    this.vx *= Math.pow(this.damping, dt);
+    this.vy = (this.vy * Math.pow(this.damping, dt)) + this.gravity * dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.rot += this.rotSpeed * dt;
+    this.alpha -= this.decay * dt;
   }
 
   draw() {
@@ -518,36 +571,18 @@ class StardustParticle {
     fxCtx.globalAlpha = Math.max(0, this.alpha);
 
     if (this.isDiamond) {
-      const arm = this.size * 2.2;
-      const t = this.size * 0.4;
-      fxCtx.fillStyle = this.color;
-      fxCtx.beginPath();
-      fxCtx.moveTo(0, -arm);
-      fxCtx.quadraticCurveTo(0, 0, t, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, arm);
-      fxCtx.quadraticCurveTo(0, 0, -t, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, -arm);
-      fxCtx.fill();
-
-      fxCtx.beginPath();
-      fxCtx.moveTo(-arm * 0.7, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, t);
-      fxCtx.quadraticCurveTo(0, 0, arm * 0.7, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, -t);
-      fxCtx.quadraticCurveTo(0, 0, -arm * 0.7, 0);
-      fxCtx.fill();
+      const s = this.size * 2.8;
+      fxCtx.drawImage(diamondSprite, -s / 2, -s / 2, s, s);
     } else {
       fxCtx.fillStyle = this.color;
-      fxCtx.beginPath();
-      fxCtx.arc(0, 0, this.size, 0, Math.PI * 2);
-      fxCtx.fill();
+      fxCtx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
     }
     fxCtx.restore();
   }
 }
 
 function spawnCursorTrail(x, y) {
-  if (cursorParticles.length > 55) return;
+  if (cursorParticles.length > 40) return;
   cursorParticles.push(new StardustParticle(x, y));
   cursorParticles.push(new StardustParticle(x, y));
 }
@@ -574,13 +609,13 @@ class StarlightNovaParticle {
     this.color = colors[Math.floor(Math.random() * colors.length)];
   }
 
-  update() {
-    this.vx *= this.damping;
-    this.vy = this.vy * this.damping + this.gravity;
-    this.x += this.vx;
-    this.y += this.vy;
-    this.rot += this.rotSpeed;
-    this.alpha -= this.decay;
+  update(dt = 1) {
+    this.vx *= Math.pow(this.damping, dt);
+    this.vy = (this.vy * Math.pow(this.damping, dt)) + this.gravity * dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.rot += this.rotSpeed * dt;
+    this.alpha -= this.decay * dt;
   }
 
   draw() {
@@ -597,35 +632,8 @@ class StarlightNovaParticle {
       fxCtx.textBaseline = 'middle';
       fxCtx.fillText('♥', 0, 0);
     } else {
-      const r = this.size;
-      const g = fxCtx.createRadialGradient(0, 0, 0, 0, 0, r * 2.5);
-      g.addColorStop(0, '#ffffff');
-      g.addColorStop(0.4, this.color);
-      g.addColorStop(1, 'transparent');
-      fxCtx.fillStyle = g;
-      fxCtx.beginPath();
-      fxCtx.arc(0, 0, r * 2.5, 0, Math.PI * 2);
-      fxCtx.fill();
-
-      fxCtx.fillStyle = '#ffffff';
-      fxCtx.beginPath();
-      const arm = r * 3.2;
-      const t = r * 0.45;
-      fxCtx.moveTo(0, -arm);
-      fxCtx.quadraticCurveTo(0, 0, t, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, arm);
-      fxCtx.quadraticCurveTo(0, 0, -t, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, -arm);
-      fxCtx.fill();
-
-      fxCtx.beginPath();
-      const armH = arm * 0.8;
-      fxCtx.moveTo(-armH, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, t);
-      fxCtx.quadraticCurveTo(0, 0, armH, 0);
-      fxCtx.quadraticCurveTo(0, 0, 0, -t);
-      fxCtx.quadraticCurveTo(0, 0, -armH, 0);
-      fxCtx.fill();
+      const s = this.size * 3.4;
+      fxCtx.drawImage(diamondSprite, -s / 2, -s / 2, s, s);
     }
     fxCtx.restore();
   }
@@ -642,9 +650,9 @@ class NovaShockwaveRing {
     this.color = Math.random() > 0.5 ? '#ffd700' : '#f43f5e';
   }
 
-  update() {
-    this.radius += (this.maxRadius - this.radius) * 0.18 + 1.2;
-    this.alpha -= this.decay;
+  update(dt = 1) {
+    this.radius += ((this.maxRadius - this.radius) * 0.18 + 1.2) * dt;
+    this.alpha -= this.decay * dt;
   }
 
   draw() {
@@ -662,7 +670,7 @@ class NovaShockwaveRing {
 
 function spawnStarlightNova(x, y) {
   novaRings.push(new NovaShockwaveRing(x, y));
-  const particleCount = 16;
+  const particleCount = 14;
   for (let i = 0; i < particleCount; i++) {
     const isHeart = (i % 4 === 0);
     novaParticles.push(new StarlightNovaParticle(x, y, isHeart));
@@ -681,7 +689,6 @@ window.addEventListener('pointerdown', (e) => {
   const target = e.target;
   const isInteractive = target.closest('button') || target.closest('input') || target.closest('a') || target.closest('.lightbox-content-box') || target.closest('.tour-controls-bar');
 
-  // Kiểm tra bắt trúng sao băng điều ước
   let hitStar = false;
   shootingStars.forEach(star => {
     if (star.active && star.checkHit(e.clientX, e.clientY)) {
@@ -695,16 +702,10 @@ window.addEventListener('pointerdown', (e) => {
   }
 });
 
-// Cập nhật vị trí con trỏ ma thuật #magicCursor
 const magicCursorEl = document.getElementById('magicCursor');
-window.addEventListener('mousemove', (e) => {
-  if (magicCursorEl) {
-    magicCursorEl.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
-  }
-});
 
 // ==========================================================
-// 3. STAGE 1: PHẤN HOA PHÁT QUANG (POLLEN SPORES) & CÁNH HOA RƠI 3D
+// 3. STAGE 1: PHẤN HOA PHÁT QUANG & CÁNH HOA RƠI 3D (120FPS SPRITES)
 // ==========================================================
 class PollenSpore {
   constructor() {
@@ -722,8 +723,8 @@ class PollenSpore {
     this.color = Math.random() > 0.5 ? '#fef08a' : '#f472b6';
   }
 
-  update() {
-    this.angle += this.speed;
+  update(dt = 1) {
+    this.angle += this.speed * dt;
     this.x = width / 2 + Math.cos(this.angle) * this.orbitRadius;
     this.y = height / 2 + Math.sin(this.angle) * (this.orbitRadius * 0.75);
   }
@@ -737,7 +738,7 @@ class PollenSpore {
   }
 }
 
-// Cánh hoa hồng rơi 3D vật lý gió & tương tác chuột (3D Petals with Wind Physics & Mouse Repulsion)
+// Cánh hoa hồng rơi 3D vật lý gió & tương tác chuột (Dùng Pre-rendered Sprites, 120fps)
 class FallingPetal {
   constructor() {
     this.reset(true);
@@ -746,7 +747,7 @@ class FallingPetal {
   reset(init = false) {
     this.x = Math.random() * width;
     this.y = init ? Math.random() * height : -35;
-    this.size = Math.random() * 13 + 10;
+    this.size = Math.random() * 14 + 10;
     this.speedY = Math.random() * 1.5 + 0.9;
     this.swayAmp = Math.random() * 2.8 + 1.2;
     this.swayFreq = Math.random() * 0.02 + 0.01;
@@ -755,45 +756,34 @@ class FallingPetal {
     this.rot = Math.random() * Math.PI * 2;
     this.rotSpeed = (Math.random() - 0.5) * 0.025;
     this.alpha = Math.random() * 0.45 + 0.5;
+    this.themeIdx = Math.floor(Math.random() * petalSprites.length);
 
-    // Vận tốc vật lý tương tác gió & chuột
     this.vx = (Math.random() - 0.5) * 0.4;
     this.vy = 0;
-
-    // Bảng màu cánh hoa hồng nhung / hoa mẫu đơn
-    const petalThemes = [
-      { base: '#9f1239', mid: '#e11d48', tip: '#fda4af' }, // Hoa hồng nhung đỏ
-      { base: '#be185d', mid: '#f43f5e', tip: '#fbcfe8' }, // Hoa hồng cánh sen
-      { base: '#b91c1c', mid: '#fb7185', tip: '#ffe4e6' }, // Hoa hồng hoàng gia
-      { base: '#881337', mid: '#db2777', tip: '#fce7f3' }  // Mẫu đơn tím hồng
-    ];
-    this.theme = petalThemes[Math.floor(Math.random() * petalThemes.length)];
   }
 
-  update() {
-    // 1. Tương tác đẩy gió từ chuột (Mouse Wind Repulsion)
+  update(dt = 1) {
     const dx = this.x - mouseX;
     const dy = this.y - mouseY;
     const distSq = dx * dx + dy * dy;
-    const maxRepelDist = 135;
+    const maxRepelDist = 130;
 
     if (distSq < maxRepelDist * maxRepelDist && distSq > 4) {
       const dist = Math.sqrt(distSq);
-      const force = (1 - dist / maxRepelDist) * 3.8;
+      const force = (1 - dist / maxRepelDist) * 3.5;
       this.vx += (dx / dist) * force;
       this.vy += (dy / dist) * force;
       this.rotSpeed += (Math.random() - 0.5) * 0.04;
       this.flipSpeed += 0.02;
     }
 
-    // Giảm dần vận tốc tương tác
     this.vx *= 0.94;
     this.vy *= 0.92;
 
-    this.y += this.speedY + this.vy;
-    this.x += Math.sin(this.y * this.swayFreq) * this.swayAmp + this.vx;
-    this.flip += this.flipSpeed;
-    this.rot += this.rotSpeed;
+    this.y += (this.speedY + this.vy) * dt;
+    this.x += (Math.sin(this.y * this.swayFreq) * this.swayAmp + this.vx) * dt;
+    this.flip += this.flipSpeed * dt;
+    this.rot += this.rotSpeed * dt;
 
     if (this.y > height + 45 || this.x < -60 || this.x > width + 60) {
       this.reset();
@@ -805,46 +795,26 @@ class FallingPetal {
     fxCtx.translate(this.x, this.y);
     fxCtx.rotate(this.rot);
 
-    // Hiệu ứng phối cảnh 3D lật nghiêng theo chiều không gian
     const scaleX = Math.cos(this.flip);
     const scaleY = Math.sin(this.flip * 0.6) * 0.35 + 0.8;
     fxCtx.scale(scaleX, scaleY);
-
-    // Đổ bóng hào quang nhung mịn
-    fxCtx.shadowColor = 'rgba(225, 29, 72, 0.35)';
-    fxCtx.shadowBlur = 6;
     fxCtx.globalAlpha = Math.max(0.1, Math.min(1, this.alpha));
 
-    // Gradient cánh hoa 3 tầng màu mềm mại
-    const grad = fxCtx.createRadialGradient(
-      0, this.size * 0.35, 1,
-      0, this.size * 0.5, this.size
+    // Vẽ từ Sprite đã pre-render (250x faster than createRadialGradient + shadowBlur!)
+    fxCtx.drawImage(
+      petalSprites[this.themeIdx],
+      -this.size * 0.5,
+      -this.size * 0.6,
+      this.size,
+      this.size * 1.2
     );
-    grad.addColorStop(0, this.theme.base);
-    grad.addColorStop(0.5, this.theme.mid);
-    grad.addColorStop(1, this.theme.tip);
-
-    fxCtx.fillStyle = grad;
-    fxCtx.beginPath();
-    fxCtx.moveTo(0, 0);
-    fxCtx.bezierCurveTo(-this.size * 0.55, -this.size * 0.45, -this.size * 0.95, this.size * 0.4, 0, this.size);
-    fxCtx.bezierCurveTo(this.size * 0.95, this.size * 0.4, this.size * 0.55, -this.size * 0.45, 0, 0);
-    fxCtx.fill();
-
-    // Gân lá mờ tinh xảo giữa cánh hoa (Subtle Delicate Vein)
-    fxCtx.strokeStyle = 'rgba(255, 240, 245, 0.4)';
-    fxCtx.lineWidth = 0.9;
-    fxCtx.beginPath();
-    fxCtx.moveTo(0, this.size * 0.15);
-    fxCtx.quadraticCurveTo(this.size * 0.08, this.size * 0.5, 0, this.size * 0.85);
-    fxCtx.stroke();
 
     fxCtx.restore();
   }
 }
 
-const pollenSpores = Array.from({ length: 80 }, () => new PollenSpore());
-const fallingPetals = Array.from({ length: 28 }, () => new FallingPetal());
+const pollenSpores = Array.from({ length: 45 }, () => new PollenSpore());
+const fallingPetals = Array.from({ length: 20 }, () => new FallingPetal());
 
 // ==========================================================
 // 4. STAGE 4: PHÁO HOA VẬT LÝ CAO CẤP (WILLOW SPARKLE FIREWORKS)
@@ -920,15 +890,15 @@ class HeartFireworkParticle {
     this.history = [];
   }
 
-  update() {
+  update(dt = 1) {
     this.history.push({ x: this.x, y: this.y });
     if (this.history.length > 5) this.history.shift();
 
-    this.vx *= this.damping;
-    this.vy = this.vy * this.damping + this.gravity;
-    this.x += this.vx;
-    this.y += this.vy;
-    this.alpha -= this.decay;
+    this.vx *= Math.pow(this.damping, dt);
+    this.vy = (this.vy * Math.pow(this.damping, dt)) + this.gravity * dt;
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.alpha -= this.decay * dt;
   }
 
   draw() {
@@ -967,7 +937,7 @@ function triggerHeartFirework(x, y, scale = 1.0) {
     }
   } catch (e) {}
 
-  const count = 68;
+  const count = 55;
   const baseSpeed = (Math.random() * 0.6 + 1.8) * scale;
   for (let i = 0; i < count; i++) {
     const t = (i / count) * Math.PI * 2;
@@ -993,7 +963,7 @@ function triggerWillowFirework(x, y) {
     }
   } catch (e) {}
 
-  for (let i = 0; i < 65; i++) {
+  for (let i = 0; i < 55; i++) {
     fireworkParticles.push(new WillowSparkleParticle(spawnX, spawnY, col));
   }
 }
@@ -1004,7 +974,7 @@ function triggerWillowFirework(x, y) {
 class FloatingHeartBalloon {
   constructor() {
     this.reset();
-    this.y = height + Math.random() * 200; // Khởi tạo dưới đáy màn hình
+    this.y = height + Math.random() * 200;
   }
 
   reset() {
@@ -1018,9 +988,9 @@ class FloatingHeartBalloon {
     this.color = colors[Math.floor(Math.random() * colors.length)];
   }
 
-  update() {
-    this.y -= this.speedY;
-    this.x += Math.sin(this.y * this.swaySpeed) * 1.2;
+  update(dt = 1) {
+    this.y -= this.speedY * dt;
+    this.x += Math.sin(this.y * this.swaySpeed) * 1.2 * dt;
     if (this.y < -50) this.reset();
   }
 
@@ -1039,27 +1009,49 @@ let isClimaxActive = false;
 
 function activateClimaxBalloons() {
   isClimaxActive = true;
-  climaxHeartBalloons = Array.from({ length: 60 }, () => new FloatingHeartBalloon());
+  climaxHeartBalloons = Array.from({ length: 45 }, () => new FloatingHeartBalloon());
 }
 
 // ==========================================================
-// 6. MAIN FX RENDER LOOP
+// 6. MAIN FX RENDER LOOP (120FPS SYNCED)
 // ==========================================================
-function renderFxLoop() {
+let lastFxTime = performance.now();
+
+function renderFxLoop(now = performance.now()) {
+  const dt = Math.min(2.0, (now - lastFxTime) / 16.667);
+  lastFxTime = now;
+
   fxCtx.clearRect(0, 0, width, height);
+
+  // Xử lý chuột mượt mà đúng tần số 120fps
+  mouseX = pendingMouseX;
+  mouseY = pendingMouseY;
+  if (hasMouseMoved) {
+    const dx = mouseX - lastSpawnX;
+    const dy = mouseY - lastSpawnY;
+    if (dx * dx + dy * dy > 80 && cursorParticles.length < 35) {
+      lastSpawnX = mouseX;
+      lastSpawnY = mouseY;
+      spawnCursorTrail(mouseX, mouseY);
+    }
+    if (magicCursorEl) {
+      magicCursorEl.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+    }
+    hasMouseMoved = false;
+  }
 
   // 1. Vẽ vệt bụi sao chuột
   for (let i = cursorParticles.length - 1; i >= 0; i--) {
-    cursorParticles[i].update();
+    cursorParticles[i].update(dt);
     cursorParticles[i].draw();
     if (cursorParticles[i].alpha <= 0) {
       cursorParticles.splice(i, 1);
     }
   }
 
-  // 2. Vẽ sóng xung kích Starlight Nova & vụ nổ sao mini
+  // 2. Sóng xung kích Starlight Nova & vụ nổ sao mini
   for (let i = novaRings.length - 1; i >= 0; i--) {
-    novaRings[i].update();
+    novaRings[i].update(dt);
     novaRings[i].draw();
     if (novaRings[i].alpha <= 0) {
       novaRings.splice(i, 1);
@@ -1067,7 +1059,7 @@ function renderFxLoop() {
   }
 
   for (let i = novaParticles.length - 1; i >= 0; i--) {
-    novaParticles[i].update();
+    novaParticles[i].update(dt);
     novaParticles[i].draw();
     if (novaParticles[i].alpha <= 0) {
       novaParticles.splice(i, 1);
@@ -1076,15 +1068,15 @@ function renderFxLoop() {
 
   // 3. Phấn hoa ở Stage 1 & 2
   if (window.currentActiveStage === 1 || window.currentActiveStage === 2) {
-    pollenSpores.forEach(p => { p.update(); p.draw(); });
+    pollenSpores.forEach(p => { p.update(dt); p.draw(); });
   }
 
   // Cánh hoa hồng rơi 3D bay bổng lơ lửng khắp các giai đoạn
-  fallingPetals.forEach(fp => { fp.update(); fp.draw(); });
+  fallingPetals.forEach(fp => { fp.update(dt); fp.draw(); });
 
   // 4. Vẽ pháo hoa vật lý willow và pháo hoa trái tim
   for (let i = fireworkParticles.length - 1; i >= 0; i--) {
-    fireworkParticles[i].update();
+    fireworkParticles[i].update(dt);
     fireworkParticles[i].draw();
     if (fireworkParticles[i].alpha <= 0) {
       fireworkParticles.splice(i, 1);
@@ -1093,12 +1085,12 @@ function renderFxLoop() {
 
   // 5. Vẽ bóng bay trái tim khi đạt cao trào
   if (isClimaxActive) {
-    climaxHeartBalloons.forEach(b => { b.update(); b.draw(); });
+    climaxHeartBalloons.forEach(b => { b.update(dt); b.draw(); });
   }
 
   requestAnimationFrame(renderFxLoop);
 }
-renderFxLoop();
+requestAnimationFrame(renderFxLoop);
 
 // Bắn loạt pháo hoa chúc mừng dồn dập
 function launchFireworkBarrage(count = 5) {

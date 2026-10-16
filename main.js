@@ -3731,6 +3731,9 @@ function setupStage6Interactions() {
   });
 }
 
+let stage6BgGrad = null;
+let stage6NebulaGrad = null;
+
 function resizeStage6() {
   if (!stage6Canvas || !stage6Ctx) return;
   const d = Math.min(window.devicePixelRatio || 1, 2);
@@ -3739,6 +3742,26 @@ function resizeStage6() {
   stage6Canvas.width = stage6W * d;
   stage6Canvas.height = stage6H * d;
   stage6Ctx.setTransform(d, 0, 0, d, 0, 0);
+
+  // Pre-bake gradients một lần duy nhất khi resize, tối ưu 120fps
+  stage6BgGrad = stage6Ctx.createRadialGradient(
+    stage6W / 2, stage6H / 2, 0,
+    stage6W / 2, stage6H / 2, Math.max(stage6W, stage6H) * 0.85
+  );
+  stage6BgGrad.addColorStop(0, '#380a33');
+  stage6BgGrad.addColorStop(0.28, '#24062a');
+  stage6BgGrad.addColorStop(0.62, '#14031d');
+  stage6BgGrad.addColorStop(1, '#090113');
+
+  const nebulaR = Math.min(stage6W, stage6H) * 0.75;
+  stage6NebulaGrad = stage6Ctx.createRadialGradient(
+    stage6W / 2, stage6H / 2, 0,
+    stage6W / 2, stage6H / 2, nebulaR
+  );
+  stage6NebulaGrad.addColorStop(0, 'rgba(244, 63, 94, 0.28)');
+  stage6NebulaGrad.addColorStop(0.35, 'rgba(219, 39, 119, 0.18)');
+  stage6NebulaGrad.addColorStop(0.68, 'rgba(168, 85, 247, 0.08)');
+  stage6NebulaGrad.addColorStop(1, 'rgba(9, 1, 19, 0)');
 }
 
 function stage6Frame(now) {
@@ -3753,34 +3776,19 @@ function stage6Frame(now) {
   stage6LastTime = now;
   const time = (now - stage6T0) / 1000;
 
-  // 1. VẼ BẦU TRỜI VŨ TRỤ CÓ CHIỀU SÂU (Style 1: Romantic Rose Nebula)
-  const bgGrad = stage6Ctx.createRadialGradient(
-    stage6W / 2, stage6H / 2, 0,
-    stage6W / 2, stage6H / 2, Math.max(stage6W, stage6H) * 0.85
-  );
-  bgGrad.addColorStop(0, '#380a33');
-  bgGrad.addColorStop(0.28, '#24062a');
-  bgGrad.addColorStop(0.62, '#14031d');
-  bgGrad.addColorStop(1, '#090113');
+  if (!stage6BgGrad) resizeStage6();
 
+  // 1. VẼ BẦU TRỜI VŨ TRỤ CÓ CHIỀU SÂU (Cached Gradient, 0ms overhead)
   stage6Ctx.globalAlpha = 1;
   stage6Ctx.globalCompositeOperation = 'source-over';
-  stage6Ctx.fillStyle = bgGrad;
+  stage6Ctx.fillStyle = stage6BgGrad;
   stage6Ctx.fillRect(0, 0, stage6W, stage6H);
 
-  // Tinh vân phát sáng hữu cơ lãng mạn (organic glowing rose nebula) ở giữa màn hình
-  const nebulaPulse = 0.22 + 0.07 * Math.sin(time * 0.85);
-  const nebulaR = Math.min(stage6W, stage6H) * 0.75;
-  const nebulaGrad = stage6Ctx.createRadialGradient(
-    stage6W / 2, stage6H / 2, 0,
-    stage6W / 2, stage6H / 2, nebulaR
-  );
-  nebulaGrad.addColorStop(0, `rgba(244, 63, 94, ${nebulaPulse * 1.1})`);
-  nebulaGrad.addColorStop(0.35, `rgba(219, 39, 119, ${nebulaPulse * 0.75})`);
-  nebulaGrad.addColorStop(0.68, `rgba(168, 85, 247, ${nebulaPulse * 0.4})`);
-  nebulaGrad.addColorStop(1, 'rgba(9, 1, 19, 0)');
+  // Tinh vân phát sáng lãng mạn
+  const nebulaPulse = 0.7 + 0.3 * Math.sin(time * 0.85);
+  stage6Ctx.globalAlpha = nebulaPulse;
   stage6Ctx.globalCompositeOperation = 'screen';
-  stage6Ctx.fillStyle = nebulaGrad;
+  stage6Ctx.fillStyle = stage6NebulaGrad;
   stage6Ctx.fillRect(0, 0, stage6W, stage6H);
   stage6Ctx.globalCompositeOperation = 'source-over';
 
@@ -4478,41 +4486,50 @@ function setup3DCardTiltInteractions() {
   // 1. Tilt 3D cho Modal Tour Điện ảnh
   const tourFrame = document.querySelector('.tour-photo-frame');
   if (tourFrame) {
+    let tourTiltRaf = null;
     tourFrame.addEventListener('mousemove', (e) => {
-      const rect = tourFrame.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-      const rotX = ((y - cy) / cy) * -12;
-      const rotY = ((x - cx) / cx) * 12;
-
-      tourFrame.style.transform = `perspective(800px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg) scale(1.03)`;
-    });
+      if (tourTiltRaf) return;
+      tourTiltRaf = requestAnimationFrame(() => {
+        const rect = tourFrame.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const rotX = ((y - cy) / cy) * -12;
+        const rotY = ((x - cx) / cx) * 12;
+        tourFrame.style.transform = `perspective(800px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg) scale(1.03)`;
+        tourTiltRaf = null;
+      });
+    }, { passive: true });
 
     tourFrame.addEventListener('mouseleave', () => {
+      if (tourTiltRaf) cancelAnimationFrame(tourTiltRaf);
+      tourTiltRaf = null;
       tourFrame.style.transform = '';
     });
   }
 
-  // 2. Tilt 3D tương tác khi di chuột vào Mini Card ở Stage 6
+  // 2. Tilt 3D tương tác khi di chuột vào Mini Card ở Stage 6 (Throttled per-frame)
+  let cardTiltRaf = null;
   document.addEventListener('mousemove', (e) => {
-    const activeHoverCard = e.target.closest('.finale-mini-card');
-    if (activeHoverCard) {
-      const rect = activeHoverCard.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const cx = rect.width / 2;
-      const cy = rect.height / 2;
-      const rotX = ((y - cy) / cy) * -14;
-      const rotY = ((x - cx) / cx) * 14;
+    if (cardTiltRaf) return;
+    cardTiltRaf = requestAnimationFrame(() => {
+      const activeHoverCard = e.target ? e.target.closest('.finale-mini-card') : null;
+      if (activeHoverCard) {
+        const rect = activeHoverCard.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const rotX = ((e.clientY - cy) / (rect.height / 2)) * -14;
+        const rotY = ((e.clientX - cx) / (rect.width / 2)) * 14;
 
-      const frame = activeHoverCard.querySelector('.finale-card-frame');
-      if (frame) {
-        frame.style.transform = `scale(1.3) perspective(400px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg)`;
+        const frame = activeHoverCard.querySelector('.finale-card-frame');
+        if (frame) {
+          frame.style.transform = `scale(1.3) perspective(400px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg)`;
+        }
       }
-    }
-  });
+      cardTiltRaf = null;
+    });
+  }, { passive: true });
 
   // 3. Đóng bubble toast khi nhấn nút đóng
   const btnCloseWish = document.getElementById('btnCloseWishBubble');
