@@ -1,0 +1,22 @@
+========================================================================
+🌸 HƯỚNG DẪN MỞ VÀ TRẢI NGHIỆM QUÀ TẶNG 20/10 VŨ TRỤ TRI ÂN 🌸
+Dành tặng 23 đóa hoa tuyệt vời nhất của tập thể lớp chúng mình!
+========================================================================
+
+CÁCH 1: TRÊN MÁY TÍNH WINDOWS (TIỆN LỢI NHẤT)
+1. Giải nén file .zip này ra một thư mục.
+2. Nhấp đúp chuột vào file: "Chay_Galaxy_20_10.bat"
+   -> Ứng dụng sẽ tự động mở trên trình duyệt (Chrome, Cốc Cốc, Edge, Brave...) kèm nhạc nền du dương.
+
+CÁCH 2: MỞ TRỰC TIẾP KHÔNG CẦN CÀI ĐẶT (WINDOWS / MAC / ĐIỆN THOẠI)
+1. Giải nén thư mục.
+2. Nhấp đúp chuột trực tiếp vào file: "index.html"
+   -> Hoạt động 100% Offline ngay lập tức, không cần mạng Internet!
+
+CÁCH GỬI CHO CÁC BẠN NỮ:
+- Cách A: Gửi trực tiếp file zip "Qua_Tang_20_10_23_Ban_Nu.zip" qua Zalo, Google Drive, hoặc USB.
+- Cách B: Kéo thả toàn bộ thư mục này lên Netlify Drop (https://app.netlify.com/drop) hoặc Vercel để lấy link web gửi qua Messenger/Zalo cho các bạn xem trên điện thoại.
+
+✨ ĐẶC BIỆT:
+Giao diện gồm 6 giai đoạn tương tác tuyệt đẹp (từ Hoa nở, Lịch bóc 20/10, Thiên hà 23 tinh tú, Bức tường ảnh 360°, Bức thư sáp đến Trái tim tên lớp chạy mãi mãi) kèm nút điều hướng mượt mà, cho phép xem lại bất cứ lúc nào!
+========================================================================

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<link rel="stylesheet" href="libs/google-fonts.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Photo Galaxy</title>
+<style>
+  html,body{margin:0;height:100%;background:#010104;overflow:hidden;-webkit-user-select:none;user-select:none}
+  body.idle{cursor:none}
+  #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(3,1,8,.4) 100%)}
+  #flash{position:fixed;inset:0;pointer-events:none;opacity:0;mix-blend-mode:screen;
+    background:radial-gradient(circle at 50% 55%,rgba(255,170,100,.95),rgba(200,60,110,.55) 55%,rgba(60,10,50,.25))}
+  #sub{position:fixed;left:7vw;right:7vw;bottom:9vh;text-align:center;color:#fff;
+    font:italic 500 clamp(22px,2.7vw,72px)/1.4 "Playfair Display",Georgia,"Times New Roman",serif;
+    text-shadow:0 .08em .5em rgba(0,0,0,.9);opacity:0;transition:opacity .7s;pointer-events:none;white-space:pre-line}
+  #sub.on{opacity:1}
+  #start{position:fixed;inset:0;display:none;align-items:center;justify-content:center;color:#fff;
+    font:500 clamp(20px,2vw,44px)/1 system-ui,sans-serif;letter-spacing:.08em;background:rgba(6,3,13,.72);cursor:pointer;z-index:5}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="vignette"></div>
+<div id="flash"></div>
+<div id="sub"></div>
+<div id="start">Nhấn Enter / click để bắt đầu</div>
+
+<script src="libs/three.min.js"></script>
+<script>
+/* =====================================================================
+   CẤU HÌNH – chỉ cần sửa phần này
+   ===================================================================== */
+const CONFIG = {
+  IMAGE_DIR: 'images/',          // thư mục chứa ảnh (cạnh index.html)
+  PHOTOS: [
+    'images/thao_my.jpg',
+    'images/ngoc_han.jpg',
+    'images/bich_loan.jpg',
+    'images/quynh_mai.png',
+    'images/ai_thu.jpg',
+    'images/gia_linh.jpg',
+    'images/hien_luong.jpg',
+    'images/tran_thao_nguyen.jpg',
+    'images/nghinh_duong.png',
+    'images/thu_huyen.png',
+    'images/le_thao_nguyen.jpg',
+    'images/van_khanh.jpg',
+    'images/binh_an.jpg',
+    'images/phuong_vy.png',
+    'images/hoai_phuong.jpg',
+    'images/thuy_trang.png',
+    'images/ngoc_thuy.png',
+    'images/bao_ngoc.png',
+    'images/lisa.jpg',
+    'images/thuc_quyen.jpg',
+    'images/photo1.jpg',
+    'images/photo2.jpg',
+    'images/photo3.jpg',
+    'images/photo4.jpg',
+    'images/photo5.jpg',
+    'images/photo6.jpg',
+    'images/photo7.jpg',
+    'images/photo8.jpg'
+  ],
+  PLACEHOLDER_COUNT: 23,         // số ảnh mẫu khi PHOTOS trống (đủ 23 ảnh)
+  SPEED: 0.75,                   // tốc độ hiệu ứng: 1 = gốc, nhỏ hơn = chậm hơn
+  AUDIO_SRC: '',                 // vd: 'assets/music.mp3' (để trống = không nhạc)
+  LOOP: true,                    // lặp lại hiệu ứng
+  BORDER_COLOR: '#ecd2da',       // viền hồng nhạt quanh mỗi ảnh
+  SPHERE_R: 10,
+
+  // Thời lượng (giây) của từng giai đoạn
+  TIMELINE: { intro:2.4, fly:2.7, gather:2.0, sphere:5.4, burst:1.8, wall:2.7, hold:12.5, out:1.5 },
+
+  // Phụ đề: t = giây bắt đầu (theo timeline), d = thời gian hiện
+  LYRICS: [
+    { t: 1.7,  d: 1.6, text: 'Dòng chữ 1' },
+    { t: 3.5,  d: 2.6, text: 'Dòng chữ 2' },
+    { t: 7.1,  d: 3.0, text: 'Dòng chữ 3' },
+    { t: 13.0, d: 3.0, text: 'Dòng chữ 4' }
+  ]
+};
+
+/* =====================================================================
+   TIỆN ÍCH
+   ===================================================================== */
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const easeIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const easeOut=t=>1-Math.pow(1-t,3);
+const easeOutBack=t=>1+2.4*Math.pow(t-1,3)+1.4*Math.pow(t-1,2);
+function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const rand=mulberry(20102026);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+/* ---------- Timeline ---------- */
+const TL={}; let TOTAL=0;
+for(const k of ['intro','fly','gather','sphere','burst','wall','hold','out']){
+  TL[k]=[TOTAL,TOTAL+CONFIG.TIMELINE[k]]; TOTAL+=CONFIG.TIMELINE[k];
+}
+const prog=(k,t)=>clamp((t-TL[k][0])/(TL[k][1]-TL[k][0]));
+
+/* =====================================================================
+   RENDERER / SCENE
+   ===================================================================== */
+const BASE_FOV=60;
+const small=innerWidth<700;
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+const MAXPR=Math.min(window.devicePixelRatio||1,2);
+renderer.autoClear=false;
+renderer.setClearColor(0x010104,1);
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(BASE_FOV,1,0.1,3000);
+
+// Lớp phủ mờ dần để tạo vệt mờ chuyển động (motion trail)
+const fadeScene=new THREE.Scene();
+const fadeCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+const fadeMat=new THREE.MeshBasicMaterial({color:0x010104,transparent:true,opacity:1,depthTest:false,depthWrite:false});
+fadeScene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),fadeMat));
+
+/* ---------- Texture phát sáng ---------- */
+function radialTex(stops,size=128){
+  const c=document.createElement('canvas');c.width=c.height=size;
+  const g=c.getContext('2d');
+  const gr=g.createRadialGradient(size/2,size/2,0,size/2,size/2,size/2);
+  stops.forEach(([o,col])=>gr.addColorStop(o,col));
+  g.fillStyle=gr;g.fillRect(0,0,size,size);
+  return new THREE.CanvasTexture(c);
+}
+const dotTex=radialTex([[0,'rgba(255,255,255,1)'],[.35,'rgba(255,255,255,.8)'],[1,'rgba(255,255,255,0)']]);
+
+/* ---------- Sao ---------- */
+const starMats=[];
+function makeStars(n,rmin,rmax,size){
+  const pos=new Float32Array(n*3),col=new Float32Array(n*3),sz=new Float32Array(n),ph=new Float32Array(n),sp=new Float32Array(n);
+  const pal=['#ffffff','#bcd2ff','#d9c2ff','#ffe0bd'].map(c=>new THREE.Color(c));
+  for(let i=0;i<n;i++){
+    const r=lerp(rmin,rmax,Math.random()),th=Math.random()*6.283,p2=Math.acos(2*Math.random()-1);
+    pos[i*3]=r*Math.sin(p2)*Math.cos(th);pos[i*3+1]=r*Math.cos(p2);pos[i*3+2]=r*Math.sin(p2)*Math.sin(th);
+    const c=pal[Math.floor(Math.random()*4)],k=.5+Math.random()*.5;
+    col[i*3]=c.r*k;col[i*3+1]=c.g*k;col[i*3+2]=c.b*k;
+    sz[i]=size*(.5+Math.random()*1.1+Math.pow(Math.random(),9)*3.2);   // vài ngôi sao sáng to hơn hẳn
+    ph[i]=Math.random()*6.283;sp[i]=.8+Math.random()*3.4;               // mỗi sao nhấp nháy nhịp riêng
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  g.setAttribute('aSize',new THREE.BufferAttribute(sz,1));g.setAttribute('aPhase',new THREE.BufferAttribute(ph,1));g.setAttribute('aSpeed',new THREE.BufferAttribute(sp,1));
+  const m=new THREE.ShaderMaterial({uniforms:{uTime:{value:0},uScale:{value:400}},vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    vertexShader:`attribute float aSize,aPhase,aSpeed;uniform float uTime,uScale;varying vec3 vC;varying float vT;
+      void main(){vC=color;float s=.5+.5*sin(uTime*aSpeed+aPhase);vT=.25+.75*s*s;
+        vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=min(64.,aSize*(uScale/-mv.z)*(.75+.5*vT));gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`varying vec3 vC;varying float vT;
+      void main(){vec2 d=gl_PointCoord-.5;float r=length(d);float core=pow(smoothstep(.5,0.,r),2.2);
+        float ray=(max(0.,1.-abs(d.x)*16.)*max(0.,1.-abs(d.y)*2.)+max(0.,1.-abs(d.y)*16.)*max(0.,1.-abs(d.x)*2.))*.5*vT*vT;
+        gl_FragColor=vec4(vC*(core*vT+ray),1.);}`});
+  starMats.push(m);return new THREE.Points(g,m);
+}
+const starsFar=makeStars(5200,300,900,3.4);
+const starsNear=makeStars(700,60,220,.8);
+scene.add(starsFar,starsNear);
+
+/* ---------- Tinh vân nền ---------- */
+const nebula=new THREE.Sprite(new THREE.SpriteMaterial({
+  map:radialTex([[0,'rgba(95,40,150,.55)'],[.5,'rgba(60,25,110,.22)'],[1,'rgba(0,0,0,0)']],256),
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+nebula.material.opacity=.3;nebula.position.set(0,-40,-260);nebula.scale.set(900,700,1);scene.add(nebula);
+
+/* ---------- Sao băng ---------- */
+const metTex=(()=>{const c=document.createElement('canvas');c.width=256;c.height=8;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,256,0);
+  gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(1,'rgba(255,255,255,1)');g.fillStyle=gr;g.fillRect(0,0,256,8);return new THREE.CanvasTexture(c);})();
+const meteor=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:metTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
+meteor.visible=false;camera.add(meteor);scene.add(camera);
+let metT=-1,metNext=2.5,metU={};
+function updateMeteor(dt){
+  metNext-=dt;
+  if(metT<0&&metNext<=0){
+    const H=2*200*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)),Wd=H*camera.aspect;
+    metU={x:Math.random()*.5*Wd,y:(.1+Math.random()*.35)*H,a:Math.PI+.45+Math.random()*.25,Wd};
+    metT=0;metNext=3+Math.random()*5;meteor.visible=true;meteor.scale.set(36,.4,1);meteor.rotation.z=metU.a;
+  }
+  if(metT>=0){
+    metT+=dt;const k=metT/1.1;
+    if(k>=1){metT=-1;meteor.visible=false;return;}
+    meteor.position.set(metU.x+Math.cos(metU.a)*k*.7*metU.Wd,metU.y+Math.sin(metU.a)*k*.7*metU.Wd,-200);
+    meteor.material.opacity=Math.sin(Math.PI*k);
+  }
+}
+const sGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:radialTex([[0,'rgba(255,190,220,.55)'],[.45,'rgba(170,110,255,.2)'],[1,'rgba(0,0,0,0)']],256),
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));
+sGlow.position.set(0,0,-CONFIG.SPHERE_R*1.3);sGlow.scale.set(CONFIG.SPHERE_R*3.6,CONFIG.SPHERE_R*3.6,1);scene.add(sGlow);
+
+/* ---------- Thiên hà (nhìn gần như nghiêng cạnh) ---------- */
+const galaxy=new THREE.Group();scene.add(galaxy);
+const gCore=new THREE.Sprite(new THREE.SpriteMaterial({
+  map:radialTex([[0,'rgba(255,255,255,1)'],[.08,'rgba(255,236,200,.95)'],[.25,'rgba(255,160,90,.35)'],[.6,'rgba(120,60,200,.12)'],[1,'rgba(0,0,0,0)']],256),
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+gCore.scale.set(9,9,1);
+const gHalo=new THREE.Sprite(new THREE.SpriteMaterial({
+  map:radialTex([[0,'rgba(140,80,230,.5)'],[.5,'rgba(90,40,170,.18)'],[1,'rgba(0,0,0,0)']],256),
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:.55}));
+gHalo.scale.set(70,40,1);
+function makeDisc(n,radius){
+  const pos=new Float32Array(n*3),col=new Float32Array(n*3);
+  const c1=new THREE.Color('#fff4d6'),c2=new THREE.Color('#9b6bff'),c3=new THREE.Color('#4a63ff'),c=new THREE.Color();
+  for(let i=0;i<n;i++){
+    const r=Math.pow(Math.random(),1.5)*radius, k=r/radius;
+    const arm=Math.floor(Math.random()*3);
+    const ang=arm*(Math.PI*2/3)+r*.38+(Math.random()-.5)*(.5+.9*k);
+    pos[i*3]=Math.cos(ang)*r;pos[i*3+1]=(Math.random()-.5)*radius*.05*(1.3-k);pos[i*3+2]=Math.sin(ang)*r;
+    if(k<.35)c.copy(c1).lerp(c2,k/.35);else c.copy(c2).lerp(c3,(k-.35)/.65);
+    const b=1.15-k*.65;col[i*3]=c.r*b;col[i*3+1]=c.g*b;col[i*3+2]=c.b*b;
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  return new THREE.Points(g,new THREE.PointsMaterial({size:.45,map:dotTex,vertexColors:true,transparent:true,
+    depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true}));
+}
+const gDisc=makeDisc(7000,15);
+const gDiscGroup=new THREE.Group();gDiscGroup.add(gDisc);
+gDiscGroup.rotation.x=1.35;gDiscGroup.rotation.z=.25;
+galaxy.add(gHalo,gDiscGroup,gCore);
+
+/* =====================================================================
+   ẢNH → TEXTURE (có viền, tự cắt cover)
+   ===================================================================== */
+const TW=512,TH=448,ASPECT=TW/TH;     // texture 512px: nét khi tile phóng to trên TV
+const maxAniso=renderer.capabilities.getMaxAnisotropy();
+
+function drawPlaceholder(ctx,i){
+  const BW=256,BH=224,hue=(i*47)%360,b=5;       // vẽ theo hệ 256×224 rồi phóng lên
+  ctx.save();ctx.scale(TW/BW,TH/BH);
+  ctx.fillStyle=CONFIG.BORDER_COLOR;ctx.fillRect(0,0,BW,BH);
+  const g=ctx.createLinearGradient(0,b,0,BH-b);
+  g.addColorStop(0,`hsl(${hue},55%,72%)`);g.addColorStop(1,`hsl(${(hue+40)%360},60%,38%)`);
+  ctx.fillStyle=g;ctx.fillRect(b,b,BW-2*b,BH-2*b);
+  ctx.fillStyle='rgba(255,255,255,.55)';
+  ctx.beginPath();ctx.arc(BW/2,BH*.5,32,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(BW/2,BH-b,66,50,0,Math.PI,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.92)';ctx.font='bold 24px system-ui,sans-serif';ctx.textAlign='center';
+  ctx.fillText('#'+(i+1),BW/2,38);
+  ctx.restore();
+}
+function drawPhoto(ctx,img){
+  const b=Math.round(TW/50),iw=TW-2*b,ih=TH-2*b;
+  ctx.fillStyle=CONFIG.BORDER_COLOR;ctx.fillRect(0,0,TW,TH);
+  const s=Math.max(iw/img.width,ih/img.height),sw=iw/s,sh=ih/s;
+  const sx=(img.width-sw)/2, sy=(img.height-sh)*.3;   // ưu tiên phần trên (khuôn mặt)
+  ctx.drawImage(img,sx,sy,sw,sh,b,b,iw,ih);
+}
+
+const P=CONFIG.PHOTOS.length||CONFIG.PLACEHOLDER_COUNT;
+const photos=[];
+for(let i=0;i<P;i++){
+  const cv=document.createElement('canvas');cv.width=TW;cv.height=TH;
+  const ctx=cv.getContext('2d');drawPlaceholder(ctx,i);
+  const tex=new THREE.CanvasTexture(cv);tex.anisotropy=Math.min(8,maxAniso);
+  photos.push({cv,ctx,tex,mat:new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide})});
+}
+CONFIG.PHOTOS.forEach((name,i)=>{
+  const src=/^(https?:|data:|blob:|\/)/.test(name)?name:CONFIG.IMAGE_DIR+name;
+  const img=new Image();
+  img.onload=()=>{
+    const tmp=document.createElement('canvas');tmp.width=TW;tmp.height=TH;
+    const tctx=tmp.getContext('2d');drawPhoto(tctx,img);
+    try{tctx.getImageData(0,0,1,1);}catch(e){
+      console.warn('Canvas bị chặn (mở bằng file://?). Hãy chạy bằng Live Server / http server.',e);return;
+    }
+    photos[i].ctx.drawImage(tmp,0,0);photos[i].tex.needsUpdate=true;
+  };
+  img.onerror=()=>console.warn('Không tải được ảnh: '+src);
+  img.src=src;
+});
+
+/* =====================================================================
+   TẠO CÁC TILE ẢNH
+   ===================================================================== */
+const R=CONFIG.SPHERE_R, RW=9;                  // bán kính cầu / bán kính "tường" hình trụ
+const BANDS=small?11:16;
+const WCOLS=small?18:24;
+const world=new THREE.Group();scene.add(world);
+const geo=new THREE.PlaneGeometry(ASPECT,1);
+const dummy=new THREE.Object3D();
+
+// --- Vị trí trên mặt cầu (xếp theo vĩ độ như trong video) ---
+const sph=[];
+// Tổng số tile = P × (số lần mỗi ảnh lặp lại) → mỗi ảnh xuất hiện ĐỀU NHAU
+const TARGET=P*(small?6:12);
+const bandCount=(()=>{
+  const wts=[];let sum=0;
+  for(let b=0;b<BANDS;b++){const w=Math.cos(-Math.PI/2+(b+.5)*Math.PI/BANDS);wts.push(w);sum+=w;}
+  const c=wts.map(w=>Math.max(3,Math.floor(TARGET*w/sum)));
+  const order=[...c.keys()].sort((a,b)=>wts[b]-wts[a]);      // xích đạo → cực
+  let diff=TARGET-c.reduce((a,b)=>a+b,0),k=0;
+  while(diff>0){c[order[k%BANDS]]++;diff--;k++;}
+  k=0;
+  while(diff<0){const b=order[BANDS-1-(k%BANDS)];if(c[b]>3){c[b]--;diff++;}k++;}
+  return c;
+})();
+for(let b=0;b<BANDS;b++){
+  const lat=-Math.PI/2+(b+.5)*Math.PI/BANDS;
+  const ringR=R*Math.cos(lat),y=R*Math.sin(lat),hBand=Math.PI*R/BANDS;
+  const count=bandCount[b];
+  for(let j=0;j<count;j++){
+    const lon=(j+(b%2)*.5)*2*Math.PI/count;
+    sph.push({pos:new THREE.Vector3(Math.cos(lon)*ringR,y,Math.sin(lon)*ringR),
+              s:Math.min((2*Math.PI*ringR/count)/ASPECT,hBand)*1.04});
+  }
+}
+const N=sph.length;
+
+// 4 trạng thái: A = rải rác, S = quả cầu, B = nổ tung, W = tường
+const mk=()=>({p:new Float32Array(N*3),q:new Float32Array(N*4),s:new Float32Array(N)});
+const A=mk(),S=mk(),B=mk(),W=mk();
+const nA=new Float32Array(N*3);               // toạ độ chuẩn hoá của trạng thái A
+const delay=new Float32Array(N);
+
+const meshes=[];
+const deck=[];
+function drawFromDeck(){if(!deck.length){for(let i=0;i<P;i++)deck.push(i);shuffle(deck);}return deck.pop();}
+
+const wallW=(2*Math.PI*RW/WCOLS)*.97, sW=wallW/ASPECT, spacing=sW*1.04;
+const rows=Math.ceil(N/WCOLS);
+const perm=shuffle([...Array(N).keys()]);
+const qTmp=new THREE.Quaternion(),eTmp=new THREE.Euler();
+
+for(let i=0;i<N;i++){
+  const m=new THREE.Mesh(geo,photos[drawFromDeck()].mat);
+  m.visible=false;world.add(m);meshes.push(m);
+  delay[i]=rand()*.45;
+
+  // S
+  const sp=sph[i].pos;
+  S.p.set([sp.x,sp.y,sp.z],i*3);S.s[i]=sph[i].s;
+  dummy.position.copy(sp);dummy.lookAt(sp.x*2,sp.y*2,sp.z*2);dummy.quaternion.toArray(S.q,i*4);
+
+  // A (vị trí thật tính ở layout() vì phụ thuộc tỉ lệ màn hình)
+  nA.set([rand()*2-1,rand()*2-1,rand()],i*3);
+  A.s[i]=.9+Math.pow(rand(),3)*3.3;
+  eTmp.set((rand()-.5)*1.4,(rand()-.5)*1.4,(rand()-.5)*1.8);
+  qTmp.setFromEuler(eTmp);qTmp.toArray(A.q,i*4);
+
+  // B (nổ tung)
+  const th=rand()*Math.PI*2,ph=Math.acos(2*rand()-1),r=lerp(16,36,rand());
+  B.p.set([r*Math.sin(ph)*Math.cos(th),r*Math.cos(ph),r*Math.sin(ph)*Math.sin(th)],i*3);
+  B.s[i]=1.2+Math.pow(rand(),1.5)*2.2;
+  eTmp.set(rand()*6.28,rand()*6.28,rand()*6.28);qTmp.setFromEuler(eTmp);qTmp.toArray(B.q,i*4);
+
+  // W (tường hình trụ, mặt quay vào trong)
+  const slot=perm[i],col=slot%WCOLS,row=Math.floor(slot/WCOLS);
+  const ang=col*2*Math.PI/WCOLS;
+  W.p.set([RW*Math.sin(ang),(row-(rows-1)/2)*spacing,-RW*Math.cos(ang)],i*3);
+  W.s[i]=sW;
+  eTmp.set(0,-ang,(rand()-.5)*.06);qTmp.setFromEuler(eTmp);qTmp.toArray(W.q,i*4);
+}
+
+/* ---------- Bố cục phụ thuộc kích thước màn hình ---------- */
+let sphereDist=30,wallCamZ=-3;
+function layout(){
+  const aspect=camera.aspect,halfFov=THREE.MathUtils.degToRad(BASE_FOV/2);
+  const hf=Math.atan(Math.tan(halfFov)*Math.min(1,aspect));
+  sphereDist=R/Math.sin(hf*.8);
+  const wallDist=Math.max(5.2,(wallW*3.3)/(2*Math.tan(halfFov)*aspect));
+  wallCamZ=wallDist-RW;
+  const rx=30*clamp(aspect,.5,1.9),ry=26;
+  for(let i=0;i<N;i++){
+    A.p[i*3]=nA[i*3]*rx;A.p[i*3+1]=nA[i*3+1]*ry;A.p[i*3+2]=lerp(-35,22,nA[i*3+2]);
+  }
+}
+function resize(){
+  const w=innerWidth,h=innerHeight;
+  renderer.setPixelRatio(clamp(Math.sqrt(4.2e6/(w*h)),1,MAXPR));   // giữ tổng điểm ảnh vừa phải trên TV 4K
+  renderer.setSize(w,h,false);starMats.forEach(m=>m.uniforms.uScale.value=h*renderer.getPixelRatio()/2);camera.aspect=w/h;camera.updateProjectionMatrix();
+  layout();renderer.clear();
+}
+addEventListener('resize',resize);resize();
+
+/* =====================================================================
+   CẬP NHẬT TILE THEO TIMELINE
+   ===================================================================== */
+const qa=new THREE.Quaternion(),qb=new THREE.Quaternion();
+function setTile(i,a,b,e,swirl){
+  const o=i*3,m=meshes[i];
+  let x=lerp(a.p[o],b.p[o],e),y=lerp(a.p[o+1],b.p[o+1],e),z=lerp(a.p[o+2],b.p[o+2],e);
+  if(swirl){                                   // xoáy quanh trục Y → hiệu ứng "vòng xoáy"
+    const ang=Math.sin(Math.PI*e)*swirl,c=Math.cos(ang),s=Math.sin(ang);
+    const nx=x*c+z*s;z=-x*s+z*c;x=nx;
+  }
+  m.position.set(x,y,z);
+  qa.fromArray(a.q,i*4);qb.fromArray(b.q,i*4);m.quaternion.copy(qa).slerp(qb,e);
+  m.scale.setScalar(Math.max(.0001,lerp(a.s[i],b.s[i],e)));
+}
+function updateTiles(t){
+  const uF=prog('fly',t),uG=prog('gather',t),uB=prog('burst',t),uW=prog('wall',t),uO=prog('out',t);
+  for(let i=0;i<N;i++){
+    const m=meshes[i],d=delay[i];
+    if(t<TL.fly[0]){m.visible=false;continue;}
+    m.visible=true;
+    if(t<TL.gather[0]){                         // ảnh bay từ xa vào
+      const e=easeOut(clamp(uF*1.45-d)),o=i*3;
+      m.position.set(A.p[o],A.p[o+1],A.p[o+2]-90*(1-e));
+      m.quaternion.fromArray(A.q,i*4);
+      m.scale.setScalar(Math.max(.0001,A.s[i]*easeOutBack(clamp(uF*1.45-d))));
+    }
+    else if(t<TL.sphere[0]) setTile(i,A,S,easeIO(clamp(uG*1.45-d)),3.2);   // tụ lại thành cầu
+    else if(t<TL.burst[0])  {setTile(i,S,S,1,0);m.scale.multiplyScalar(1+.035*Math.sin(t*2.2+i*.9));}                           // quả cầu quay
+    else if(t<TL.wall[0])   setTile(i,S,B,easeIO(clamp(uB*1.45-d)),0);    // nổ tung
+    else if(t<TL.hold[0])   setTile(i,B,W,easeIO(clamp(uW*1.45-d)),-2.4); // xếp thành tường
+    else if(t<TL.out[0]){setTile(i,W,W,1,0);m.position.y+=Math.sin(t*.9+i*.7)*.06;m.position.z+=Math.sin(t*.7+i)*.05;m.scale.multiplyScalar(1+.015*Math.sin(t*1.3+i));}
+    else{
+      setTile(i,W,W,1,0);
+      m.scale.multiplyScalar(Math.max(.0001,1-easeIO(clamp(uO*1.45-d))));
+    }
+  }
+}
+
+/* =====================================================================
+   PHỤ ĐỀ + NHẠC
+   ===================================================================== */
+const subEl=document.getElementById('sub');let curSub=-2;
+function updateSub(t){
+  let idx=-1;
+  CONFIG.LYRICS.forEach((l,k)=>{if(t>=l.t&&t<l.t+l.d)idx=k;});
+  if(idx===curSub)return;curSub=idx;
+  if(idx<0){subEl.classList.remove('on');return;}
+  subEl.classList.remove('on');
+  setTimeout(()=>{if(curSub===idx){subEl.textContent='“ '+CONFIG.LYRICS[idx].text+' ”';subEl.classList.add('on');}},120);
+}
+let audio=null;
+if(CONFIG.AUDIO_SRC){audio=new Audio(CONFIG.AUDIO_SRC);audio.loop=false;}
+
+/* =====================================================================
+   TƯƠNG TÁC: kéo để xoay
+   ===================================================================== */
+let dragging=false,lastX=0,userYaw=0,userVel=0;
+addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;});
+addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX;lastX=e.clientX;userYaw+=dx*.005;userVel=dx*.005;});
+addEventListener('pointerup',()=>dragging=false);
+addEventListener('pointercancel',()=>dragging=false);
+
+/* =====================================================================
+   VÒNG LẶP CHÍNH
+   ===================================================================== */
+const flashEl=document.getElementById('flash');
+const flashAt=[TL.fly[0],TL.gather[0],TL.burst[0],TL.wall[0]];
+let T=0,started=false,last=performance.now(),spin=0,spinSpeed=0,trail=0,tilt=0.25;
+
+function stageOf(t){
+  for(const k of ['intro','fly','gather','sphere','burst','wall','hold','out'])if(t<TL[k][1])return k;
+  return 'out';
+}
+const SPIN={intro:.04,fly:.1,gather:.55,sphere:.5,burst:1.1,wall:.2,hold:.06,out:.06};
+const TRAIL={intro:0,fly:.5,gather:.45,sphere:0,burst:.62,wall:.3,hold:0,out:.2};
+
+function restart(){
+  T=0;spin=0;curSub=-2;trail=0;renderer.clear();
+  if(audio){audio.currentTime=0;audio.play().catch(()=>{});}
+}
+window.restart=restart;
+addEventListener('keydown',e=>{if(e.key==='r'||e.key==='R')restart();});
+function toggleFS(){
+  if(document.fullscreenElement)document.exitFullscreen();
+  else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});
+}
+addEventListener('keydown',e=>{if(e.key==='f'||e.key==='F'||(e.key==='Enter'&&started))toggleFS();});
+addEventListener('dblclick',toggleFS);
+let idleTimer;
+function wake(){document.body.classList.remove('idle');clearTimeout(idleTimer);idleTimer=setTimeout(()=>document.body.classList.add('idle'),2000);}
+addEventListener('mousemove',wake);wake();
+async function keepAwake(){try{if('wakeLock' in navigator)await navigator.wakeLock.request('screen');}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)keepAwake();});
+
+function begin(){started=true;keepAwake();if(audio)audio.play().catch(()=>{});}
+if(audio){
+  const st=document.getElementById('start');st.style.display='flex';
+  st.addEventListener('click',()=>{st.style.display='none';begin();});
+  addEventListener('keydown',e=>{if(e.key==='Enter'&&!started){st.style.display='none';begin();}});
+}else begin();
+
+function frame(now){
+  requestAnimationFrame(frame);
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(started){
+    T+=dt*CONFIG.SPEED;
+    if(T>=TOTAL){if(CONFIG.LOOP)restart();else T=TOTAL-.001;}
+  }
+  const stage=stageOf(T);
+
+  // --- Thiên hà mờ dần khi ảnh tụ lại ---
+  const gA=T<TL.gather[0]?1:1-easeIO(prog('gather',T));
+  galaxy.visible=gA>.01;
+  gCore.material.opacity=gA;gHalo.material.opacity=.55*gA;gDisc.material.opacity=gA;
+  gDiscGroup.rotation.y+=dt*.25;
+  starMats.forEach(m=>m.uniforms.uTime.value=now/1000);
+  updateMeteor(dt);
+  const gl=T<TL.gather[0]?0:T<TL.burst[0]?easeIO(prog('gather',T)):1-easeIO(prog('burst',T));
+  sGlow.material.opacity=gl*(.85+.15*Math.sin(T*1.5));
+  starsFar.rotation.y+=dt*.012;starsNear.rotation.y+=dt*.02;
+
+  // --- Camera ---
+  let z;
+  if(T<TL.fly[0])         z=lerp(82,78,easeOut(prog('intro',T)));
+  else if(T<TL.gather[0]) z=lerp(78,56,easeIO(prog('fly',T)));
+  else if(T<TL.sphere[0]) z=lerp(56,sphereDist+3,easeIO(prog('gather',T)));
+  else if(T<TL.burst[0])  z=lerp(sphereDist+3,sphereDist,prog('sphere',T));
+  else if(T<TL.wall[0])   z=lerp(sphereDist,wallCamZ,easeIO(prog('burst',T)));
+  else                    z=wallCamZ;
+  const inWall=T>=TL.wall[0];
+  camera.position.set(Math.sin(T*.25)*(inWall?.8:.4),inWall?Math.sin(T*.4)*.6:Math.cos(T*.3)*.5,z);
+  camera.rotation.set(0,0,Math.sin(T*.3)*.015);
+  const fov=BASE_FOV+(stage==='burst'?16*Math.sin(Math.PI*prog('burst',T)):0);
+  if(Math.abs(fov-camera.fov)>.01){camera.fov=fov;camera.updateProjectionMatrix();}
+
+  // --- Quay thế giới ---
+  spinSpeed+=(SPIN[stage]-spinSpeed)*Math.min(1,dt*2.2);
+  spin+=spinSpeed*dt*CONFIG.SPEED;
+  userYaw+=userVel;userVel*=dragging?0:.94;
+  const tiltTarget=(T<TL.burst[0])?.25:lerp(.25,0,easeIO(prog('burst',T)));
+  world.rotation.set(tiltTarget,spin+userYaw,0);
+
+  updateTiles(T);
+  updateSub(T);
+
+  // --- Flash chuyển cảnh ---
+  let f=0;
+  for(const te of flashAt)if(T>=te)f=Math.max(f,.38*Math.exp(-(T-te)*4));
+  f=Math.max(f,clamp((T-(TOTAL-1))/1)*.9);
+  f=Math.max(f,.9*Math.exp(-T*3.5));
+  flashEl.style.opacity=f.toFixed(3);
+
+  // --- Vẽ (có vệt mờ chuyển động) ---
+  trail+=(TRAIL[stage]-trail)*Math.min(1,dt*3);
+  if(trail>.02){fadeMat.opacity=1-trail;renderer.render(fadeScene,fadeCam);}
+  else renderer.clear();
+  renderer.clearDepth();
+  renderer.render(scene,camera);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vũ Trụ Tri Ân 20/10 - Cinematic Galaxy Experience</title>
+  
+  <!-- Local Google Fonts (Offline Ready) -->
+  <link rel="stylesheet" href="libs/google-fonts.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,600&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Pro / Free Icons (Offline Ready) -->
+  <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
+  
+  <!-- Canvas Confetti Library (Offline Ready) -->
+  <script src="libs/confetti.browser.min.js"></script>
+
+  <!-- Three.js r128 Library (Offline Ready) -->
+  <script src="libs/three.min.js"></script>
+
+  <!-- GSAP Animation Library (Offline Ready) -->
+  <script src="libs/gsap.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="universe-body">
+
+  <!-- ========================================================
+       CON TRỎ CHUỘT MA THUẬT (MAGIC FAIRY CURSOR)
+       ======================================================== -->
+  <div id="magicCursor" class="magic-cursor">
+    <div class="cursor-dot"></div>
+    <div class="cursor-glow"></div>
+  </div>
+
+  <!-- ========================================================
+       CANVAS SYSTEM: NỀN VŨ TRỤ PARALLAX, BỤI SAO & PHÁO HOA
+       ======================================================== -->
+  <!-- Canvas vẽ sao Parallax 3D & Sao băng -->
+  <canvas id="bgCanvas"></canvas>
+  <!-- Canvas vẽ hiệu ứng hạt: Bụi chuột, Phấn hoa, Cánh hoa rơi, Hố đen & Pháo hoa -->
+  <canvas id="fxCanvas"></canvas>
+
+  <!-- Vòng sóng xung kích toàn màn hình (Shockwave Ripple Ring) -->
+  <div id="screenRipple" class="screen-ripple"></div>
+
+  <!-- ========================================================
+       GALAXY HEADER: ĐIỀU HƯỚNG & ÂM NHẠC SANG TRỌNG
+       ======================================================== -->
+  <header class="galaxy-header">
+    <div class="brand-group">
+      <div class="star-orb"></div>
+      <div class="brand-text">
+        <span class="brand-title">COSMIC 20.10</span>
+        <span class="brand-sub">Tribute to 23 Stars</span>
+      </div>
+    </div>
+
+    <!-- Timeline 5 Giai đoạn chuyển cảnh (Ẩn theo yêu cầu người dùng) -->
+    <nav class="timeline-stepper" id="timelineStepper" style="display: none !important;">
+      <div class="step-node active" data-stage="1">
+        <span class="node-idx">01</span>
+        <span class="node-label">Bó Hoa Nở</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-node" data-stage="2">
+        <span class="node-idx">02</span>
+        <span class="node-label">Lịch Kỷ Niệm 20.10</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-node" data-stage="3">
+        <span class="node-idx">03</span>
+        <span class="node-label">Thiên Hà Tinh Tú</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-node" data-stage="4">
+        <span class="node-idx">04</span>
+        <span class="node-label">Quả Cầu & Tường Ảnh</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-node" data-stage="5">
+        <span class="node-idx">05</span>
+        <span class="node-label">Bức Thư Sáp</span>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-node" data-stage="6">
+        <span class="node-idx">06</span>
+        <span class="node-label">Trái Tim & Tên Lớp</span>
+      </div>
+    </nav>
+
+    <!-- Điều khiển âm thanh & Chế độ Three.js 3D -->
+    <div class="audio-controls-wrap">
+      <a href="galaxy_three.html" class="cosmic-icon-btn" title="Chuyển sang chế độ Thiên Hà 3D Three.js WebGL (60fps)">
+        <i class="fa-solid fa-cube"></i>
+      </a>
+      <button id="btnAudioToggle" class="cosmic-icon-btn" title="Bật/Tắt nhạc nền lãng mạn">
+        <i class="fa-solid fa-music"></i>
+        <span class="audio-wave-bars">
+          <span></span><span></span><span></span>
+        </span>
+      </button>
+      <label class="cosmic-icon-btn" title="Nạp bài hát MP3 từ máy tính của bạn">
+        <i class="fa-solid fa-folder-music"></i>
+        <input type="file" id="audioUploadInput" accept="audio/*" style="display: none;">
+      </label>
+    </div>
+  </header>
+
+  <!-- ========================================================
+       MAIN UNIVERSE STAGES (5 GIAI ĐOẠN TƯƠNG TÁC ĐIỆN ẢNH)
+       ======================================================== -->
+  <main class="viewport-universe" id="viewportUniverse">
+
+    <!-- ----------------------------------------------------
+         STAGE 1: BÓ HOA NỞ RỘ & PHẤN HOA PHÁT QUANG (TOÀN MÀN HÌNH KHÔNG GIAN)
+         ---------------------------------------------------- -->
+    <section class="stage-section stage-fullscreen-flower stage-active" id="stage1">
+      
+      <!-- Hào quang hồng và Canvas Three.js phủ kín 100% toàn màn hình -->
+      <div id="roseWall" class="rose-wall-fullscreen"></div>
+      <canvas id="roseIntroCanvas" class="rose-canvas-fullscreen"></canvas>
+
+      <!-- Tiêu đề nổi phía trên (Floating Header Overlay) -->
+      <div class="flower-header-overlay" id="flowerHeaderOverlay">
+        <div class="cosmic-tag-badge">
+          <i class="fa-solid fa-sparkles"></i>
+          <span>VIETNAMESE WOMEN'S DAY • 20.10.2026</span>
+          <i class="fa-solid fa-sparkles"></i>
+        </div>
+
+        <h1 class="cinematic-heading">
+          Đóa Hoa Nở Giữa Ngân Hà
+        </h1>
+        <p class="cinematic-sub">
+          Dành tặng 23 bông hoa rực rỡ và duy nhất của tập thể lớp 12B1 🌸
+        </p>
+      </div>
+
+      <!-- Nút tương tác chạm để mở đóa hoa -->
+      <button id="btnRoseOpen" class="btn-rose-open" aria-label="Bắt đầu hiệu ứng đóa hoa">
+        <i class="fa-solid fa-sparkles"></i>
+        <span>Chạm để mở</span>
+      </button>
+
+
+
+      <!-- Cụm nút chuyển tiếp khi hoa nở xong (Xem lại & Tiếp nào) -->
+      <div class="stage-action-wrap rose-stage-actions" id="stage1Action">
+        <button id="btnRoseReplay" class="luxury-btn btn-secondary-lux">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>Xem lại hoa</span>
+        </button>
+
+        <div class="ripple-wave-btn-container">
+          <div class="glow-wave-ring wave-1"></div>
+          <div class="glow-wave-ring wave-2"></div>
+          <button class="luxury-btn btn-bloom-next" id="btnStage1Next">
+            <span class="btn-text">Tiếp nào</span>
+            <i class="fa-solid fa-arrow-right-long btn-icon"></i>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ----------------------------------------------------
+         STAGE 2: LỊCH BÓC TƯỜNG TRUYỀN THỐNG 20/10 (TRADITIONAL TEAR-OFF CALENDAR)
+         ---------------------------------------------------- -->
+    <section class="stage-section" id="stage2">
+      <div class="calendar-tearoff-container">
+        
+        <div class="cal-stage" id="calSt">
+          <div class="cal-halo" id="calHalo"></div>
+          <div class="cal-board"></div>
+          <div class="cal-stack"></div>
+          <div class="cal-bind"></div>
+        </div>
+
+        <div class="cal-below">
+          <div class="cal-cap" id="calCap"></div>
+          <div class="cal-msg" id="calMsg">
+            <h1>Chúc mừng ngày 20/10</h1>
+            <p>Chúc 23 đóa hoa của tập thể lớp 12B1 luôn rạng rỡ, bình an và được yêu thương mỗi ngày.</p>
+            <div class="cal-actions-row">
+              <button id="calBtn" class="cal-btn-outline" disabled>
+                <i class="fa-solid fa-rotate-left"></i> Xem lại
+              </button>
+              <button id="btnStage2Next" class="luxury-btn btn-bloom-next">
+                <span>Khám Phá Thiên Hà Tinh Tú</span>
+                <i class="fa-solid fa-arrow-right-long btn-icon"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="cal-fx" id="calFx"></div>
+
+        <div class="cal-veil" id="calVeil">
+          <p id="calLn"></p>
+          <button class="cal-skip" id="calSkip">Bỏ qua</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------
+         STAGE 3: THIÊN HÀ NGÂN HÀ 23 VÌ TINH TÚ (SPIRAL GALAXY)
+         ---------------------------------------------------- -->
+    <section class="stage-section" id="stage3">
+      <div class="stage-container galaxy-stage">
+        
+        <div class="cosmic-tag-badge">
+          <i class="fa-solid fa-atom fa-spin"></i>
+          <span>INTERACTIVE SPIRAL GALAXY • 23 CELESTIAL STARS</span>
+        </div>
+        <h2 class="cinematic-heading">Thiên Hà 23 Vì Tinh Tú Lớp Mình</h2>
+        <p class="cinematic-sub">23 đóa hoa tỏa sáng rực rỡ xoay quanh dòng chảy ngân hà 💖</p>
+
+        <!-- Galaxy Controls Bar -->
+        <div class="galaxy-control-pills">
+          <button class="pill-btn" id="btnToggleGalaxyAngle" title="Chuyển chế độ xem 3D Nghiêng / Trực diện 2D">
+            <i class="fa-solid fa-cubes"></i> <span id="galaxyAngleText">Góc Trực Diện 2D</span>
+          </button>
+          <button class="pill-btn" id="btnToggleGalaxyOrbit" title="Tạm dừng / Tiếp tục chuyển động">
+            <i class="fa-solid fa-pause"></i> <span id="galaxyOrbitText">Đang Xoay</span>
+          </button>
+        </div>
+
+        <!-- Khung cảnh Thiên Hà Xoắn Ốc -->
+        <div class="galaxy-viewport" id="galaxyViewport">
+          <!-- Canvas vẽ dải bụi sao xoắn ốc (Spiral Galaxy Arms) -->
+          <canvas id="galaxyCanvas"></canvas>
+
+          <!-- Nhân Thiên Hà Siêu Sáng (Galactic Core) -->
+          <div class="galactic-core-glow">
+            <div class="core-singularity-flare"></div>
+            <i class="fa-solid fa-sun-bright core-star-icon"></i>
+            <span class="core-label">12B1</span>
+          </div>
+
+          <!-- Các vòng quỹ đạo ánh sáng và 23 tinh tú -->
+          <div class="galaxy-orbit-plane view-2d" id="galaxyOrbitPlane">
+            <!-- 4 vòng quỹ đạo ánh sáng neon -->
+            <div class="galaxy-track track-1"></div>
+            <div class="galaxy-track track-2"></div>
+            <div class="galaxy-track track-3"></div>
+            <div class="galaxy-track track-4"></div>
+
+            <!-- 23 Tinh tú của các bạn nữ được định vị động bằng JS -->
+            <div class="galaxy-stars-cluster" id="galaxyStarsCluster"></div>
+          </div>
+
+          <!-- Spotlight Card: Hiển thị chi tiết khi rê chuột vào 1 bạn nữ -->
+          <div class="galaxy-spotlight-card" id="galaxySpotlightCard">
+            <button class="btn-close-spotlight" id="btnCloseSpotlight">&times;</button>
+            <div class="spotlight-avatar-box">
+              <img id="spotlightAvatar" src="" alt="Avatar">
+              <div class="spotlight-glow-ring"></div>
+            </div>
+            <div class="spotlight-content">
+              <div class="spotlight-tag" id="spotlightTag"><i class="fa-solid fa-crown"></i> Nàng Thơ</div>
+              <h3 class="spotlight-name" id="spotlightName">Tên Bạn Nữ</h3>
+              <p class="spotlight-dob" id="spotlightDob"><i class="fa-regular fa-calendar"></i> 20/10/2009</p>
+              <p class="spotlight-wish" id="spotlightWish">Lời chúc 20/10...</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="stage-action-wrap galaxy-action-wrap">
+          <div class="ripple-wave-btn-container">
+            <div class="glow-wave-ring wave-1"></div>
+            <div class="glow-wave-ring wave-2"></div>
+            <button class="luxury-btn btn-bloom-next" id="btnStage3Next">
+              <span class="btn-text">Hành Trình Kỷ Niệm</span>
+              <i class="fa-solid fa-sparkles btn-icon"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------
+         STAGE 4: QUẢ CẦU & BỨC TƯỜNG KỶ NIỆM (THREE.JS PHOTO GALAXY)
+         ---------------------------------------------------- -->
+    <section class="stage-section stage-photo-galaxy" id="stage4">
+      
+      <!-- Fullscreen Three.js WebGL Canvas -->
+      <canvas id="photoGalaxyCanvas" class="photo-galaxy-canvas"></canvas>
+      
+      <!-- Vignette and Flash Cinematic Overlays -->
+      <div id="photoGalaxyVignette" class="photo-galaxy-vignette"></div>
+      <div id="photoGalaxyFlash" class="photo-galaxy-flash"></div>
+      
+      <!-- Floating Cinematic Subtitle / Lyrics -->
+      <div id="photoGalaxySub" class="photo-galaxy-sub"></div>
+
+      <!-- Overlay HUD & Action Controls -->
+      <div class="photo-galaxy-hud" id="photoGalaxyHud">
+
+        <div class="ripple-wave-btn-container">
+          <div class="glow-wave-ring wave-1"></div>
+          <div class="glow-wave-ring wave-2"></div>
+          <button class="luxury-btn btn-bloom-next" id="btnStage4Next">
+            <span class="btn-text">Mở Bức Thư Tri Ân</span>
+            <i class="fa-solid fa-envelope-open-text btn-icon"></i>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ----------------------------------------------------
+         STAGE 5: BỨC THƯ TÌNH CHÂN THỰC & CON DẤU SÁP ĐỎ
+         ---------------------------------------------------- -->
+    <section class="stage-section" id="stage5">
+      <div class="stage-container envelope-stage">
+        
+        <!-- VÒNG HOA ẢNH KỶ NIỆM 23 BẠN NỮ BAY LƯỢN XUNG QUANH BỨC THƯ -->
+        <div class="floating-girls-constellation" id="floatingGirlsConstellation"></div>
+
+        <div class="envelope-presentation-wrap" id="envelopePresentation">
+          
+          <!-- PHONG BÌ THƯ MÀU HỒNG 3D VỚI CON DẤU SÁP -->
+          <div class="luxury-envelope-box" id="luxuryEnvelope">
+            <div class="env-back-shell"></div>
+
+            <!-- TỜ GIẤY THƯ XẾP NẾP (UNFOLDING PAPER) -->
+            <div class="unfolding-letter-paper" id="letterPaperSheet">
+              <div class="paper-crease-top"></div>
+              <div class="letter-inner-content">
+                
+                <div class="letter-top-meta">
+                  <span class="meta-tag"><i class="fa-solid fa-crown"></i> 12B1 • 20/10/2026</span>
+                  <h3 class="letter-recipient-title">Gửi 23 đóa hoa tuyệt vời nhất lớp 12B1 ! 🌸</h3>
+                </div>
+
+                <!-- Vùng gõ chữ cảm xúc -->
+                <div class="letter-text-viewport">
+                  <span id="typewriterBody" class="typewriter-body"></span><span class="typing-caret" id="typingCaret">|</span>
+                </div>
+
+                <!-- Chữ ký viết tay Handwriting SVG chạy nét -->
+                <div class="letter-signature-area" id="signatureArea">
+                  <div class="sig-note">Mãi là người bạn đồng hành chân thành nhất,</div>
+                  <svg class="handwriting-svg" viewBox="0 0 540 80">
+                    <path class="sig-path" id="sigPath" d="M15,50 Q65,15 110,48 T195,48 Q235,18 280,45 T370,48 Q405,20 445,45" fill="none" stroke="#e11d48" stroke-width="2.8" stroke-linecap="round"/>
+                    <text x="18" y="50" font-family="'Dancing Script', cursive" font-size="30" fill="#be123c" font-weight="700">Tập thể nam lớp 12B1 với tất cả sự trân trọng ❤️</text>
+                  </svg>
+                </div>
+
+              </div>
+              <div class="paper-crease-bottom"></div>
+            </div>
+
+            <!-- Nắp phong bì và túi trước -->
+            <div class="env-flap-3d" id="envFlap"></div>
+            <div class="env-front-pocket"></div>
+
+            <!-- CON DẤU SÁP ĐỎ RUBY (3D WAX SEAL UNLOCK) -->
+            <div class="ruby-wax-seal" id="rubyWaxSeal" title="Bấm vào để mở niêm phong bức thư">
+              <div class="seal-half seal-left">
+                <i class="fa-solid fa-heart"></i>
+              </div>
+              <div class="seal-half seal-right">
+                <i class="fa-solid fa-heart"></i>
+              </div>
+              <div class="seal-core-text">MỞ THƯ</div>
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- Nút bấm sang đoạn kết sau khi gõ xong thư -->
+        <div class="final-climax-actions" id="finalClimaxActions">
+          <button class="luxury-btn btn-bloom-next btn-climax-stage6" id="btnGoToStage6">
+            <i class="fa-solid fa-heart fa-beat" style="color: #ff3b5c;"></i>
+            <span>Đến Đoạn Kết: 23 Đóa Hoa 12B1</span>
+            <i class="fa-solid fa-arrow-right-long"></i>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------
+         STAGE 6: GRAND FINALE - ĐÈN TRỜI KỶ NIỆM 23 BẠN NỮ & THÔNG ĐIỆP 12B1
+         ---------------------------------------------------- -->
+    <section class="stage-section stage-heart-names" id="stage6">
+      <canvas id="heartNamesCanvas" class="heart-names-canvas"></canvas>
+
+      <!-- Giai đoạn 1: Trái tim mở màn đập 3 nhịp lớn dần rồi nổ tung (0s -> 2.5s) -->
+      <div class="finale-opening-heart-wrap" id="finaleOpeningHeartWrap">
+        <div class="finale-opening-heart" id="finaleOpeningHeart">
+          <i class="fa-solid fa-heart"></i>
+          <div class="finale-heart-halo"></div>
+        </div>
+      </div>
+
+      <!-- Giai đoạn 2: Lời dẫn cảm xúc từng nhịp (2.5s -> 11.2s) -->
+      <div class="finale-storytelling-wrap" id="finaleStorytellingWrap">
+        <p class="finale-story-text" id="finaleStoryText"></p>
+      </div>
+
+      <!-- Giai đoạn 3: 23 Thẻ ảnh kỷ niệm tỏa ra 2 vòng quỹ đạo elip (11.2s -> 13.0s) -->
+      <div class="finale-cards-layer" id="finaleCardsLayer"></div>
+
+      <!-- Giai đoạn 4: Cụm thông điệp trung tâm trang trọng (13.0s trở đi) -->
+      <div class="finale-centerpiece" id="finaleCenterpiece">
+        <div class="finale-centerpiece-card" id="finaleCenterpieceCard">
+          <div class="finale-badge" id="finaleBadge">
+            <i class="fa-solid fa-sparkles"></i>
+            <span>✦ FOREVER 12B1 • 20.10.2026 ✦</span>
+            <i class="fa-solid fa-sparkles"></i>
+          </div>
+          <h1 class="finale-title" id="finaleTitle">
+            Gửi 23 Đóa Hoa Rạng Rỡ Nhất<br>Của Tập Thể 12B1
+          </h1>
+          <div class="finale-divider" id="finaleDivider"></div>
+          <p class="finale-subtitle" id="finaleSubtitle">
+            <span class="finale-type-body" id="finaleTypeBody"></span><span class="finale-cursor" id="finaleCursor">|</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Bước 4.4: Hai nút bấm góc dưới phải (hiện khi gõ xong lời chúc) -->
+      <div class="stage6-action-overlay" id="stage6ActionOverlay">
+        <button class="luxury-btn btn-secondary-lux" id="btnReplayAll">
+          <i class="fa-solid fa-rotate-left"></i> <span>Xem lại từ đầu</span>
+        </button>
+        <button class="luxury-btn btn-secondary-lux" id="btnOpenRoster">
+          <i class="fa-solid fa-address-book"></i> <span>Danh sách 23 bạn nữ</span>
+        </button>
+      </div>
+      
+    </section>
+
+  </main>
+
+  <!-- ========================================================
+       MODAL DANH SÁCH CHI TIẾT 23 BẠN NỮ
+       ======================================================== -->
+  <div class="roster-modal" id="rosterModal">
+    <div class="roster-modal-backdrop" id="rosterBackdrop"></div>
+    <div class="roster-modal-sheet">
+      <div class="roster-header">
+        <h3><i class="fa-solid fa-sparkles"></i> 23 Bông Hoa Của Tập Thể Lớp 12B1</h3>
+        <button class="roster-close-btn" id="btnCloseRoster">&times;</button>
+      </div>
+      <div class="roster-grid" id="rosterGrid">
+        <!-- Render 23 cards học sinh nữ -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       LIGHTBOX MODAL: XEM ẢNH GỐC NGUYÊN BẢN (KHÔNG BIẾN DẠNG)
+       ======================================================== -->
+  <div class="photo-lightbox-modal" id="photoLightboxModal">
+    <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+    <div class="lightbox-content-box">
+      <button class="lightbox-close-btn" id="btnCloseLightbox" title="Đóng">&times;</button>
+      <div class="lightbox-img-wrap">
+        <img id="lightboxImg" src="" alt="" class="lightbox-full-img">
+      </div>
+      <div class="lightbox-caption" id="lightboxCaption">
+        <h3 id="lightboxName"></h3>
+        <p id="lightboxTitle"></p>
+        <span id="lightboxDob" class="lightbox-dob"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Element ẩn hỗ trợ nạp MP3 trực tiếp -->
+  <audio id="bgmAudio" loop preload="auto" src="audio/music.mp3">
+    <source src="audio/music.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Module JS (100% Offline Ready) -->
+  <script src="images_data.js"></script>
+  <script src="audio_data.js"></script>
+  <script src="fx.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

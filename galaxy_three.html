@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Thiên Hà 3D 20/10 - Three.js WebGL 60FPS Experience</title>
+
+  <!-- Local Google Fonts (Offline Ready) -->
+  <link rel="stylesheet" href="libs/google-fonts.css">
+
+  <!-- Font Awesome Pro / Free Icons (Offline Ready) -->
+  <link rel="stylesheet" href="libs/fontawesome/css/all.min.css">
+
+  <!-- Three.js r128 Library (Offline Ready) -->
+  <script src="libs/three.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(ellipse at bottom, #170724 0%, #06030c 100%);
+      font-family: 'Montserrat', sans-serif;
+      color: #ffffff;
+      touch-action: none;
+    }
+
+    /* Khung chứa WebGL Canvas */
+    #threeCanvasContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Lớp giao diện HUD (Heads-Up Display) */
+    .galaxy-hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px 24px;
+    }
+
+    /* Header thanh tiêu đề */
+    .hud-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: all;
+    }
+
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffd700, #f7e7ce, #ff69b4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: #fca5bc;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .hud-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .hud-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(247, 231, 206, 0.4);
+      backdrop-filter: blur(16px);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      text-decoration: none;
+    }
+
+    .hud-btn:hover {
+      background: linear-gradient(135deg, #e11d48, #ff4b7d);
+      border-color: #ffd700;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+      transform: translateY(-2px);
+    }
+
+    /* Chỉ dẫn tương tác ở giữa */
+    .hud-center-hint {
+      text-align: center;
+      pointer-events: none;
+      animation: floatHint 3s ease-in-out infinite alternate;
+      margin-top: 20px;
+    }
+
+    .hint-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(18, 5, 26, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      padding: 6px 18px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: #ffd700;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes floatHint {
+      0% { transform: translateY(0); opacity: 0.8; }
+      100% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* Thanh thông tin bạn nữ ở dưới cùng */
+    .hud-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      pointer-events: all;
+      margin-bottom: 10px;
+    }
+
+    /* Thanh Focus Banner */
+    .focus-card-banner {
+      background: rgba(22, 6, 30, 0.85);
+      border: 1.5px solid rgba(247, 231, 206, 0.55);
+      backdrop-filter: blur(20px);
+      border-radius: 35px;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75), 0 0 25px rgba(255, 105, 180, 0.3);
+      max-width: 90%;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .focus-card-banner:hover {
+      border-color: #ffd700;
+      box-shadow: 0 0 35px #ffd700;
+      transform: scale(1.03);
+    }
+
+    .banner-idx {
+      background: #e11d48;
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .banner-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .banner-title {
+      font-size: 0.85rem;
+      color: #ffd700;
+      font-style: italic;
+    }
+
+    /* Điều khiển xoay Trái / Phải */
+    .carousel-arrows-bar {
+      display: flex;
+      gap: 16px;
+    }
+
+    .arrow-round-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(22, 6, 30, 0.75);
+      border: 1px solid rgba(247, 231, 206, 0.5);
+      backdrop-filter: blur(12px);
+      color: #ffffff;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+
+    .arrow-round-btn:hover {
+      background: #e11d48;
+      border-color: #ffd700;
+      transform: scale(1.15);
+      box-shadow: 0 0 18px #ffd700;
+    }
+
+    /* Modal Chi Tiết Lời Chúc (Spotlight Modal) */
+    .spotlight-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(6, 3, 12, 0.85);
+      backdrop-filter: blur(16px);
+      z-index: 100;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .spotlight-modal.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: linear-gradient(135deg, #1c092c, #2d0a3d);
+      border: 2px solid #ffd700;
+      border-radius: 28px;
+      max-width: 440px;
+      width: 100%;
+      padding: 28px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 105, 180, 0.4);
+      animation: zoomModal 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    @keyframes zoomModal {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .btn-close-modal {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 1.6rem;
+      cursor: pointer;
+    }
+
+    .modal-crown-tag {
+      font-size: 0.82rem;
+      color: #ffd700;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .modal-girl-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.65rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #ffffff;
+    }
+
+    .modal-dob {
+      font-size: 0.82rem;
+      color: #fca5bc;
+      margin-bottom: 18px;
+    }
+
+    .modal-wish-content {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 16px 20px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #fce7f3;
+      font-style: italic;
+      margin-bottom: 20px;
+    }
+
+    .modal-btn-done {
+      background: linear-gradient(135deg, #e11d48, #ff4b7d);
+      border: 1px solid #ffd700;
+      color: #ffffff;
+      padding: 10px 28px;
+      border-radius: 25px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: 0 0 20px rgba(225, 29, 72, 0.6);
+    }
+
+    @media (max-width: 768px) {
+      .galaxy-hud { padding: 14px 16px; }
+      .brand-title { font-size: 1.15rem; }
+      .brand-subtitle { font-size: 0.65rem; }
+      .banner-name { font-size: 1.05rem; }
+      .banner-title { font-size: 0.75rem; }
+      .focus-card-banner { padding: 8px 16px; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Khung Canvas Three.js WebGL -->
+  <div id="threeCanvasContainer"></div>
+
+  <!-- Giao diện HUD -->
+  <div class="galaxy-hud">
+    <!-- Header -->
+    <header class="hud-header">
+      <div>
+        <h1 class="brand-title">3D GALAXY • 20/10</h1>
+        <span class="brand-subtitle">THREE.JS 60FPS SHADER ENGINE</span>
+      </div>
+      <div class="hud-actions">
+        <button class="hud-btn" id="btnAudioToggle">
+          <i class="fa-solid fa-music"></i> <span>Giai Điệu</span>
+        </button>
+        <a href="index.html" class="hud-btn">
+          <i class="fa-solid fa-arrow-left"></i> <span>5 Giai Đoạn</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Hướng dẫn tương tác -->
+    <div class="hud-center-hint">
+      <div class="hint-badge">
+        <i class="fa-solid fa-hand-pointer fa-bounce"></i>
+        <span>Kéo chuột hoặc vuốt để xoay vòng ảnh • Nhấp vào ảnh để xem chi tiết 💖</span>
+      </div>
+    </div>
+
+    <!-- Footer điều khiển -->
+    <footer class="hud-footer">
+      <!-- Thanh vinh danh bạn nữ đang ở tiêu điểm -->
+      <div class="focus-card-banner" id="focusCardBanner">
+        <div class="banner-idx" id="bannerIndex">#01 / 23</div>
+        <div class="banner-name" id="bannerName">Trịnh Phan Bình An</div>
+        <div class="banner-title" id="bannerTitle">👑 Tâm Hồn Dịu Êm</div>
+      </div>
+
+      <!-- Nút điều hướng vòng xoay -->
+      <div class="carousel-arrows-bar">
+        <button class="arrow-round-btn" id="btnPrev3D" title="Bạn trước"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="arrow-round-btn" id="btnNext3D" title="Bạn tiếp theo"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal Chi Tiết Từng Bạn Nữ -->
+  <div class="spotlight-modal" id="spotlightModal">
+    <div class="modal-box">
+      <button class="btn-close-modal" id="btnCloseModal">&times;</button>
+      <div class="modal-crown-tag" id="modalTag">👑 NÀNG THƠ LỚP 10B1</div>
+      <h2 class="modal-girl-name" id="modalName">Trịnh Phan Bình An</h2>
+      <p class="modal-dob" id="modalDob"><i class="fa-regular fa-calendar"></i> Sinh nhật: 19/05/2009</p>
+      <div class="modal-wish-content" id="modalWish">
+        "Chúc Bình An ngày 20/10 ngập tràn niềm vui, cuộc sống lúc nào cũng an yên và hạnh phúc đúng như tên gọi của bạn!"
+      </div>
+      <button class="modal-btn-done" id="btnModalDone">Gửi Yêu Thương ❤️</button>
+    </div>
+  </div>
+
+  <!-- Tải file logic Three.js chính -->
+  <script src="galaxy_three.js"></script>
+
+  <script>
+    // ==========================================================
+    // KHỞI ĐỘNG HỆ THỐNG THREE.JS & HUD TƯƠNG TÁC
+    // ==========================================================
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Khởi tạo Three.js Scene trong #threeCanvasContainer
+      window.ThreeGalaxy.init('threeCanvasContainer');
+
+      // 2. Đồng bộ hóa khi người dùng nhấp vào ảnh trong không gian 3D
+      let currentActiveIdx = 0;
+      window.onThreeCardFocus = (index, student) => {
+        currentActiveIdx = index;
+        document.getElementById('bannerIndex').textContent = `#${String(index + 1).padStart(2, '0')} / 23`;
+        document.getElementById('bannerName').textContent = student.name;
+        document.getElementById('bannerTitle').textContent = `👑 ${student.title}`;
+
+        // Mở Spotlight Modal
+        document.getElementById('modalTag').innerHTML = `<i class="fa-solid fa-crown"></i> ${student.title.toUpperCase()}`;
+        document.getElementById('modalName').textContent = student.name;
+        document.getElementById('modalDob').innerHTML = `<i class="fa-regular fa-calendar"></i> Sinh nhật: ${student.dob}`;
+        document.getElementById('modalWish').textContent = `"${student.wish}"`;
+        document.getElementById('spotlightModal').classList.add('show');
+
+        playCrystalSound();
+      };
+
+      // 3. Nút bấm Prev / Next trên HUD
+      const STUDENTS_LIST = window.ThreeGalaxy.CONFIG;
+      document.getElementById('btnPrev3D').addEventListener('click', () => {
+        currentActiveIdx = (currentActiveIdx - 1 + 23) % 23;
+        window.ThreeGalaxy.rotateToCard(currentActiveIdx, null);
+        updateBannerOnly(currentActiveIdx);
+      });
+
+      document.getElementById('btnNext3D').addEventListener('click', () => {
+        currentActiveIdx = (currentActiveIdx + 1) % 23;
+        window.ThreeGalaxy.rotateToCard(currentActiveIdx, null);
+        updateBannerOnly(currentActiveIdx);
+      });
+
+      // Nhấp vào Banner để mở Modal
+      document.getElementById('focusCardBanner').addEventListener('click', () => {
+        document.getElementById('spotlightModal').classList.add('show');
+      });
+
+      // Đóng Modal
+      document.getElementById('btnCloseModal').addEventListener('click', () => {
+        document.getElementById('spotlightModal').classList.remove('show');
+      });
+      document.getElementById('btnModalDone').addEventListener('click', () => {
+        document.getElementById('spotlightModal').classList.remove('show');
+      });
+
+      function updateBannerOnly(idx) {
+        // Lấy tên từ STUDENTS_DATA có sẵn trong galaxy_three.js
+        const student = STUDENTS_DATA[idx];
+        if (student) {
+          document.getElementById('bannerIndex').textContent = `#${String(idx + 1).padStart(2, '0')} / 23`;
+          document.getElementById('bannerName').textContent = student.name;
+          document.getElementById('bannerTitle').textContent = `👑 ${student.title}`;
+          playCrystalSound();
+        }
+      }
+
+      // 4. Âm thanh Web Audio Synthesizer du dương lãng mạn
+      let audioCtx = null;
+      let isPlayingAudio = false;
+      let melodyInterval = null;
+
+      function playCrystalSound() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.35);
+
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.6);
+      }
+
+      const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
+      function playNextMelodyNote() {
+        if (!audioCtx || !isPlayingAudio) return;
+        const note = notes[Math.floor(Math.random() * notes.length)];
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(note, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 1.2);
+      }
+
+      document.getElementById('btnAudioToggle').addEventListener('click', () => {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        isPlayingAudio = !isPlayingAudio;
+        const btn = document.getElementById('btnAudioToggle');
+
+        if (isPlayingAudio) {
+          btn.innerHTML = '<i class="fa-solid fa-volume-high"></i> <span>Đang Phát</span>';
+          btn.style.borderColor = '#ffd700';
+          melodyInterval = setInterval(playNextMelodyNote, 1200);
+          playNextMelodyNote();
+        } else {
+          btn.innerHTML = '<i class="fa-solid fa-music"></i> <span>Giai Điệu</span>';
+          btn.style.borderColor = 'rgba(247, 231, 206, 0.4)';
+          if (melodyInterval) clearInterval(melodyInterval);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
