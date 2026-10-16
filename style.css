@@ -4,10 +4,11 @@
    ========================================================== */
 
 :root {
-  /* Luxury Romantic Cosmic Palette */
-  --bg-deep-cosmic: #06030c;
-  --bg-dark-violet: #1e0938;
-  --bg-rose-quartz: #360f42;
+  /* Luxury Romantic Cosmic Palette - Style 1: Thiên Hà Tình Yêu */
+  --bg-deep-cosmic: #0a0214;
+  --bg-dark-violet: #200538;
+  --bg-rose-quartz: #450c3f;
+  --bg-ruby-wine: #280424;
   
   --accent-rose-gold: #b76e79;
   --accent-champagne-gold: #f7e7ce;
@@ -31,11 +32,13 @@
 }
 
 body.universe-body {
-  background-color: var(--bg-deep-cosmic);
+  background-color: #0b0216;
   background-image: 
-    radial-gradient(circle at 50% 20%, var(--bg-rose-quartz) 0%, transparent 45%),
-    radial-gradient(circle at 80% 80%, var(--bg-dark-violet) 0%, transparent 55%),
-    radial-gradient(ellipse at bottom, #150524 0%, var(--bg-deep-cosmic) 100%);
+    radial-gradient(circle at 50% 15%, rgba(142, 24, 82, 0.42) 0%, transparent 60%),
+    radial-gradient(circle at 18% 65%, rgba(94, 18, 120, 0.35) 0%, transparent 55%),
+    radial-gradient(circle at 82% 70%, rgba(175, 36, 100, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, #22042d 0%, #0b0216 100%);
+  background-attachment: fixed;
   color: var(--text-pure-white);
   font-family: 'Be Vietnam Pro', 'Montserrat', sans-serif;
   min-height: 100vh;

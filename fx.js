@@ -58,26 +58,32 @@ class ParallaxStar {
 
   reset(init = false) {
     this.baseX = Math.random() * width;
-    this.baseY = init ? Math.random() * height : -10;
+    this.baseY = init ? Math.random() * height : -15;
 
     if (this.layer === 1) {
-      this.size = Math.random() * 1.0 + 0.5;
+      this.size = Math.random() * 1.1 + 0.4;
       this.speed = 0.05;
       this.parallaxFactor = 8;
-      this.alpha = Math.random() * 0.5 + 0.2;
-      this.color = '#ffffff';
+      this.alpha = Math.random() * 0.45 + 0.25;
+      this.color = Math.random() > 0.4 ? '#ffffff' : '#fce7f3';
+      this.isDiamond = false;
     } else if (this.layer === 2) {
       this.size = Math.random() * 1.6 + 0.8;
       this.speed = 0.12;
       this.parallaxFactor = 18;
-      this.alpha = Math.random() * 0.7 + 0.3;
-      this.color = Math.random() > 0.5 ? '#fbcfe8' : '#fef08a';
+      this.alpha = Math.random() * 0.65 + 0.35;
+      const palette = ['#fbcfe8', '#fef08a', '#ffd1dc', '#ffffff'];
+      this.color = palette[Math.floor(Math.random() * palette.length)];
+      this.isDiamond = false;
     } else {
-      this.size = Math.random() * 2.5 + 1.2;
+      this.size = Math.random() * 2.8 + 1.2;
       this.speed = 0.22;
       this.parallaxFactor = 35;
-      this.alpha = Math.random() * 0.9 + 0.4;
-      this.color = Math.random() > 0.5 ? '#ffd700' : '#ff69b4';
+      this.alpha = Math.random() * 0.85 + 0.45;
+      const palette = ['#ffd700', '#ff69b4', '#fff0f5', '#fda4af', '#fef08a'];
+      this.color = palette[Math.floor(Math.random() * palette.length)];
+      // ~35% của lớp sao gần là sao kim cương 4 cánh lấp lánh (Diamond Twinkle Star)
+      this.isDiamond = Math.random() < 0.35;
     }
 
     this.twinkleSpeed = (Math.random() - 0.5) * 0.025;
@@ -96,12 +102,72 @@ class ParallaxStar {
   draw(pX, pY) {
     const renderX = this.baseX - pX * this.parallaxFactor;
     const renderY = this.baseY - pY * this.parallaxFactor;
+    const currentAlpha = Math.max(0, Math.min(1, this.alpha));
 
-    bgCtx.globalAlpha = Math.max(0, Math.min(1, this.alpha));
-    bgCtx.fillStyle = this.color;
-    bgCtx.beginPath();
-    bgCtx.arc(renderX, renderY, this.size, 0, Math.PI * 2);
-    bgCtx.fill();
+    if (this.isDiamond) {
+      // Sao kim cương 4 cánh tỏa sáng nghệ thuật (4-point Diamond Flare)
+      bgCtx.save();
+      bgCtx.translate(renderX, renderY);
+      bgCtx.globalAlpha = currentAlpha;
+
+      // Hào quang tỏa tròn mềm mại
+      const glowR = this.size * 3.2;
+      const g = bgCtx.createRadialGradient(0, 0, 0, 0, 0, glowR);
+      g.addColorStop(0, this.color);
+      g.addColorStop(0.4, this.color);
+      g.addColorStop(1, 'transparent');
+      bgCtx.fillStyle = g;
+      bgCtx.beginPath();
+      bgCtx.arc(0, 0, glowR, 0, Math.PI * 2);
+      bgCtx.fill();
+
+      // Cánh nhọn dọc
+      const armV = this.size * 3.5;
+      const thick = this.size * 0.5;
+      bgCtx.fillStyle = '#ffffff';
+      bgCtx.beginPath();
+      bgCtx.moveTo(0, -armV);
+      bgCtx.quadraticCurveTo(0, 0, thick, 0);
+      bgCtx.quadraticCurveTo(0, 0, 0, armV);
+      bgCtx.quadraticCurveTo(0, 0, -thick, 0);
+      bgCtx.quadraticCurveTo(0, 0, 0, -armV);
+      bgCtx.fill();
+
+      // Cánh nhọn ngang
+      const armH = armV * 0.75;
+      bgCtx.beginPath();
+      bgCtx.moveTo(-armH, 0);
+      bgCtx.quadraticCurveTo(0, 0, 0, thick);
+      bgCtx.quadraticCurveTo(0, 0, armH, 0);
+      bgCtx.quadraticCurveTo(0, 0, 0, -thick);
+      bgCtx.quadraticCurveTo(0, 0, -armH, 0);
+      bgCtx.fill();
+
+      // Tâm sáng trắng
+      bgCtx.beginPath();
+      bgCtx.arc(0, 0, this.size * 0.7, 0, Math.PI * 2);
+      bgCtx.fill();
+
+      bgCtx.restore();
+    } else {
+      bgCtx.globalAlpha = currentAlpha;
+      if (this.size > 1.8) {
+        // Sao có hào quang tỏa nhẹ xung quanh
+        const g = bgCtx.createRadialGradient(renderX, renderY, 0, renderX, renderY, this.size * 2.2);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.4, this.color);
+        g.addColorStop(1, 'transparent');
+        bgCtx.fillStyle = g;
+        bgCtx.beginPath();
+        bgCtx.arc(renderX, renderY, this.size * 2.2, 0, Math.PI * 2);
+        bgCtx.fill();
+      } else {
+        bgCtx.fillStyle = this.color;
+        bgCtx.beginPath();
+        bgCtx.arc(renderX, renderY, this.size, 0, Math.PI * 2);
+        bgCtx.fill();
+      }
+    }
   }
 }
 
@@ -109,6 +175,53 @@ class ParallaxStar {
 const starsLayer1 = Array.from({ length: 280 }, () => new ParallaxStar(1));
 const starsLayer2 = Array.from({ length: 140 }, () => new ParallaxStar(2));
 const starsLayer3 = Array.from({ length: 50 }, () => new ParallaxStar(3));
+
+// Đốm sáng Bokeh hữu cơ lãng mạn (Romantic Bokeh Light Orbs)
+class RomanticBokehOrb {
+  constructor() {
+    this.reset(true);
+  }
+  reset(init = false) {
+    this.x = Math.random() * width;
+    this.y = init ? Math.random() * height : height + Math.random() * 80;
+    this.radius = Math.random() * 50 + 25; // 25px - 75px
+    this.speedY = Math.random() * 0.22 + 0.1;
+    this.speedX = (Math.random() - 0.5) * 0.15;
+    this.phase = Math.random() * Math.PI * 2;
+    this.baseAlpha = Math.random() * 0.07 + 0.035;
+    const colors = [
+      'rgba(244, 63, 94,',   // Rose
+      'rgba(251, 113, 133,', // Peony Pink
+      'rgba(251, 191, 36,',  // Champagne Amber
+      'rgba(217, 70, 239,',  // Magenta Violet
+      'rgba(254, 205, 211,'  // Soft Blush
+    ];
+    this.colorPrefix = colors[Math.floor(Math.random() * colors.length)];
+  }
+  update() {
+    this.y -= this.speedY;
+    this.x += this.speedX + Math.sin(Date.now() * 0.0008 + this.phase) * 0.18;
+    if (this.y < -this.radius * 2 || this.x < -this.radius * 2 || this.x > width + this.radius * 2) {
+      this.reset(false);
+    }
+  }
+  draw() {
+    const pulse = 0.85 + 0.15 * Math.sin(Date.now() * 0.0012 + this.phase);
+    const a = this.baseAlpha * pulse;
+    const grad = bgCtx.createRadialGradient(
+      this.x, this.y, 0,
+      this.x, this.y, this.radius
+    );
+    grad.addColorStop(0, `${this.colorPrefix} ${a * 1.5})`);
+    grad.addColorStop(0.5, `${this.colorPrefix} ${a * 0.7})`);
+    grad.addColorStop(1, `${this.colorPrefix} 0)`);
+    bgCtx.fillStyle = grad;
+    bgCtx.beginPath();
+    bgCtx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    bgCtx.fill();
+  }
+}
+const bokehOrbs = Array.from({ length: 22 }, () => new RomanticBokehOrb());
 
 // Sao băng (Shooting Star)
 class ShootingStar {
@@ -152,16 +265,29 @@ class ShootingStar {
 
     const grad = bgCtx.createLinearGradient(this.x, this.y, tailX, tailY);
     grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.2, '#ffd700');
-    grad.addColorStop(0.6, '#ff69b4');
+    grad.addColorStop(0.2, '#fde047');
+    grad.addColorStop(0.55, '#f43f5e');
+    grad.addColorStop(0.85, '#c084fc');
     grad.addColorStop(1, 'transparent');
 
     bgCtx.strokeStyle = grad;
-    bgCtx.lineWidth = 2.5;
+    bgCtx.lineWidth = 2.8;
+    bgCtx.lineCap = 'round';
     bgCtx.beginPath();
     bgCtx.moveTo(this.x, this.y);
     bgCtx.lineTo(tailX, tailY);
     bgCtx.stroke();
+
+    // Hào quang ở đầu sao băng
+    const headGlow = bgCtx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 8);
+    headGlow.addColorStop(0, '#ffffff');
+    headGlow.addColorStop(0.4, 'rgba(253, 224, 71, 0.7)');
+    headGlow.addColorStop(1, 'transparent');
+    bgCtx.fillStyle = headGlow;
+    bgCtx.beginPath();
+    bgCtx.arc(this.x, this.y, 8, 0, Math.PI * 2);
+    bgCtx.fill();
+
     bgCtx.restore();
   }
 }
@@ -169,36 +295,61 @@ class ShootingStar {
 const shootingStar = new ShootingStar();
 let shootingStarCooldown = 180;
 
-// Vòng lặp vẽ bầu trời sao Parallax & Tinh vân mượt mà
-let nebGrad1 = null, nebGrad2 = null;
+// Vòng lặp vẽ bầu trời sao Parallax & Tinh vân hoa hồng thở nhịp nhàng (Style 1: Romantic Rose Nebula)
+let nebGrad1 = null, nebGrad2 = null, nebGrad3 = null;
 let lastNebulaTick = 0;
 
 function renderBackground() {
   bgCtx.clearRect(0, 0, width, height);
 
-  // 1. Tinh vân mượt mà huyền ảo (Cập nhật gradient mỗi 3 frames để giải phóng CPU/GPU)
+  // 1. Tinh vân hữu cơ đa tầng thở nhịp nhàng
   lastNebulaTick++;
+  const time = Date.now() * 0.00045;
   if (!nebGrad1 || lastNebulaTick % 3 === 0) {
-    const time = Date.now() * 0.0004;
-    const cx1 = width * 0.35 + Math.sin(time) * 60;
-    const cy1 = height * 0.4 + Math.cos(time) * 40;
-    nebGrad1 = bgCtx.createRadialGradient(cx1, cy1, 60, cx1, cy1, width * 0.5);
-    nebGrad1.addColorStop(0, 'rgba(192, 132, 252, 0.12)');
-    nebGrad1.addColorStop(0.4, 'rgba(244, 114, 182, 0.07)');
+    // Cụm 1: Tinh vân Hoa Hồng & Rượu Vang ở góc trên trung tâm
+    const cx1 = width * 0.42 + Math.sin(time) * 55;
+    const cy1 = height * 0.32 + Math.cos(time * 0.9) * 40;
+    const r1 = Math.max(width, height) * 0.52;
+    nebGrad1 = bgCtx.createRadialGradient(cx1, cy1, 40, cx1, cy1, r1);
+    nebGrad1.addColorStop(0, 'rgba(244, 63, 94, 0.18)');
+    nebGrad1.addColorStop(0.4, 'rgba(219, 39, 119, 0.11)');
+    nebGrad1.addColorStop(0.75, 'rgba(136, 19, 78, 0.05)');
     nebGrad1.addColorStop(1, 'transparent');
 
-    const cx2 = width * 0.72 + Math.cos(time * 0.8) * 70;
-    const cy2 = height * 0.65 + Math.sin(time * 0.8) * 50;
-    nebGrad2 = bgCtx.createRadialGradient(cx2, cy2, 70, cx2, cy2, width * 0.55);
-    nebGrad2.addColorStop(0, 'rgba(251, 191, 36, 0.08)');
-    nebGrad2.addColorStop(0.5, 'rgba(236, 72, 153, 0.05)');
+    // Cụm 2: Tinh vân Tím Hoàng Gia & Mẫu Đơn bên góc trái dưới
+    const cx2 = width * 0.2 + Math.cos(time * 0.8) * 60;
+    const cy2 = height * 0.72 + Math.sin(time * 0.7) * 45;
+    const r2 = Math.max(width, height) * 0.5;
+    nebGrad2 = bgCtx.createRadialGradient(cx2, cy2, 50, cx2, cy2, r2);
+    nebGrad2.addColorStop(0, 'rgba(168, 85, 247, 0.14)');
+    nebGrad2.addColorStop(0.45, 'rgba(126, 34, 206, 0.08)');
     nebGrad2.addColorStop(1, 'transparent');
+
+    // Cụm 3: Tinh vân Bụi Vàng Champagne & Hổ Phách bên góc phải
+    const cx3 = width * 0.8 + Math.sin(time * 0.75) * 50;
+    const cy3 = height * 0.55 + Math.cos(time * 0.85) * 40;
+    const r3 = Math.max(width, height) * 0.48;
+    nebGrad3 = bgCtx.createRadialGradient(cx3, cy3, 50, cx3, cy3, r3);
+    nebGrad3.addColorStop(0, 'rgba(251, 191, 36, 0.12)');
+    nebGrad3.addColorStop(0.5, 'rgba(244, 114, 182, 0.07)');
+    nebGrad3.addColorStop(1, 'transparent');
   }
 
+  bgCtx.save();
+  bgCtx.globalCompositeOperation = 'screen';
   bgCtx.fillStyle = nebGrad1;
   bgCtx.fillRect(0, 0, width, height);
   bgCtx.fillStyle = nebGrad2;
   bgCtx.fillRect(0, 0, width, height);
+  bgCtx.fillStyle = nebGrad3;
+  bgCtx.fillRect(0, 0, width, height);
+
+  // Đốm sáng Bokeh lơ lửng mộng mơ
+  bokehOrbs.forEach(orb => {
+    orb.update();
+    orb.draw();
+  });
+  bgCtx.restore();
 
   // 2. Nội suy mượt vị trí Parallax
   currentParallaxX += (targetParallaxX - currentParallaxX) * 0.05;

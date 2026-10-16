@@ -3420,13 +3420,15 @@ function initStage6Atmosphere() {
   const countStars = 160;
   const curW = stage6W || window.innerWidth || 1200;
   const curH = stage6H || window.innerHeight || 800;
+  const STAR_COLORS = ['#ffffff', '#ffffff', '#fff0f5', '#fef08a', '#ffd1dc'];
   for (let i = 0; i < countStars; i++) {
     stage6Stars.push({
       x: Math.random() * curW,
       y: Math.random() * curH,
-      size: 1 + Math.random() * 2.2,
-      speedY: 20 + Math.random() * 35,
-      phase: Math.random() * 6.28
+      size: 1.0 + Math.random() * 2.4,
+      speedY: 18 + Math.random() * 32,
+      phase: Math.random() * 6.28,
+      color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)]
     });
   }
 
@@ -3583,48 +3585,63 @@ function stage6Frame(now) {
   stage6LastTime = now;
   const time = (now - stage6T0) / 1000;
 
-  // 1. VẼ BẦU TRỜI VŨ TRỤ CÓ CHIỀU SÂU
+  // 1. VẼ BẦU TRỜI VŨ TRỤ CÓ CHIỀU SÂU (Style 1: Romantic Rose Nebula)
   const bgGrad = stage6Ctx.createRadialGradient(
     stage6W / 2, stage6H / 2, 0,
-    stage6W / 2, stage6H / 2, Math.max(stage6W, stage6H) * 0.75
+    stage6W / 2, stage6H / 2, Math.max(stage6W, stage6H) * 0.85
   );
-  bgGrad.addColorStop(0, '#2a0826');
-  bgGrad.addColorStop(0.35, '#1b061d');
-  bgGrad.addColorStop(0.7, '#0e0416');
-  bgGrad.addColorStop(1, '#07030d');
+  bgGrad.addColorStop(0, '#380a33');
+  bgGrad.addColorStop(0.28, '#24062a');
+  bgGrad.addColorStop(0.62, '#14031d');
+  bgGrad.addColorStop(1, '#090113');
 
   stage6Ctx.globalAlpha = 1;
   stage6Ctx.globalCompositeOperation = 'source-over';
   stage6Ctx.fillStyle = bgGrad;
   stage6Ctx.fillRect(0, 0, stage6W, stage6H);
 
-  // Tinh vân phát sáng nhẹ (soft glowing nebula) ở giữa màn hình
-  const nebulaPulse = 0.16 + 0.05 * Math.sin(time * 0.85);
-  const nebulaR = Math.min(stage6W, stage6H) * 0.65;
+  // Tinh vân phát sáng hữu cơ lãng mạn (organic glowing rose nebula) ở giữa màn hình
+  const nebulaPulse = 0.22 + 0.07 * Math.sin(time * 0.85);
+  const nebulaR = Math.min(stage6W, stage6H) * 0.75;
   const nebulaGrad = stage6Ctx.createRadialGradient(
     stage6W / 2, stage6H / 2, 0,
     stage6W / 2, stage6H / 2, nebulaR
   );
-  nebulaGrad.addColorStop(0, `rgba(244, 63, 94, ${nebulaPulse})`);
-  nebulaGrad.addColorStop(0.45, `rgba(168, 85, 247, ${nebulaPulse * 0.35})`);
-  nebulaGrad.addColorStop(1, 'rgba(7, 3, 13, 0)');
+  nebulaGrad.addColorStop(0, `rgba(244, 63, 94, ${nebulaPulse * 1.1})`);
+  nebulaGrad.addColorStop(0.35, `rgba(219, 39, 119, ${nebulaPulse * 0.75})`);
+  nebulaGrad.addColorStop(0.68, `rgba(168, 85, 247, ${nebulaPulse * 0.4})`);
+  nebulaGrad.addColorStop(1, 'rgba(9, 1, 19, 0)');
   stage6Ctx.globalCompositeOperation = 'screen';
   stage6Ctx.fillStyle = nebulaGrad;
   stage6Ctx.fillRect(0, 0, stage6W, stage6H);
   stage6Ctx.globalCompositeOperation = 'source-over';
 
-  // 2. VẼ HẠT BỤI SAO BAY TỪ DƯỚI LÊN TRÊN KHẮP MÀN HÌNH
+  // 2. VẼ HẠT BỤI SAO & SAO KIM CƯƠNG BAY TỪ DƯỚI LÊN TRÊN KHẮP MÀN HÌNH
   for (const s of stage6Stars) {
     s.y -= s.speedY * dt;
     s.x += Math.sin(time + s.phase) * 0.35;
-    if (s.y < -10) {
-      s.y = stage6H + 10;
+    if (s.y < -15) {
+      s.y = stage6H + 15;
       s.x = Math.random() * stage6W;
     }
     const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(time * 2.2 + s.phase));
     stage6Ctx.globalAlpha = twinkle;
-    stage6Ctx.fillStyle = '#ffffff';
-    stage6Ctx.fillRect(s.x, s.y, s.size, s.size);
+    if (s.size > 2.2 && twinkle > 0.65) {
+      // Sao kim cương 4 cánh lấp lánh nghệ thuật
+      const arm = s.size * 2.4;
+      stage6Ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      stage6Ctx.lineWidth = 1.2;
+      stage6Ctx.beginPath();
+      stage6Ctx.moveTo(s.x - arm, s.y);
+      stage6Ctx.lineTo(s.x + arm, s.y);
+      stage6Ctx.moveTo(s.x, s.y - arm);
+      stage6Ctx.lineTo(s.x, s.y + arm);
+      stage6Ctx.stroke();
+    }
+    stage6Ctx.fillStyle = s.color || '#ffffff';
+    stage6Ctx.beginPath();
+    stage6Ctx.arc(s.x, s.y, s.size * 0.75, 0, Math.PI * 2);
+    stage6Ctx.fill();
   }
 
   // 3. VẼ TRÁI TIM NHỎ 3D BAY LƠ LỬNG TỪ DƯỚI LÊN TRÊN
