@@ -4199,7 +4199,7 @@ let tourProgressTimer = null;
 let tourSlideTimeout = null;
 let tourIsPlaying = false;
 let tourProgressPercent = 0;
-const TOUR_SLIDE_DURATION = 5500; // 5.5 giây cho mỗi bạn nữ đọc trọn vẹn lời chúc
+const TOUR_SLIDE_DURATION = 3000; // 3 giây mỗi bạn nữ theo yêu cầu
 
 function openCinematicTour(startIndex = 0) {
   const modal = document.getElementById('cinematicTourModal');
