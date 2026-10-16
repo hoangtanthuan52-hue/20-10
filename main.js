@@ -444,6 +444,52 @@ class LuxuryAudioManager {
     } catch (e) {}
   }
 
+  // Âm thanh vỡ òa tinh tú kỳ ảo khi nhấp chuột (Magic Nova Starlight Chime)
+  playMagicNovaSound() {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      const t = this.ctx.currentTime;
+      const freqs = [1046.5, 1318.5, 1567.98]; // C6, E6, G6
+      freqs.forEach((f, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, t + idx * 0.032);
+        gain.gain.setValueAtTime(0.04, t + idx * 0.032);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + idx * 0.032 + 0.32);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t + idx * 0.032);
+        osc.stop(t + idx * 0.032 + 0.33);
+      });
+    } catch (e) {}
+  }
+
+  // Âm thanh sao băng điều ước may mắn ngân vang (Wishing Star Melodic Chime)
+  playWishingChime() {
+    this.init();
+    if (!this.ctx) return;
+    try {
+      if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+      const t = this.ctx.currentTime;
+      const notes = [783.99, 1046.5, 1318.5, 1760.0]; // G5, C6, E6, A6
+      notes.forEach((freq, i) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t + i * 0.065);
+        gain.gain.setValueAtTime(0.075, t + i * 0.065);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.065 + 0.55);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t + i * 0.065);
+        osc.stop(t + i * 0.065 + 0.56);
+      });
+    } catch (e) {}
+  }
+
   // Tương thích ngược với các lời gọi cũ
   playTypeKeySound(char = '') {
     this.playTypewriterASMR(char);
@@ -4390,10 +4436,101 @@ window.addEventListener('resize', () => {
 });
 
 // ==========================================================
+// VFX 6: BẮT ĐƯỢC SAO BĂNG ĐIỀU ƯỚC 20/10 MAY MẮN
+// ==========================================================
+const wishingStarQuotes = [
+  "✦ Điều ước thành hiện thực: Chúc bạn luôn rạng rỡ như ánh mặt trời, bình yên như dòng sông và ngập tràn hạnh phúc mỗi ngày!",
+  "✦ Bắt được ngôi sao may mắn: Chúc mọi hoài bão của bạn đều thuận buồm xuôi gió, luôn được yêu thương và trân trọng!",
+  "✦ Lời chúc từ vũ trụ: Bạn là một vì tinh tú độc nhất vô nhị. Hãy luôn tự tin, kiêu hãnh và toả sáng theo cách riêng!",
+  "✦ Phép màu 20/10: Chúc nụ cười ngọt ngào luôn ngự trị trên môi, mọi âu lo đều tan biến như sương sớm!",
+  "✦ Nguyện ước tinh tú: Chúc bạn luôn xinh đẹp, yêu đời và luôn có người đồng hành ấm áp trên mọi nẻo đường!",
+  "✦ Chúc phái nữ lớp ta: Luôn giữ ngọn lửa đam mê, học tập xuất sắc và gặt hái vô vàn thành công rực rỡ!",
+  "✦ Món quà từ thiên hà: Chúc bạn mỗi ngày thức giấc đều đón nhận niềm vui bất ngờ và sự ngọt ngào trọn vẹn!",
+  "✦ Điều ước thanh xuân: Chúc thanh xuân của bạn luôn rực rỡ ngát hương như vườn hoa mẫu đơn nở rộ!",
+  "✦ Ánh sáng diệu kỳ: Chúc bạn luôn can đảm theo đuổi ước mơ, và vũ trụ sẽ luôn ưu ái gửi đến bạn những điều tốt đẹp nhất!",
+  "✦ Ngôi sao may mắn: Chúc bạn 20/10 nhận được thật nhiều hoa, ngập tràn quà tặng và muôn vàn lời chúc chân thành!",
+  "✦ Vũ điệu thiên hà: Chúc tâm hồn bạn mãi trong trẻo như giọt sương mai, bình yên và an nhiên giữa cuộc sống!",
+  "✦ Tinh tú chở che: Mong bạn luôn gặp được những điều may mắn, quý nhân phù trợ và bạn bè luôn sát cánh bên cạnh!"
+];
+
+let wishingBubbleTimer = null;
+
+window.showWishingBubble = function(x, y) {
+  const toast = document.getElementById('wishingBubbleToast');
+  const textEl = document.getElementById('wishingBubbleText');
+  if (!toast || !textEl) return;
+
+  const quote = wishingStarQuotes[Math.floor(Math.random() * wishingStarQuotes.length)];
+  textEl.textContent = quote;
+
+  toast.classList.add('active');
+
+  if (wishingBubbleTimer) clearTimeout(wishingBubbleTimer);
+  wishingBubbleTimer = setTimeout(() => {
+    toast.classList.remove('active');
+  }, 5000);
+};
+
+// ==========================================================
+// VFX 2: 3D CARD TILT & HOLOGRAPHIC SPECULAR INTERACTION
+// ==========================================================
+function setup3DCardTiltInteractions() {
+  // 1. Tilt 3D cho Modal Tour Điện ảnh
+  const tourFrame = document.querySelector('.tour-photo-frame');
+  if (tourFrame) {
+    tourFrame.addEventListener('mousemove', (e) => {
+      const rect = tourFrame.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const rotX = ((y - cy) / cy) * -12;
+      const rotY = ((x - cx) / cx) * 12;
+
+      tourFrame.style.transform = `perspective(800px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg) scale(1.03)`;
+    });
+
+    tourFrame.addEventListener('mouseleave', () => {
+      tourFrame.style.transform = '';
+    });
+  }
+
+  // 2. Tilt 3D tương tác khi di chuột vào Mini Card ở Stage 6
+  document.addEventListener('mousemove', (e) => {
+    const activeHoverCard = e.target.closest('.finale-mini-card');
+    if (activeHoverCard) {
+      const rect = activeHoverCard.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const rotX = ((y - cy) / cy) * -14;
+      const rotY = ((x - cx) / cx) * 14;
+
+      const frame = activeHoverCard.querySelector('.finale-card-frame');
+      if (frame) {
+        frame.style.transform = `scale(1.3) perspective(400px) rotateX(${rotX.toFixed(1)}deg) rotateY(${rotY.toFixed(1)}deg)`;
+      }
+    }
+  });
+
+  // 3. Đóng bubble toast khi nhấn nút đóng
+  const btnCloseWish = document.getElementById('btnCloseWishBubble');
+  if (btnCloseWish) {
+    btnCloseWish.addEventListener('click', () => {
+      const toast = document.getElementById('wishingBubbleToast');
+      if (toast) toast.classList.remove('active');
+      if (wishingBubbleTimer) clearTimeout(wishingBubbleTimer);
+    });
+  }
+}
+
+// ==========================================================
 // 9. KHỞI TẠO ỨNG DỤNG (INITIALIZATION)
 // ==========================================================
 window.addEventListener('DOMContentLoaded', () => {
   initCinematicTourEvents();
+  setup3DCardTiltInteractions();
   const urlParams = new URLSearchParams(window.location.search);
   const hashMatch = window.location.hash.match(/stage(\d+)/i);
   const startStage = parseInt(urlParams.get('stage')) || (hashMatch ? parseInt(hashMatch[1]) : 1);
