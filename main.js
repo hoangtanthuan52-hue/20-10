@@ -591,10 +591,14 @@ function playEndingVoiceover() {
     if (p) p.catch(err => console.warn("Voiceover play note:", err));
   }
 
-  // Khi giọng đọc kết thúc (sau 33s) -> Tự động đưa nhạc nền to dần trở lại
+  // Khi giọng đọc kết thúc (sau 35s) -> Tự động đưa nhạc nền to dần trở lại và hiện bảng thông điệp kết
   voiceoverEl.onended = () => {
     if (window.currentActiveStage === 6) {
       setBgmVolumeSmooth(BGM_NORMAL_VOL, 1800);
+      if (typeof showStage6CenterpieceAndTypewriter === 'function' && !stage6HasStartedCenterpiece) {
+        stage6HasStartedCenterpiece = true;
+        showStage6CenterpieceAndTypewriter();
+      }
     }
   };
 }
@@ -3999,7 +4003,11 @@ function stage6Frame(now) {
     stage6UserVelPitch *= 0.92;
   }
 
-  // 5. CẬP NHẬT 23 THẺ ẢNH POLAROID: LƠ LỬNG KHÔNG GIAN (14s-26s) -> TỤ THÀNH HÌNH TRÁI TIM (26s-32s)
+  // 5. CẬP NHẬT 23 THẺ ẢNH POLAROID THEO CUE SHEET CHÍNH XÁC:
+  // - Trước 14.5s: Ẩn tuyệt đối toàn bộ 23 ảnh
+  // - 14.5s -> 26.0s (Giai đoạn 1): 23 ảnh tỏa ra từ tâm và bay lơ lửng chậm rãi khắp màn hình quanh dòng chữ
+  // - 26.0s -> 30.5s (Giai đoạn 2 - kéo dài 4.5s): 23 ảnh di chuyển tụ lại về vòng cung Hình Trái Tim
+  // - Từ 30.5s trở đi: Hoàn tất khóa vào Vòng Trái Tim, giữ nhịp thở êm ái
   const winW = window.innerWidth || stage6W || 1200;
   const winH = window.innerHeight || stage6H || 800;
   const isMobile = winW < 768;
@@ -4023,12 +4031,81 @@ function stage6Frame(now) {
     baseCardScale = Math.min(1.0, Math.max(0.78, winH / 940));
   }
 
+  // Lấy mốc thời gian thực từ audio giọng đọc (hoặc fallback chính xác từ lúc bắt đầu)
+  const timelineTime = getStage6TimelineTime();
+
+  // ĐỒNG BỘ 9 CÂU PHỤ ĐỀ TRỰC TIẾP TỪ AUDIO CURRENTTIME (0.0s -> 34.2s)
+  const storyWrap = document.getElementById('finaleStorytellingWrap');
+  const storyText = document.getElementById('finaleStoryText');
+
+  if (storyWrap && storyText) {
+    if (timelineTime < 34.5) {
+      storyWrap.style.display = 'flex';
+
+      let activeSub = null;
+      for (let i = 0; i < STAGE6_SUBTITLES.length; i++) {
+        const sub = STAGE6_SUBTITLES[i];
+        if (timelineTime >= sub.start && timelineTime <= sub.end) {
+          activeSub = sub;
+          break;
+        }
+      }
+
+      if (activeSub) {
+        if (storyText.textContent !== activeSub.text) {
+          storyText.textContent = activeSub.text;
+        }
+        // Hiệu ứng mờ dần (fade-out 0.3s) trong 0.3s cuối của câu; trước đó hiện rõ (fade-in 0.3s)
+        if (timelineTime > activeSub.end - 0.3) {
+          if (!storyText.classList.contains('fade-out')) {
+            storyText.className = 'finale-story-text fade-out';
+          }
+        } else {
+          if (!storyText.classList.contains('visible')) {
+            storyText.className = 'finale-story-text visible';
+          }
+        }
+      } else {
+        // Khoảng nghỉ chuyển câu (0.2s gap)
+        if (!storyText.classList.contains('fade-out')) {
+          storyText.className = 'finale-story-text fade-out';
+        }
+      }
+    } else {
+      storyWrap.style.display = 'none';
+    }
+  }
+
+  // TRONG SUỐT 34 GIÂY GIỌNG ĐỌC: TUYỆT ĐỐI ẨN BẢNG TRUNG TÂM VÀ THANH ĐIỀU KHIỂN
+  const centerpiece = document.getElementById('finaleCenterpiece');
+  const actionOverlay = document.getElementById('stage6ActionOverlay');
+
+  if (timelineTime < 34.5) {
+    if (centerpiece && !stage6HasStartedCenterpiece) {
+      centerpiece.style.display = 'none';
+      centerpiece.style.opacity = '0';
+      centerpiece.style.visibility = 'hidden';
+      centerpiece.style.pointerEvents = 'none';
+      centerpiece.classList.remove('show');
+    }
+    if (actionOverlay) {
+      actionOverlay.classList.remove('show');
+    }
+  } else {
+    // Đúng giây thứ 34.5s: Hiện bảng trung tâm mượt mà và bắt đầu chạy typewriter
+    if (!stage6HasStartedCenterpiece) {
+      stage6HasStartedCenterpiece = true;
+      showStage6CenterpieceAndTypewriter();
+    }
+  }
+
+  // CẬP NHẬT 23 THẺ ẢNH POLAROID:
   for (const it of finaleCards) {
     const cardEl = it.el;
     if (!cardEl) continue;
 
-    // Giai đoạn 1 & 2: Trước 14.0s ẩn toàn bộ thẻ để người xem tập trung đọc các câu dẫn đầu tiên
-    if (time < 14.0) {
+    // Trước 14.5s: Ẩn tuyệt đối toàn bộ 23 ảnh
+    if (timelineTime < 14.5) {
       cardEl.style.opacity = '0';
       cardEl.style.transform = 'translate(-50%, -50%) translate3d(0px, 0px, 0px) scale(0)';
       continue;
@@ -4039,84 +4116,83 @@ function stage6Frame(now) {
 
     let curX = 0, curY = 0, curScale = baseCardScale, curOpacity = 1.0, curRot = 0;
 
-    // Giai đoạn từ 14.0s đến 22.0s: 23 thẻ lần lượt xuất hiện từ tâm và bay lơ lửng chậm rãi khắp màn hình
-    if (time < 22.0) {
-      const cardStartTime = 14.0 + (it.index * 0.20); // Phân bổ từ 14.0s đến 18.4s
-      const flyDuration = 1.6;
+    if (timelineTime < 26.0) {
+      // Giai đoạn 1 (từ 14.5s đến 26.0s):
+      // 23 ảnh tỏa ra từ tâm và bay lơ lửng chậm rãi khắp màn hình quanh dòng chữ
+      const cardStartTime = 14.5 + (it.index * 0.16); // Phân bổ từ 14.5s đến 18.02s
+      const flyDur = 1.4;
 
-      if (time < cardStartTime) {
+      if (timelineTime < cardStartTime) {
         cardEl.style.opacity = '0';
         cardEl.style.transform = 'translate(-50%, -50%) translate3d(0px, 0px, 0px) scale(0)';
         continue;
-      } else if (time < cardStartTime + flyDuration) {
-        const p = (time - cardStartTime) / flyDuration;
+      } else if (timelineTime < cardStartTime + flyDur) {
+        const p = (timelineTime - cardStartTime) / flyDur;
         const easeP = 1 - Math.pow(1 - p, 3);
         curX = floatBaseX * easeP;
         curY = floatBaseY * easeP;
         curScale = (0.2 + 0.8 * easeP) * baseCardScale;
-        curOpacity = Math.min(1.0, easeP * 1.4);
-        curRot = Math.sin(time * 1.2 + it.index) * 6;
+        curOpacity = Math.min(1.0, easeP * 1.5);
+        curRot = Math.sin(timelineTime * 1.2 + it.index) * 6;
       } else {
-        const driftX = Math.sin(time * 0.9 + it.index * 1.4) * 14;
-        const driftY = Math.cos(time * 0.8 + it.index * 1.2) * 12;
+        // Đang bay lơ lửng thư thái khắp màn hình quanh dòng chữ
+        const driftX = Math.sin(timelineTime * 0.9 + it.index * 1.4) * 15;
+        const driftY = Math.cos(timelineTime * 0.8 + it.index * 1.2) * 12;
         curX = floatBaseX + driftX;
         curY = floatBaseY + driftY;
         curScale = baseCardScale;
         curOpacity = 1.0;
-        curRot = Math.sin(time * 0.7 + it.index * 1.5) * 7;
+        curRot = Math.sin(timelineTime * 0.7 + it.index * 1.5) * 7;
       }
-    } else if (time < 26.0) {
-      // Từ 22.0s đến 26.0s: Toàn bộ 23 thẻ tiếp tục bay lơ lửng thư thái (chưa xếp thành hình trái tim vội)
-      const driftX = Math.sin(time * 0.9 + it.index * 1.4) * 14;
-      const driftY = Math.cos(time * 0.8 + it.index * 1.2) * 12;
-      curX = floatBaseX + driftX;
-      curY = floatBaseY + driftY;
-      curScale = baseCardScale;
-      curOpacity = 1.0;
-      curRot = Math.sin(time * 0.7 + it.index * 1.5) * 7;
-    } else if (time < 32.0) {
-      // Từ 26.0s đến 32.0s (Cao trào cuối giọng đọc): 23 thẻ tụ lại, khóa vào vị trí Vòng Trái Tim
+    } else if (timelineTime < 30.5) {
+      // Giai đoạn 2 (từ 26.0s đến 30.5s - kéo dài 4.5s):
+      // 23 ảnh di chuyển tụ lại dần về vị trí vòng cung Hình Trái Tim
+      if (!stage6HasTriggeredConfetti26) {
+        stage6HasTriggeredConfetti26 = true;
+        try {
+          if (window.audioManager?.playCrystalChime) audioManager.playCrystalChime();
+          if (window.audioManager?.playBellSound) audioManager.playBellSound(1046, 1.3);
+          if (window.FX?.triggerFirework) window.FX.triggerFirework();
+          if (window.confetti) {
+            window.confetti({
+              particleCount: 100,
+              spread: 90,
+              origin: { x: 0.5, y: 0.5 },
+              colors: ['#ffd700', '#ff1493', '#ff69b4', '#ffffff', '#e11d48']
+            });
+          }
+        } catch (e) {}
+      }
+
       const norm = HEART_23_NORM[it.index];
       const targetX = norm.nx * heartScaleX;
       const targetY = norm.ny * heartScaleY + heartCenterY;
 
-      const srcDriftX = Math.sin(26.0 * 0.9 + it.index * 1.4) * 14;
+      // Vị trí xuất phát từ trạng thái lơ lửng lúc t = 26.0s
+      const srcDriftX = Math.sin(26.0 * 0.9 + it.index * 1.4) * 15;
       const srcDriftY = Math.cos(26.0 * 0.8 + it.index * 1.2) * 12;
       const srcX = floatBaseX + srcDriftX;
       const srcY = floatBaseY + srcDriftY;
       const srcRot = Math.sin(26.0 * 0.7 + it.index * 1.5) * 7;
 
-      const convergeStart = 26.0 + (it.index % 6) * 0.12;
-      const convergeDur = 5.0;
-
-      if (time < convergeStart) {
-        const driftX = Math.sin(time * 0.9 + it.index * 1.4) * 14;
-        const driftY = Math.cos(time * 0.8 + it.index * 1.2) * 12;
-        curX = floatBaseX + driftX;
-        curY = floatBaseY + driftY;
-        curScale = baseCardScale;
-        curOpacity = 1.0;
-        curRot = Math.sin(time * 0.7 + it.index * 1.5) * 7;
-      } else {
-        const p = Math.min(1.0, (time - convergeStart) / convergeDur);
-        const easeP = 0.5 * (1 - Math.cos(Math.PI * p));
-        curX = srcX * (1 - easeP) + targetX * easeP;
-        curY = srcY * (1 - easeP) + targetY * easeP;
-        curRot = srcRot * (1 - easeP) + (Math.sin(it.index * 0.8) * 1.8) * easeP;
-        curScale = baseCardScale;
-        curOpacity = 1.0;
-      }
+      const p = Math.min(1.0, (timelineTime - 26.0) / 4.5);
+      const easeP = 0.5 * (1 - Math.cos(Math.PI * p)); // Cosine easing êm dịu
+      curX = srcX * (1 - easeP) + targetX * easeP;
+      curY = srcY * (1 - easeP) + targetY * easeP;
+      curRot = srcRot * (1 - easeP) + (Math.sin(it.index * 0.8) * 1.6) * easeP;
+      curScale = baseCardScale;
+      curOpacity = 1.0;
     } else {
-      // Từ 32.0s trở đi: Đã khóa hoàn chỉnh thành Vòng Trái Tim, giữ nhịp thở êm ái
+      // Từ 30.5s trở đi: Hoàn tất xếp hình trái tim, khóa vào vị trí và giữ nhịp thở êm ái
       const norm = HEART_23_NORM[it.index];
       const targetX = norm.nx * heartScaleX;
       const targetY = norm.ny * heartScaleY + heartCenterY;
-      const breathe = Math.sin(time * 1.4 + it.index * 0.5) * 2.5;
+      const breathe = Math.sin(timelineTime * 1.4 + it.index * 0.5) * 2.5;
       const dirX = targetX !== 0 ? (targetX / Math.abs(targetX)) : 0;
       const dirY = targetY !== 0 ? (targetY / Math.abs(targetY)) : 1;
       curX = targetX + dirX * breathe;
       curY = targetY + dirY * breathe;
-      curRot = Math.sin(time * 1.2 + it.index * 0.7) * 1.5;
+      curRot = Math.sin(timelineTime * 1.2 + it.index * 0.7) * 1.5;
       curScale = baseCardScale;
       curOpacity = 1.0;
     }
@@ -4139,8 +4215,35 @@ function stage6Frame(now) {
   stage6AnimId = requestAnimationFrame(stage6Frame);
 }
 
-// Danh sách bộ đếm thời gian cho kịch bản điện ảnh 4 giai đoạn
+// ==========================================================
+// BẢNG CUE SHEET 9 CÂU PHỤ ĐỀ ĐOẠN KẾT (KHỚP 100% VỚI GIỌNG ĐỌC AUDIO 35S)
+// ==========================================================
+const STAGE6_SUBTITLES = [
+  { start: 0.0,  end: 3.6,  text: "10 năm sau, hay 20 năm sau, hay 30 năm sau nữa..." },
+  { start: 3.8,  end: 6.2,  text: "Những chuyến đi này sẽ là ký ức..." },
+  { start: 6.4,  end: 10.2, text: "Có khi lúc đó chúng ta quên mất những tháng ngày cùng nhau này..." },
+  { start: 10.4, end: 14.3, text: "Nhưng mà biết đâu, 50 năm sau đó trong một chiều nắng ngập tràn..." },
+  { start: 14.5, end: 18.8, text: "Những tấm hình cũ sẽ nằm trên đôi tay run rẩy, rồi bất chợt kỷ niệm sẽ ùa về..." },
+  { start: 19.0, end: 22.8, text: "Và ta nhớ lại cái lần đầu tiên bỡ ngỡ trước biển trời rộng lớn..." },
+  { start: 23.0, end: 25.5, text: "Nhớ lại cái nôn nao khi thấy tuyết ngập tràn..." },
+  { start: 25.7, end: 29.0, text: "Nhớ lại những chuyến đi, nhớ hết tất cả những con người..." },
+  { start: 29.2, end: 34.2, text: "Và nhớ lại những nụ cười rất tươi... của một thời tuổi trẻ." }
+];
+
+let stage6VoiceStartT0 = 0;
+let stage6HasStartedCenterpiece = false;
+let stage6HasTriggeredConfetti26 = false;
 let stage6Timers = [];
+
+function getStage6TimelineTime() {
+  if (voiceoverEl && !voiceoverEl.paused && voiceoverEl.currentTime > 0) {
+    return voiceoverEl.currentTime;
+  }
+  if (stage6VoiceStartT0 > 0) {
+    return (performance.now() - stage6VoiceStartT0) / 1000;
+  }
+  return 0;
+}
 
 function clearStage6Timeline() {
   if (typeof stopEndingVoiceover === 'function') {
@@ -4154,17 +4257,118 @@ function clearStage6Timeline() {
     clearTimeout(window.stage6TypeTimer);
     window.stage6TypeTimer = null;
   }
+  stage6HasStartedCenterpiece = false;
+  stage6HasTriggeredConfetti26 = false;
+}
+
+// BƯỚC 3: HIỆN BẢNG THÔNG ĐIỆP CHÍNH VÀ CHẠY HIỆU ỨNG GÕ CHỮ (ĐÚNG GIÂY THỨ 34.5s)
+function showStage6CenterpieceAndTypewriter() {
+  const centerpiece = document.getElementById('finaleCenterpiece');
+  const centerCard = document.getElementById('finaleCenterpieceCard');
+  const badge = document.getElementById('finaleBadge');
+  const title = document.getElementById('finaleTitle');
+  const typeBody = document.getElementById('finaleTypeBody');
+  const cursor = document.getElementById('finaleCursor');
+  const actionOverlay = document.getElementById('stage6ActionOverlay');
+
+  if (centerpiece) {
+    centerpiece.style.display = 'block';
+    centerpiece.style.visibility = 'visible';
+    centerpiece.classList.add('show');
+    centerpiece.style.opacity = '1';
+    centerpiece.style.pointerEvents = 'auto';
+  }
+  if (centerCard) centerCard.classList.add('reveal-box');
+  if (badge) {
+    badge.style.opacity = '1';
+    badge.style.transform = 'translateY(0)';
+    badge.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+  }
+  if (title) {
+    title.innerHTML = 'Gửi 23 Đóa Hoa Rạng Rỡ Nhất<br>Của Tập Thể 12B1';
+    title.classList.add('visible');
+    title.style.opacity = '1';
+  }
+
+  // Chạy hiệu ứng gõ chữ (typewriter) cho đoạn lời chúc từ tập thể nam
+  const part1 = "Thanh xuân của chúng mình đẹp nhất là vì có sự xuất hiện của các bạn. Món quà nhỏ này tụi con trai 12B1 đã cố gắng chuẩn bị bằng tất cả tấm lòng, dù đôi chỗ có thể còn vụng về hay thiếu sót, mong các bạn nữ nhẹ nhàng bỏ qua nhé.";
+  const part2 = "Chúc 23 đóa hoa của lớp mình luôn mỉm cười, rạng rỡ và hạnh phúc! ❤️";
+
+  let curPart = 1;
+  let charIdx = 0;
+  if (typeBody) typeBody.innerHTML = '';
+  if (cursor) cursor.classList.remove('hide');
+
+  if (window.stage6TypeTimer) {
+    clearTimeout(window.stage6TypeTimer);
+    window.stage6TypeTimer = null;
+  }
+
+  function typeClimaxChar() {
+    if (window.currentActiveStage !== 6) return;
+
+    if (curPart === 1) {
+      if (charIdx < part1.length) {
+        const ch = part1[charIdx];
+        charIdx++;
+        if (typeBody) typeBody.innerHTML = part1.slice(0, charIdx);
+        try {
+          if (window.audioManager && audioManager.playTypewriterASMR) {
+            audioManager.playTypewriterASMR(ch);
+          }
+        } catch (e) {}
+        window.stage6TypeTimer = setTimeout(typeClimaxChar, 33);
+      } else {
+        curPart = 2;
+        charIdx = 0;
+        if (typeBody) typeBody.innerHTML = part1 + '<br><br>';
+        try {
+          if (window.audioManager && audioManager.playVintageBell) {
+            audioManager.playVintageBell();
+          }
+        } catch (e) {}
+        window.stage6TypeTimer = setTimeout(typeClimaxChar, 250);
+      }
+    } else {
+      if (charIdx < part2.length) {
+        const ch = part2[charIdx];
+        charIdx++;
+        if (typeBody) typeBody.innerHTML = part1 + '<br><br>' + part2.slice(0, charIdx);
+        try {
+          if (window.audioManager && audioManager.playTypewriterASMR) {
+            audioManager.playTypewriterASMR(ch);
+          }
+        } catch (e) {}
+        window.stage6TypeTimer = setTimeout(typeClimaxChar, 33);
+      } else {
+        // Gõ xong toàn bộ thông điệp!
+        try {
+          if (window.audioManager && audioManager.playVintageBell) {
+            audioManager.playVintageBell();
+          }
+        } catch (e) {}
+        if (cursor) cursor.classList.add('hide');
+
+        // Hiện thanh nút điều khiển bên dưới
+        if (actionOverlay) {
+          actionOverlay.classList.add('show');
+        }
+
+        // BÙNG NỔ ĐẠI TIỆC PHÁO HOA TRÁI TIM & KIM TUYẾN KHI KẾT THÚC THÔNG ĐIỆP
+        try {
+          if (window.FX && window.FX.launchGrandFinaleBarrage) {
+            window.FX.launchGrandFinaleBarrage();
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  typeClimaxChar();
 }
 
 // ==========================================================
-// KỊCH BẢN XUẤT HIỆN TUẦN TỰ ĐIỆN ẢNH ĐỒNG BỘ CHÍNH XÁC VỚI GIỌNG ĐỌC (VOICEOVER TIMELINE)
-// Đồng bộ 100% từ t = 0s khớp chuẩn với file audio giọng đọc 34s:
-// 0s - 6s: Câu 1 ("10 năm sau, 20 năm sau, hay 30 năm sau nữa...")
-// 6s - 12s: Câu 2 ("Những chuyến đi này sẽ hóa thành ký ức vô giá của tuổi thanh xuân...")
-// 12s - 19s: Câu 3 ("50 năm sau đó, trong một chiều nắng ngập tràn...") + 14s-22s: 23 ảnh tỏa ra lơ lửng
-// 19s - 26s: Câu 4 ("Nhớ lại những chuyến đi, nhớ hết tất cả những con người...")
-// 26s - 32s: 23 ảnh tụ lại khóa vào Vòng Trái Tim hoàn chỉnh
-// 29.5s - 30.8s: Cụm thông điệp trung tâm xuất hiện và gõ lời chúc từ tập thể nam
+// KHỞI ĐỘNG TIMELINE ĐOẠN KẾT (ĐỒNG BỘ TUYỆT ĐỐI VỚI AUDIO GIỌNG ĐỌC)
 // ==========================================================
 function runStage6CinematicTimeline() {
   clearStage6Timeline();
@@ -4181,9 +4385,10 @@ function runStage6CinematicTimeline() {
   const cursor = document.getElementById('finaleCursor');
   const actionOverlay = document.getElementById('stage6ActionOverlay');
 
-  // Khởi tạo trạng thái ban đầu: Ẩn mọi thứ, sẵn sàng cho Trái Tim mở màn
+  // Khởi tạo trạng thái ban đầu: TUYỆT ĐỐI ẨN bảng thông điệp và thanh nút bấm
   if (centerpiece) {
     centerpiece.classList.remove('show');
+    centerpiece.style.display = 'none';
     centerpiece.style.opacity = '0';
     centerpiece.style.visibility = 'hidden';
     centerpiece.style.pointerEvents = 'none';
@@ -4200,18 +4405,30 @@ function runStage6CinematicTimeline() {
   }
   if (typeBody) typeBody.innerHTML = '';
   if (cursor) cursor.classList.remove('hide');
-  if (actionOverlay) actionOverlay.classList.remove('show');
+  if (actionOverlay) {
+    actionOverlay.classList.remove('show');
+  }
 
-  // Chuẩn hóa mốc thời gian t = 0s trùng khớp với thời điểm giọng đọc cất lên
-  stage6T0 = performance.now();
-  stage6LastTime = stage6T0;
+  // Khởi tạo trạng thái chữ phụ đề
+  if (storyWrap && storyText) {
+    storyWrap.style.display = 'flex';
+    storyText.textContent = '';
+    storyText.className = 'finale-story-text';
+  }
 
-  // Kích hoạt giọng đọc dẫn chuyện đoạn kết & tự động giảm nhỏ nhạc nền piano (Audio Ducking)
+  // Reset mốc thời gian đồng bộ và các cờ trạng thái
+  stage6VoiceStartT0 = performance.now();
+  stage6T0 = stage6VoiceStartT0;
+  stage6LastTime = stage6VoiceStartT0;
+  stage6HasStartedCenterpiece = false;
+  stage6HasTriggeredConfetti26 = false;
+
+  // Phát file audio giọng đọc 35s & giảm âm lượng BGM (Audio Ducking)
   if (typeof playEndingVoiceover === 'function') {
     playEndingVoiceover();
   }
 
-  // GIAI ĐOẠN 1: TRÁI TIM MỞ MÀN ĐẬP NHẸ RỒI NỞ BUNG RA VŨ TRỤ (0s -> 1.0s)
+  // Trái tim mở màn: Nở bung và biến mất tức thì (0s -> 0.4s) để nhường trọn không gian cho câu 1
   if (heartWrap && heart) {
     heartWrap.style.display = 'flex';
     heartWrap.style.opacity = '1';
@@ -4220,194 +4437,17 @@ function runStage6CinematicTimeline() {
     try {
       if (window.audioManager?.playBellSound) audioManager.playBellSound(554, 0.85);
       if (window.audioManager?.playCrystalChime) audioManager.playCrystalChime();
-      if (window.confetti) {
-        window.confetti({
-          particleCount: 80,
-          spread: 80,
-          origin: { x: 0.5, y: 0.5 },
-          colors: ['#ffd700', '#ff1493', '#ff69b4', '#ffffff', '#e11d48']
-        });
-      }
     } catch (e) {}
 
-    // Trái tim tan biến êm dịu ở 0.85s để nhường trọn không gian cho lời dẫn
-    stage6Timers.push(setTimeout(() => {
-      heartWrap.style.transition = 'opacity 0.35s ease';
+    setTimeout(() => {
+      heartWrap.style.transition = 'opacity 0.25s ease';
       heartWrap.style.opacity = '0';
       setTimeout(() => {
         heartWrap.style.display = 'none';
         heart.className = 'finale-opening-heart';
-      }, 350);
-    }, 850));
+      }, 250);
+    }, 350);
   }
-
-  // GIAI ĐOẠN 2: LỜI DẪN CẢM XÚC 4 CÂU ĐỒNG BỘ TUYỆT ĐỐI VỚI GIỌNG ĐỌC
-  if (storyWrap && storyText) {
-    storyWrap.style.display = 'flex';
-
-    // Câu 1 (từ 0s đến 6s)
-    stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“10 năm sau, 20 năm sau, hay 30 năm sau nữa...”';
-      storyText.className = 'finale-story-text visible';
-    }, 400));
-
-    stage6Timers.push(setTimeout(() => {
-      storyText.className = 'finale-story-text fade-out';
-    }, 5200));
-
-    // Câu 2 (từ 6s đến 12s)
-    stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“Những chuyến đi này sẽ hóa thành ký ức vô giá của tuổi thanh xuân...”';
-      storyText.className = 'finale-story-text visible';
-    }, 6000));
-
-    stage6Timers.push(setTimeout(() => {
-      storyText.className = 'finale-story-text fade-out';
-    }, 11200));
-
-    // Câu 3 (từ 12s đến 19s) - Khớp câu nói về 50 năm sau
-    stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“50 năm sau đó, trong một chiều nắng ngập tràn, những tấm hình cũ sẽ làm kỷ niệm bất chợt ùa về...”';
-      storyText.className = 'finale-story-text visible';
-    }, 12000));
-
-    stage6Timers.push(setTimeout(() => {
-      storyText.className = 'finale-story-text fade-out';
-    }, 18200));
-
-    // Câu 4 (từ 19s đến 26s)
-    stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“Nhớ lại những chuyến đi, nhớ hết tất cả những con người, và những nụ cười rực tươi nhất...”';
-      storyText.className = 'finale-story-text visible';
-    }, 19000));
-
-    stage6Timers.push(setTimeout(() => {
-      storyText.className = 'finale-story-text fade-out';
-    }, 25200));
-
-    // Kết thúc lời dẫn ở 26s
-    stage6Timers.push(setTimeout(() => {
-      storyWrap.style.display = 'none';
-      storyText.textContent = '';
-      storyText.className = 'finale-story-text';
-    }, 26000));
-  }
-
-  // GIAI ĐOẠN 3: CAO TRÀO TỤ LẠI XẾP THÀNH HÌNH TRÁI TIM (26s -> 32s)
-  stage6Timers.push(setTimeout(() => {
-    try {
-      if (window.audioManager?.playCrystalChime) audioManager.playCrystalChime();
-      if (window.audioManager?.playBellSound) audioManager.playBellSound(1046, 1.3);
-      if (window.FX?.triggerFirework) window.FX.triggerFirework();
-      if (window.confetti) {
-        window.confetti({
-          particleCount: 110,
-          spread: 90,
-          origin: { x: 0.5, y: 0.5 },
-          colors: ['#ffd700', '#ff1493', '#ff69b4', '#ffffff', '#e11d48']
-        });
-      }
-    } catch (e) {}
-  }, 26000));
-
-  // GIAI ĐOẠN 4: KHUNG THÔNG ĐIỆP CHÍNH XUẤT HIỆN Ở TRUNG TÂM TRÁI TIM (Từ 29.5s trở đi)
-  // Bước 4.1 (29.5s): Khung thông điệp và huy hiệu trung tâm nhẹ nhàng xuất hiện
-  stage6Timers.push(setTimeout(() => {
-    if (centerpiece) {
-      centerpiece.style.display = 'block';
-      centerpiece.style.visibility = 'visible';
-      centerpiece.classList.add('show');
-      centerpiece.style.opacity = '1';
-      centerpiece.style.pointerEvents = 'auto';
-    }
-    if (centerCard) centerCard.classList.add('reveal-box');
-    if (badge) {
-      badge.style.opacity = '1';
-      badge.style.transform = 'translateY(0)';
-      badge.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
-    }
-  }, 29500));
-
-  // Bước 4.2 (30.0s): Dòng tiêu đề trang trọng hiển thị
-  stage6Timers.push(setTimeout(() => {
-    if (title) {
-      title.innerHTML = 'Gửi 23 Đóa Hoa Rạng Rỡ Nhất<br>Của Tập Thể 12B1';
-      title.classList.add('visible');
-      title.style.opacity = '1';
-    }
-  }, 30000));
-
-  // Bước 4.3 (30.8s): Gõ lời nhắn chân thành từ tập thể nam bằng hiệu ứng Typewriter
-  stage6Timers.push(setTimeout(() => {
-    const part1 = "Thanh xuân của chúng mình đẹp nhất là vì có sự xuất hiện của các bạn. Món quà nhỏ này tụi con trai 12B1 đã cố gắng chuẩn bị bằng tất cả tấm lòng, dù đôi chỗ có thể còn vụng về hay thiếu sót, mong các bạn nữ nhẹ nhàng bỏ qua nhé.";
-    const part2 = "Chúc 23 đóa hoa của lớp mình luôn mỉm cười, rạng rỡ và hạnh phúc! ❤️";
-
-    let curPart = 1;
-    let charIdx = 0;
-    if (typeBody) typeBody.innerHTML = '';
-
-    function typeClimaxChar() {
-      if (window.currentActiveStage !== 6) return;
-
-      if (curPart === 1) {
-        if (charIdx < part1.length) {
-          const ch = part1[charIdx];
-          charIdx++;
-          if (typeBody) typeBody.innerHTML = part1.slice(0, charIdx);
-          try {
-            if (window.audioManager && audioManager.playTypewriterASMR) {
-              audioManager.playTypewriterASMR(ch);
-            }
-          } catch (e) {}
-          window.stage6TypeTimer = setTimeout(typeClimaxChar, 33);
-        } else {
-          curPart = 2;
-          charIdx = 0;
-          if (typeBody) typeBody.innerHTML = part1 + '<br><br>';
-          try {
-            if (window.audioManager && audioManager.playVintageBell) {
-              audioManager.playVintageBell();
-            }
-          } catch (e) {}
-          window.stage6TypeTimer = setTimeout(typeClimaxChar, 300);
-        }
-      } else {
-        if (charIdx < part2.length) {
-          const ch = part2[charIdx];
-          charIdx++;
-          if (typeBody) typeBody.innerHTML = part1 + '<br><br>' + part2.slice(0, charIdx);
-          try {
-            if (window.audioManager && audioManager.playTypewriterASMR) {
-              audioManager.playTypewriterASMR(ch);
-            }
-          } catch (e) {}
-          window.stage6TypeTimer = setTimeout(typeClimaxChar, 33);
-        } else {
-          // Gõ xong toàn bộ thông điệp!
-          try {
-            if (window.audioManager && audioManager.playVintageBell) {
-              audioManager.playVintageBell();
-            }
-          } catch (e) {}
-          if (cursor) cursor.classList.add('hide');
-
-          // Bước 4.4: Bảng điều khiển góc dưới nhẹ nhàng hiện lên
-          if (actionOverlay) {
-            actionOverlay.classList.add('show');
-          }
-
-          // BÙNG NỔ ĐẠI TIỆC PHÁO HOA TRÁI TIM & KIM TUYẾN KHI KẾT THÚC THÔNG ĐIỆP
-          try {
-            if (window.FX && window.FX.launchGrandFinaleBarrage) {
-              window.FX.launchGrandFinaleBarrage();
-            }
-          } catch (e) {}
-        }
-      }
-    }
-
-    typeClimaxChar();
-  }, 30800));
 }
 
 // ==========================================================

@@ -3015,7 +3015,7 @@ body.universe-body {
 
 .finale-mini-card:hover .finale-card-frame,
 .finale-mini-card.is-active .finale-card-frame {
-  transform: scale(1.8) !important;
+  transform: scale(1.85) !important;
   border-color: #ffd700;
   background: #ffffff;
   box-shadow: 0 0 35px rgba(255, 215, 0, 0.95), 0 0 50px rgba(244, 63, 94, 0.9), 0 20px 50px rgba(0, 0, 0, 0.9);
@@ -3161,15 +3161,16 @@ body.universe-body {
   font-weight: 600;
   line-height: 1.6;
   color: #fff9fc;
-  text-shadow: 0 0 16px rgba(255, 255, 255, 0.85),
-               0 0 32px rgba(255, 105, 180, 0.65),
-               0 0 55px rgba(255, 215, 0, 0.45);
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.95),
+               0 2px 10px rgba(0, 0, 0, 0.9),
+               0 0 32px rgba(255, 105, 180, 0.8),
+               0 0 55px rgba(255, 215, 0, 0.55);
   opacity: 0;
-  filter: blur(14px);
-  transform: scale(0.96) translateY(8px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: blur(8px);
+  transform: scale(0.96) translateY(6px);
+  transition: opacity 0.3s ease,
+              filter 0.3s ease,
+              transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .finale-story-text.visible {
@@ -3180,8 +3181,8 @@ body.universe-body {
 
 .finale-story-text.fade-out {
   opacity: 0;
-  filter: blur(12px);
-  transform: scale(1.05) translateY(-8px);
+  filter: blur(6px);
+  transform: scale(1.03) translateY(-6px);
 }
 
 /* ----------------------------------------------------------
