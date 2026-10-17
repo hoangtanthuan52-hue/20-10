@@ -4270,3 +4270,566 @@ body.universe-body {
   transform: scale(1.1);
 }
 
+/* ==========================================================
+   TÍNH NĂNG "MÓN QUÀ MANG VỀ": XUẤT ẢNH STORY 9:16 (1080x1920)
+   ========================================================== */
+
+/* 1. Nút xuất Story ở Header */
+.story-header-btn {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px !important;
+  width: auto !important;
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.35) 0%, rgba(219, 39, 119, 0.25) 100%) !important;
+  border: 1.5px solid rgba(255, 215, 0, 0.7) !important;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(225, 29, 72, 0.25) !important;
+  color: #ffd700 !important;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.story-header-btn:hover {
+  background: linear-gradient(135deg, #e11d48 0%, #db2777 100%) !important;
+  color: #ffffff !important;
+  border-color: #ffd700 !important;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 0 25px rgba(225, 29, 72, 0.8), 0 0 35px rgba(255, 215, 0, 0.6) !important;
+}
+
+.story-header-pill {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* 2. Nút xuất Story ở Stage 6 Action Overlay & Lightbox */
+.btn-story-lux {
+  background: linear-gradient(135deg, #e11d48 0%, #db2777 50%, #9f1239 100%) !important;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 215, 0, 0.8) !important;
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.6), inset 0 0 10px rgba(255, 215, 0, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.btn-story-lux:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #be123c 100%) !important;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 0 30px rgba(225, 29, 72, 0.9), 0 0 20px rgba(255, 215, 0, 0.8) !important;
+}
+
+/* 3. Nút xuất Story trong Tour Điện Ảnh */
+.tour-story-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(225, 29, 72, 0.25) 0%, rgba(219, 39, 119, 0.35) 100%);
+  border: 1.5px solid rgba(255, 215, 0, 0.6);
+  color: #ffd700;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.25);
+}
+
+.tour-story-btn:hover {
+  background: linear-gradient(135deg, #e11d48 0%, #db2777 100%);
+  color: #ffffff;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 0 25px rgba(225, 29, 72, 0.7);
+}
+
+/* 4. Story Card Modal Box */
+.story-card-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
+}
+
+.story-card-modal.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.story-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(35, 8, 48, 0.94) 0%, rgba(8, 2, 14, 0.98) 100%);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+}
+
+.story-modal-dialog {
+  position: relative;
+  z-index: 2;
+  width: 95vw;
+  max-width: 1050px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(24, 7, 34, 0.92);
+  border: 1.5px solid rgba(255, 215, 0, 0.55);
+  border-radius: 28px;
+  padding: 22px 28px 24px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(225, 29, 72, 0.35), inset 0 0 35px rgba(255, 215, 0, 0.08);
+  transform: scale(0.92);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.story-card-modal.active .story-modal-dialog {
+  transform: scale(1);
+}
+
+.story-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  padding-bottom: 14px;
+}
+
+.story-header-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+.story-header-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff1f2;
+  margin: 0;
+  text-shadow: 0 0 15px rgba(255, 105, 180, 0.4);
+}
+
+.story-header-sub {
+  font-size: 0.88rem;
+  color: #fce7f3;
+  opacity: 0.85;
+  margin: 4px 0 0;
+}
+
+.story-modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: #ffd700;
+  font-size: 28px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.story-modal-close:hover {
+  background: #e11d48;
+  color: #ffffff;
+  transform: rotate(90deg) scale(1.1);
+  box-shadow: 0 0 15px rgba(225, 29, 72, 0.8);
+}
+
+.story-modal-body {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 28px;
+  align-items: center;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 5. Cột Trái: Live Preview Container */
+.story-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-preview-frame {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 9/16;
+  max-height: calc(88vh - 140px);
+  border-radius: 20px;
+  padding: 5px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.65), rgba(225, 29, 72, 0.55), rgba(139, 92, 246, 0.4));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.85), 0 0 35px rgba(225, 29, 72, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.story-preview-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 16px;
+  display: block;
+  background: #080112;
+}
+
+.story-preview-watermark {
+  position: absolute;
+  bottom: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 215, 0, 0.95);
+  background: rgba(10, 2, 18, 0.82);
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* 6. Cột Phải: Sidebar Bộ Điều Khiển */
+.story-sidebar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  max-height: calc(88vh - 140px);
+  padding-right: 6px;
+}
+
+.story-control-card {
+  background: rgba(36, 11, 48, 0.7);
+  border: 1px solid rgba(255, 215, 0, 0.28);
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.story-ctrl-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffd700;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.story-select-input {
+  width: 100%;
+  padding: 11px 16px;
+  background: rgba(16, 4, 24, 0.92);
+  border: 1.5px solid rgba(255, 215, 0, 0.45);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.story-select-input:focus {
+  border-color: #ffd700;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.story-nav-btns-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.story-mini-btn {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: #ffd700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.story-mini-btn:hover {
+  background: rgba(225, 29, 72, 0.65);
+  border-color: #ffd700;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.story-counter-tag {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fce7f3;
+  letter-spacing: 1px;
+}
+
+/* Avatar Strip 23 bạn nữ */
+.story-avatar-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 4px 6px;
+  margin-top: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 215, 0, 0.4) transparent;
+}
+
+.story-avatar-strip::-webkit-scrollbar {
+  height: 5px;
+}
+
+.story-avatar-strip::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.4);
+  border-radius: 999px;
+}
+
+.story-avatar-thumb-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.story-avatar-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: block;
+}
+
+.story-avatar-thumb-btn:hover .story-avatar-thumb {
+  border-color: #ffd700;
+  transform: scale(1.12);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+}
+
+.story-avatar-thumb-btn.active .story-avatar-thumb {
+  border-color: #ffd700;
+  transform: scale(1.2);
+  box-shadow: 0 0 16px #e11d48, 0 0 8px #ffd700;
+}
+
+/* Tùy chỉnh thông điệp */
+.story-textarea-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(16, 4, 24, 0.85);
+  border: 1.5px solid rgba(255, 215, 0, 0.35);
+  border-radius: 12px;
+  color: #fff1f2;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.45;
+  resize: vertical;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.story-textarea-input:focus {
+  border-color: #ffd700;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.35);
+}
+
+.story-quick-wishes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.story-preset-btn {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: #fde68a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.story-preset-btn:hover {
+  background: rgba(225, 29, 72, 0.45);
+  border-color: #ffd700;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Cụm nút hành động Tải Về & Chia Sẻ */
+.story-actions-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.story-btn-download-primary {
+  width: 100%;
+  padding: 14px 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #e11d48 0%, #db2777 50%, #f59e0b 100%);
+  border: 1.5px solid rgba(255, 215, 0, 0.85);
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 10px 30px rgba(225, 29, 72, 0.5), inset 0 0 15px rgba(255, 215, 0, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.story-btn-download-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 45px rgba(225, 29, 72, 0.75), 0 0 30px rgba(255, 215, 0, 0.6);
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 50%, #fbbf24 100%);
+}
+
+.story-btn-download-primary:active {
+  transform: translateY(1px);
+}
+
+.story-sub-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.story-btn-secondary {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  color: #ffd700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+}
+
+.story-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #ffd700;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.story-download-note {
+  font-size: 0.78rem;
+  color: #fce7f3;
+  opacity: 0.75;
+  line-height: 1.4;
+  margin: 2px 0 0;
+  text-align: center;
+}
+
+/* 7. Toast thông báo Story */
+.story-toast-notification {
+  position: fixed;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  z-index: 999999999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(26, 8, 38, 0.95);
+  border: 1.5px solid #ffd700;
+  border-radius: 999px;
+  padding: 10px 24px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 215, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.story-toast-notification i {
+  color: #10b981;
+  font-size: 1.2rem;
+}
+
+.story-toast-notification.active {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Responsive cho Story Modal trên màn hình vừa và nhỏ */
+@media (max-width: 880px) {
+  .story-modal-dialog {
+    max-height: 96vh;
+    padding: 16px 18px;
+    width: 96vw;
+  }
+  .story-modal-body {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .story-preview-frame {
+    max-width: 260px;
+    max-height: 42vh;
+  }
+  .story-sidebar-container {
+    max-height: none;
+  }
+  .story-header-title {
+    font-size: 1.3rem;
+  }
+}
+
+

@@ -4844,11 +4844,744 @@ function setup3DCardTiltInteractions() {
 }
 
 // ==========================================================
+// 10. TÍNH NĂNG "MÓN QUÀ MANG VỀ": XUẤT ẢNH STORY 9:16 (1080x1920)
+// ==========================================================
+
+const StoryCardManager = {
+  currentStudentIdx: 0,
+  cachedImages: {},
+  canvas: null,
+  ctx: null,
+
+  init() {
+    this.canvas = document.getElementById('storyCanvas');
+    if (!this.canvas) return;
+    this.ctx = this.canvas.getContext('2d');
+
+    this.populateStudentOptions();
+    this.setupEvents();
+  },
+
+  populateStudentOptions() {
+    const select = document.getElementById('storyStudentSelect');
+    const strip = document.getElementById('storyAvatarStrip');
+    if (!select || !strip) return;
+
+    select.innerHTML = '';
+    strip.innerHTML = '';
+
+    FEMALE_STUDENTS.forEach((st, idx) => {
+      // 1. Thêm vào thẻ select
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = `${String(idx + 1).padStart(2, '0')}. ${st.name} — ${st.title}`;
+      select.appendChild(opt);
+
+      // 2. Thêm vào avatar strip
+      const photoUrl = getStudentPhoto(st, idx);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `story-avatar-thumb-btn ${idx === 0 ? 'active' : ''}`;
+      btn.title = `${st.name} (${st.title})`;
+      btn.dataset.idx = idx;
+      btn.innerHTML = `<img src="${photoUrl}" class="story-avatar-thumb" alt="${st.name}">`;
+      btn.onclick = () => {
+        this.selectStudent(idx);
+      };
+      strip.appendChild(btn);
+    });
+  },
+
+  selectStudent(idx) {
+    if (idx < 0) idx = FEMALE_STUDENTS.length - 1;
+    if (idx >= FEMALE_STUDENTS.length) idx = 0;
+    this.currentStudentIdx = idx;
+
+    const select = document.getElementById('storyStudentSelect');
+    if (select) select.value = idx;
+
+    const counter = document.getElementById('storyStudentCounter');
+    if (counter) counter.textContent = `${idx + 1} / ${FEMALE_STUDENTS.length}`;
+
+    // Cập nhật trạng thái active của avatar strip
+    const strip = document.getElementById('storyAvatarStrip');
+    if (strip) {
+      const btns = strip.querySelectorAll('.story-avatar-thumb-btn');
+      btns.forEach((b, i) => {
+        if (i === idx) {
+          b.classList.add('active');
+          b.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else {
+          b.classList.remove('active');
+        }
+      });
+    }
+
+    // Cập nhật textarea lời chúc theo bạn nữ được chọn
+    const textarea = document.getElementById('storyCustomWish');
+    const currentStudent = FEMALE_STUDENTS[idx];
+    if (textarea && currentStudent) {
+      textarea.value = currentStudent.wish || `Chúc ${currentStudent.name} ngày 20/10 luôn ngập tràn niềm vui, rạng rỡ và hạnh phúc trọn vẹn! ❤️`;
+    }
+
+    this.render();
+  },
+
+  setupEvents() {
+    // 1. Thay đổi select dropdown
+    const select = document.getElementById('storyStudentSelect');
+    if (select) {
+      select.onchange = (e) => {
+        this.selectStudent(parseInt(e.target.value) || 0);
+      };
+    }
+
+    // 2. Nút Prev / Next
+    const btnPrev = document.getElementById('btnStoryPrevStudent');
+    if (btnPrev) btnPrev.onclick = () => this.selectStudent(this.currentStudentIdx - 1);
+
+    const btnNext = document.getElementById('btnStoryNextStudent');
+    if (btnNext) btnNext.onclick = () => this.selectStudent(this.currentStudentIdx + 1);
+
+    // 3. Textarea sửa lời chúc
+    const textarea = document.getElementById('storyCustomWish');
+    if (textarea) {
+      let debounceTimer = null;
+      textarea.oninput = () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          this.render();
+        }, 120);
+      };
+    }
+
+    // 4. Các nút Preset lời chúc
+    const presetsContainer = document.getElementById('storyQuickWishes');
+    if (presetsContainer) {
+      presetsContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.story-preset-btn');
+        if (!btn) return;
+        const preset = btn.dataset.preset;
+        const st = FEMALE_STUDENTS[this.currentStudentIdx];
+        if (!st) return;
+
+        if (preset === 'default') {
+          textarea.value = st.wish || `Chúc ${st.name} ngày 20/10 thật hạnh phúc! ❤️`;
+        } else if (preset === '1') {
+          textarea.value = `Chúc ${st.name} ngày 20/10 luôn xinh đẹp, tự tin toả sáng như vì sao rực rỡ nhất giữa dải ngân hà 12B1! ✨🌸`;
+        } else if (preset === '2') {
+          textarea.value = `Chúc ${st.name} tuổi thanh xuân ngập tràn may mắn, học tập xuất sắc, luôn nhận được nhiều điểm 10 và muôn vàn yêu thương! 💖`;
+        }
+        this.render();
+      });
+    }
+
+    // 5. Nút Tải Ảnh Story HD (1080x1920)
+    const btnDownload = document.getElementById('btnDownloadStoryCard');
+    if (btnDownload) {
+      btnDownload.onclick = () => this.downloadStoryCard();
+    }
+
+    // 6. Nút Chia sẻ Story
+    const btnShare = document.getElementById('btnShareStoryCard');
+    if (btnShare) {
+      btnShare.onclick = () => this.shareStoryCard();
+    }
+
+    // 7. Nút Sao chép ảnh
+    const btnCopy = document.getElementById('btnCopyStoryCard');
+    if (btnCopy) {
+      btnCopy.onclick = () => this.copyStoryCard();
+    }
+
+    // 8. Đóng modal
+    const btnClose = document.getElementById('btnCloseStoryModal');
+    if (btnClose) btnClose.onclick = () => this.close();
+
+    const backdrop = document.getElementById('storyModalBackdrop');
+    if (backdrop) backdrop.onclick = () => this.close();
+
+    // Phím Escape
+    window.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('storyCardModal');
+      if (modal && modal.classList.contains('active') && e.key === 'Escape') {
+        this.close();
+      }
+    });
+
+    // 9. Nút mở Modal từ Header, Stage 6, Tour, Lightbox
+    const btnHeader = document.getElementById('btnHeaderExportStory');
+    if (btnHeader) btnHeader.onclick = () => this.open(this.currentStudentIdx);
+
+    const btnStage6 = document.getElementById('btnExportStoryCard');
+    if (btnStage6) btnStage6.onclick = () => this.open(this.currentStudentIdx);
+
+    const btnTour = document.getElementById('btnTourExportStory');
+    if (btnTour) {
+      btnTour.onclick = () => {
+        const tourIdxEl = document.getElementById('tourCurrentIndex');
+        const curIdx = tourIdxEl ? (parseInt(tourIdxEl.textContent) - 1) : this.currentStudentIdx;
+        this.open(Math.max(0, curIdx));
+      };
+    }
+
+    const btnLightbox = document.getElementById('btnLightboxExportStory');
+    if (btnLightbox) {
+      btnLightbox.onclick = () => {
+        this.open(this.currentStudentIdx);
+      };
+    }
+  },
+
+  open(studentIdx = 0) {
+    const modal = document.getElementById('storyCardModal');
+    if (!modal) return;
+    this.selectStudent(studentIdx);
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+  },
+
+  close() {
+    const modal = document.getElementById('storyCardModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+  },
+
+  showToast(message) {
+    const toast = document.getElementById('storyToast');
+    const textEl = document.getElementById('storyToastText');
+    if (!toast || !textEl) return;
+    textEl.textContent = message;
+    toast.classList.add('active');
+    setTimeout(() => {
+      toast.classList.remove('active');
+    }, 4000);
+  },
+
+  getStudentImage(student, idx, callback) {
+    const photoUrl = getStudentPhoto(student, idx);
+    if (this.cachedImages[photoUrl] && this.cachedImages[photoUrl].complete) {
+      callback(this.cachedImages[photoUrl]);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      this.cachedImages[photoUrl] = img;
+      callback(img);
+    };
+    img.onerror = () => {
+      callback(null);
+    };
+    img.src = photoUrl;
+  },
+
+  // Helper vẽ hình chữ nhật bo góc
+  roundRect(ctx, x, y, width, height, radius) {
+    if (typeof radius === 'number') {
+      radius = { tl: radius, tr: radius, br: radius, bl: radius };
+    } else {
+      radius = Object.assign({ tl: 0, tr: 0, br: 0, bl: 0 }, radius);
+    }
+    ctx.beginPath();
+    ctx.moveTo(x + radius.tl, y);
+    ctx.lineTo(x + width - radius.tr, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
+    ctx.lineTo(x + width, y + height - radius.br);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
+    ctx.lineTo(x + radius.bl, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
+    ctx.lineTo(x + radius.tl);
+    ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+    ctx.closePath();
+  },
+
+  // Helper vẽ chữ tự động xuống dòng và căn giữa
+  wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    if (!text) return 0;
+    const words = text.split(' ');
+    let line = '';
+    const lines = [];
+
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+      if (testWidth > maxWidth && n > 0) {
+        lines.push(line.trim());
+        line = words[n] + ' ';
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line.trim());
+
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+    for (let k = 0; k < lines.length; k++) {
+      ctx.fillText(lines[k], x, startY + (k * lineHeight));
+    }
+    return lines.length;
+  },
+
+  // RENDER TOÀN BỘ CANVAS 1080 x 1920 PX
+  render() {
+    if (!this.canvas || !this.ctx) return;
+    const ctx = this.ctx;
+    const width = 1080;
+    const height = 1920;
+    const student = FEMALE_STUDENTS[this.currentStudentIdx] || FEMALE_STUDENTS[0];
+    const textarea = document.getElementById('storyCustomWish');
+    const wishText = (textarea && textarea.value.trim()) ? textarea.value.trim() : (student.wish || '');
+
+    this.getStudentImage(student, this.currentStudentIdx, (img) => {
+      // 1. NỀN THIÊN HÀ SÂU THẲM (DEEP LUXURY GALAXY BACKGROUND)
+      ctx.clearRect(0, 0, width, height);
+
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+      bgGradient.addColorStop(0.00, '#070110');
+      bgGradient.addColorStop(0.20, '#150322');
+      bgGradient.addColorStop(0.50, '#2c0633');
+      bgGradient.addColorStop(0.80, '#190326');
+      bgGradient.addColorStop(1.00, '#06010d');
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(0, 0, width, height);
+
+      // Quầng sáng tinh vân (Cosmic Nebula Glows)
+      const radialNebula1 = ctx.createRadialGradient(width * 0.5, height * 0.28, 50, width * 0.5, height * 0.28, 650);
+      radialNebula1.addColorStop(0, 'rgba(225, 29, 72, 0.32)');
+      radialNebula1.addColorStop(0.5, 'rgba(219, 39, 119, 0.15)');
+      radialNebula1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = radialNebula1;
+      ctx.fillRect(0, 0, width, height);
+
+      const radialNebula2 = ctx.createRadialGradient(width * 0.25, height * 0.72, 30, width * 0.25, height * 0.72, 500);
+      radialNebula2.addColorStop(0, 'rgba(139, 92, 246, 0.25)');
+      radialNebula2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = radialNebula2;
+      ctx.fillRect(0, 0, width, height);
+
+      const radialNebula3 = ctx.createRadialGradient(width * 0.75, height * 0.85, 30, width * 0.75, height * 0.85, 450);
+      radialNebula3.addColorStop(0, 'rgba(255, 215, 0, 0.18)');
+      radialNebula3.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = radialNebula3;
+      ctx.fillRect(0, 0, width, height);
+
+      // Bụi sao & Tinh tú lấp lánh (Deterministic Stars)
+      ctx.save();
+      for (let i = 0; i < 110; i++) {
+        const starX = ((i * 137.5) % width);
+        const starY = ((i * 329.7) % height);
+        const starR = ((i % 5) * 0.6) + 0.8;
+        const starAlpha = ((i % 7) / 10) + 0.3;
+
+        ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha})`;
+        ctx.beginPath();
+        ctx.arc(starX, starY, starR, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (i % 8 === 0) {
+          ctx.strokeStyle = `rgba(255, 215, 0, ${starAlpha * 0.8})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(starX - 6, starY);
+          ctx.lineTo(starX + 6, starY);
+          ctx.moveTo(starX, starY - 6);
+          ctx.lineTo(starX, starY + 6);
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+
+      // Khung viền chỉ vàng hoàng gia đôi (Double Gold Royal Border)
+      ctx.save();
+      const margin = 42;
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
+      ctx.lineWidth = 2;
+      this.roundRect(ctx, margin, margin, width - margin * 2, height - margin * 2, 28);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+      ctx.lineWidth = 1;
+      this.roundRect(ctx, margin + 8, margin + 8, width - (margin + 8) * 2, height - (margin + 8) * 2, 22);
+      ctx.stroke();
+
+      // Hoa văn 4 góc (Corner Flourish Accents)
+      const corners = [
+        [margin + 16, margin + 16],
+        [width - margin - 16, margin + 16],
+        [margin + 16, height - margin - 16],
+        [width - margin - 16, height - margin - 16]
+      ];
+      ctx.fillStyle = '#ffd700';
+      corners.forEach(([cx, cy]) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      // 2. HEADER: TIÊU ĐỀ THIỆP & BADGE
+      ctx.save();
+      ctx.textAlign = 'center';
+
+      // Top Tag Pill: ✦ FOREVER 12B1 • 20.10.2026 ✦
+      const pillW = 460;
+      const pillH = 46;
+      const pillX = (width - pillW) / 2;
+      const pillY = 125;
+      ctx.fillStyle = 'rgba(26, 6, 36, 0.85)';
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+      ctx.lineWidth = 1.5;
+      this.roundRect(ctx, pillX, pillY, pillW, pillH, 999);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = '700 20px "Be Vietnam Pro", sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText('✦ FOREVER 12B1 • 20.10.2026 ✦', width / 2, pillY + 30);
+
+      // Tiêu đề chính lớn: ĐÓA HOA RẠNG RỠ
+      ctx.font = '700 62px "Playfair Display", Georgia, serif';
+      const titleGrad = ctx.createLinearGradient(width / 2 - 250, 200, width / 2 + 250, 260);
+      titleGrad.addColorStop(0, '#ffffff');
+      titleGrad.addColorStop(0.35, '#fde68a');
+      titleGrad.addColorStop(0.7, '#f472b6');
+      titleGrad.addColorStop(1, '#ffd700');
+      ctx.fillStyle = titleGrad;
+      ctx.shadowColor = 'rgba(225, 29, 72, 0.6)';
+      ctx.shadowBlur = 25;
+      ctx.fillText('ĐÓA HOA RẠNG RỠ', width / 2, 235);
+      ctx.shadowBlur = 0;
+
+      // Phụ đề: GIỮA NGÂN HÀ THANH XUÂN
+      ctx.font = '600 26px "Montserrat", sans-serif';
+      ctx.fillStyle = '#fce7f3';
+      ctx.fillText('GIỮA NGÂN HÀ THANH XUÂN', width / 2, 280);
+
+      // Dấu ngắt trang trí
+      ctx.fillStyle = '#ffd700';
+      ctx.font = '20px serif';
+      ctx.fillText('◆  •  ◆', width / 2, 315);
+      ctx.restore();
+
+      // 3. THẺ ẢNH POLAROID CHÍNH GIỮA (CENTER PHOTO CARD)
+      const cardW = 780;
+      const cardH = 880;
+      const cardX = (width - cardW) / 2;
+      const cardY = 345;
+
+      ctx.save();
+      // Đổ bóng phát quang của khung thẻ
+      ctx.shadowColor = 'rgba(225, 29, 72, 0.5)';
+      ctx.shadowBlur = 45;
+      ctx.shadowOffsetY = 15;
+
+      // Nền khung thẻ polaroid màu ngọc trai sang trọng
+      const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+      cardGrad.addColorStop(0, '#ffffff');
+      cardGrad.addColorStop(0.6, '#fff5f7');
+      cardGrad.addColorStop(1, '#fef2f4');
+      ctx.fillStyle = cardGrad;
+      this.roundRect(ctx, cardX, cardY, cardW, cardH, 26);
+      ctx.fill();
+
+      // Viền kim loại vàng hồng bao quanh khung thẻ
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
+      ctx.lineWidth = 3;
+      this.roundRect(ctx, cardX, cardY, cardW, cardH, 26);
+      ctx.stroke();
+
+      // Khung chứa ảnh chụp (Photo Inner Box)
+      const photoPadding = 32;
+      const photoX = cardX + photoPadding;
+      const photoY = cardY + photoPadding;
+      const photoW = cardW - photoPadding * 2;
+      const photoH = 680;
+      const photoRadius = 18;
+
+      ctx.save();
+      this.roundRect(ctx, photoX, photoY, photoW, photoH, photoRadius);
+      ctx.clip();
+
+      if (img && img.width > 0) {
+        const imgAspect = img.width / img.height;
+        const targetAspect = photoW / photoH;
+        let sx, sy, sWidth, sHeight;
+
+        if (imgAspect > targetAspect) {
+          sHeight = img.height;
+          sWidth = img.height * targetAspect;
+          sx = (img.width - sWidth) / 2;
+          sy = 0;
+        } else {
+          sWidth = img.width;
+          sHeight = img.width / targetAspect;
+          sx = 0;
+          const cropYPercent = typeof student.cropY === 'number' ? student.cropY : 0.20;
+          sy = Math.max(0, Math.min(img.height - sHeight, (img.height - sHeight) * cropYPercent * 2.2));
+        }
+
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, photoX, photoY, photoW, photoH);
+
+        // Lớp phủ ánh sáng gradient nhẹ trên bề mặt ảnh
+        const photoGlow = ctx.createLinearGradient(photoX, photoY, photoX, photoY + photoH);
+        photoGlow.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+        photoGlow.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+        photoGlow.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
+        ctx.fillStyle = photoGlow;
+        ctx.fillRect(photoX, photoY, photoW, photoH);
+      } else {
+        ctx.fillStyle = '#20052d';
+        ctx.fillRect(photoX, photoY, photoW, photoH);
+        ctx.fillStyle = '#ffd700';
+        ctx.font = '40px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(student.name, photoX + photoW / 2, photoY + photoH / 2);
+      }
+      ctx.restore();
+
+      // Viền trong bức ảnh
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+      ctx.lineWidth = 1.5;
+      this.roundRect(ctx, photoX, photoY, photoW, photoH, photoRadius);
+      ctx.stroke();
+
+      // Thông tin học sinh dưới tấm ảnh polaroid
+      ctx.textAlign = 'center';
+
+      // 1. Tên học sinh
+      ctx.font = '700 44px "Playfair Display", serif';
+      ctx.fillStyle = '#881337';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
+      ctx.shadowBlur = 5;
+      ctx.fillText(student.name, width / 2, cardY + 762);
+      ctx.shadowBlur = 0;
+
+      // 2. Danh hiệu & Ngày sinh
+      const badgeText = `✨ ${student.title} • ${student.dob}`;
+      ctx.font = '600 23px "Be Vietnam Pro", sans-serif';
+      const badgeMetrics = ctx.measureText(badgeText);
+      const bW = badgeMetrics.width + 36;
+      const bH = 40;
+      const bX = (width - bW) / 2;
+      const bY = cardY + 795;
+
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.12)';
+      ctx.strokeStyle = 'rgba(225, 29, 72, 0.35)';
+      ctx.lineWidth = 1.5;
+      this.roundRect(ctx, bX, bY, bW, bH, 999);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#be123c';
+      ctx.fillText(badgeText, width / 2, bY + 28);
+      ctx.restore();
+
+      // 4. KHUNG LỜI CHÚC TRÂN TRỌNG (HEARTFELT WISH BOX)
+      const wishW = 860;
+      const wishH = 340;
+      const wishX = (width - wishW) / 2;
+      const wishY = 1260;
+
+      ctx.save();
+      // Nền kính mờ huyền ảo
+      ctx.fillStyle = 'rgba(24, 7, 34, 0.85)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+      ctx.shadowBlur = 30;
+      this.roundRect(ctx, wishX, wishY, wishW, wishH, 24);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // Viền vàng hồng quý phái
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
+      ctx.lineWidth = 1.5;
+      this.roundRect(ctx, wishX, wishY, wishW, wishH, 24);
+      ctx.stroke();
+
+      // Dấu ngoặc kép trang trí mở
+      ctx.font = '700 70px "Playfair Display", Georgia, serif';
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
+      ctx.textAlign = 'left';
+      ctx.fillText('“', wishX + 32, wishY + 68);
+
+      // Dấu ngoặc kép trang trí đóng
+      ctx.textAlign = 'right';
+      ctx.fillText('”', wishX + wishW - 32, wishY + wishH - 50);
+
+      // Nội dung lời chúc (Tự động xuống dòng)
+      ctx.textAlign = 'center';
+      ctx.font = 'italic 500 27px "Be Vietnam Pro", sans-serif';
+      ctx.fillStyle = '#fff0f5';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+      ctx.shadowBlur = 10;
+      this.wrapText(ctx, wishText, width / 2, wishY + 130, wishW - 120, 44);
+      ctx.shadowBlur = 0;
+
+      // Chữ ký tập thể nam 12B1
+      ctx.font = '700 23px "Dancing Script", cursive, "Be Vietnam Pro", sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText('— Tập thể nam 12B1 thân tặng với tất cả sự trân trọng ❤️ —', width / 2, wishY + wishH - 30);
+      ctx.restore();
+
+      // 5. FOOTER: THÔNG ĐIỆP ĐOẠN KẾT
+      ctx.save();
+      ctx.textAlign = 'center';
+
+      // 3 Ngôi sao nhỏ
+      ctx.font = '22px serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText('✦   ✦   ✦', width / 2, 1665);
+
+      // Tên tác phẩm
+      ctx.font = '600 22px "Montserrat", sans-serif';
+      ctx.fillStyle = 'rgba(253, 230, 138, 0.9)';
+      ctx.fillText('COSMIC 20.10 • ĐÓA HOA NỞ GIỮA NGÂN HÀ 12B1', width / 2, 1715);
+
+      // Thông điệp thanh xuân
+      ctx.font = '400 18px "Be Vietnam Pro", sans-serif';
+      ctx.fillStyle = 'rgba(252, 231, 243, 0.65)';
+      ctx.fillText('Mãi là những ký ức vô giá và tươi đẹp nhất của tuổi học trò', width / 2, 1750);
+
+      // Watermark nhỏ góc đáy
+      ctx.font = '600 14px "Montserrat", sans-serif';
+      ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
+      ctx.fillText('HIGH RESOLUTION STORY CARD • 1080 × 1920 PX', width / 2, 1835);
+      ctx.restore();
+    });
+  },
+
+  // TẢI ẢNH PNG 1080x1920 XUỐNG MÁY
+  downloadStoryCard() {
+    if (!this.canvas) return;
+    const student = FEMALE_STUDENTS[this.currentStudentIdx] || FEMALE_STUDENTS[0];
+    
+    // Tên file không dấu, gọn gàng
+    const cleanName = student.name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .replace(/\s+/g, '_');
+    const filename = `Thiep_20_10_12B1_${cleanName}.png`;
+
+    try {
+      this.canvas.toBlob((blob) => {
+        if (!blob) {
+          const dataUrl = this.canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = filename;
+          link.href = dataUrl;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          this.showToast(`✨ Đã tải thiệp Story của bạn ${student.name} thành công!`);
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        this.showToast(`✨ Đã tải thiệp Story của bạn ${student.name} thành công!`);
+
+        // Bắn pháo giấy chúc mừng
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.8 }
+          });
+        }
+      }, 'image/png');
+    } catch (e) {
+      console.error('Lỗi xuất ảnh Story Canvas:', e);
+      const dataUrl = this.canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.showToast(`✨ Đã tải thiệp Story của bạn ${student.name} thành công!`);
+    }
+  },
+
+  // CHIA SẺ STORY LÊN MẠNG XÃ HỘI
+  async shareStoryCard() {
+    if (!this.canvas) return;
+    const student = FEMALE_STUDENTS[this.currentStudentIdx] || FEMALE_STUDENTS[0];
+
+    try {
+      if (navigator.share && this.canvas.toBlob) {
+        this.canvas.toBlob(async (blob) => {
+          if (!blob) {
+            this.downloadStoryCard();
+            return;
+          }
+          const cleanName = student.name.replace(/\s+/g, '_');
+          const file = new File([blob], `Thiep_20_10_12B1_${cleanName}.png`, { type: 'image/png' });
+
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+              title: `Thiệp 20/10 12B1 - ${student.name}`,
+              text: `Đóa hoa rạng rỡ của 12B1 • 20.10.2026 🌸`,
+              files: [file]
+            });
+            this.showToast('✨ Đã mở chia sẻ Story!');
+          } else {
+            this.downloadStoryCard();
+          }
+        }, 'image/png');
+      } else {
+        this.downloadStoryCard();
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        this.downloadStoryCard();
+      }
+    }
+  },
+
+  // SAO CHÉP ẢNH VÀO CLIPBOARD
+  async copyStoryCard() {
+    if (!this.canvas) return;
+    const student = FEMALE_STUDENTS[this.currentStudentIdx] || FEMALE_STUDENTS[0];
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+        this.canvas.toBlob(async (blob) => {
+          if (!blob) {
+            this.showToast('Không thể sao chép ảnh. Vui lòng bấm Tải Về!');
+            return;
+          }
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          this.showToast(`📋 Đã sao chép ảnh thiệp ${student.name} vào bộ nhớ tạm!`);
+        }, 'image/png');
+      } else {
+        this.downloadStoryCard();
+      }
+    } catch (err) {
+      console.warn('Lỗi clipboard:', err);
+      this.downloadStoryCard();
+    }
+  }
+};
+
+// ==========================================================
 // 9. KHỞI TẠO ỨNG DỤNG (INITIALIZATION)
 // ==========================================================
 window.addEventListener('DOMContentLoaded', () => {
   initCinematicTourEvents();
   setup3DCardTiltInteractions();
+  StoryCardManager.init();
   const urlParams = new URLSearchParams(window.location.search);
   const hashMatch = window.location.hash.match(/stage(\d+)/i);
   const startStage = parseInt(urlParams.get('stage')) || (hashMatch ? parseInt(hashMatch[1]) : 1);

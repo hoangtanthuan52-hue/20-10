@@ -93,6 +93,10 @@
 
     <!-- Điều khiển âm thanh & Chế độ Three.js 3D -->
     <div class="audio-controls-wrap">
+      <button id="btnHeaderExportStory" class="cosmic-icon-btn story-header-btn" title="📸 Xuất thiệp kỷ niệm Story 9:16 (Món quà mang về)">
+        <i class="fa-solid fa-camera-retro"></i>
+        <span class="story-header-pill">Story 9:16</span>
+      </button>
       <a href="galaxy_three.html" class="cosmic-icon-btn" title="Chuyển sang chế độ Thiên Hà 3D Three.js WebGL (60fps)">
         <i class="fa-solid fa-cube"></i>
       </a>
@@ -435,6 +439,9 @@
 
       <!-- Bước 4.4: Bảng điều khiển góc dưới (hiện khi gõ xong lời chúc) -->
       <div class="stage6-action-overlay" id="stage6ActionOverlay">
+        <button class="luxury-btn btn-story-lux" id="btnExportStoryCard" title="Tải thiệp kỷ niệm Story 9:16 để đăng Facebook, Instagram, Zalo">
+          <i class="fa-solid fa-camera-retro"></i> <span>📸 Tải thiệp Story 9:16</span>
+        </button>
         <button class="luxury-btn btn-primary-lux" id="btnCinematicTour">
           <i class="fa-solid fa-clapperboard"></i> <span>🎬 Trình chiếu 23 bạn nữ</span>
         </button>
@@ -506,6 +513,9 @@
             <button class="tour-heart-btn" id="btnTourHeart">
               <i class="fa-solid fa-heart"></i> <span>Thả tim cho bạn</span> <strong id="tourHeartCount">23</strong>
             </button>
+            <button class="tour-story-btn" id="btnTourExportStory" title="Tải ảnh Story 1080x1920 của bạn này">
+              <i class="fa-solid fa-camera-retro"></i> <span>Tải thiệp Story</span>
+            </button>
           </div>
         </div>
       </div>
@@ -543,6 +553,9 @@
           <p id="lightboxWish"></p>
           <i class="fa-solid fa-quote-right"></i>
         </div>
+        <button class="luxury-btn btn-story-lux" id="btnLightboxExportStory" style="margin-top: 14px; font-size: 0.85rem; padding: 8px 20px;">
+          <i class="fa-solid fa-camera-retro"></i> <span>Tải thiệp Story 9:16</span>
+        </button>
       </div>
     </div>
   </div>
@@ -561,6 +574,106 @@
       </div>
       <button class="wish-bubble-close" id="btnCloseWishBubble" title="Đóng">&times;</button>
     </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL XUẤT THIỆP KỶ NIỆM STORY 9:16 (MÓN QUÀ MANG VỀ)
+       ======================================================== -->
+  <div class="story-card-modal" id="storyCardModal" aria-hidden="true">
+    <div class="story-modal-backdrop" id="storyModalBackdrop"></div>
+    <div class="story-modal-dialog">
+      <div class="story-modal-header">
+        <div class="story-header-title-wrap">
+          <div class="story-header-badge"><i class="fa-solid fa-sparkles"></i> MÓN QUÀ MANG VỀ • 20.10.2026</div>
+          <h2 class="story-header-title">Thiệp Kỷ Niệm 12B1 (Story 9:16 HD)</h2>
+          <p class="story-header-sub">Ảnh chuẩn 1080 × 1920 px sắc nét — Tải về đăng ngay lên Facebook, Instagram hoặc Zalo Story</p>
+        </div>
+        <button class="story-modal-close" id="btnCloseStoryModal" title="Đóng">&times;</button>
+      </div>
+
+      <div class="story-modal-body">
+        <!-- Cột Trái: Live Preview ảnh 9:16 -->
+        <div class="story-preview-container">
+          <div class="story-preview-frame">
+            <canvas id="storyCanvas" width="1080" height="1920" class="story-preview-canvas"></canvas>
+            <div class="story-preview-watermark">
+              <i class="fa-solid fa-mobile-screen"></i> Chuẩn Story 9:16 (1080 × 1920 px)
+            </div>
+          </div>
+        </div>
+
+        <!-- Cột Phải: Bộ chọn & Tùy biến -->
+        <div class="story-sidebar-container">
+          <!-- Chọn bạn nữ -->
+          <div class="story-control-card">
+            <label class="story-ctrl-label" for="storyStudentSelect">
+              <i class="fa-solid fa-users"></i> Chọn đóa hoa của bạn:
+            </label>
+            <div class="story-select-row">
+              <select id="storyStudentSelect" class="story-select-input">
+                <!-- 23 bạn nữ sinh sẽ được render ở đây -->
+              </select>
+            </div>
+
+            <!-- Nút chuyển bạn trước / tiếp theo -->
+            <div class="story-nav-btns-row">
+              <button id="btnStoryPrevStudent" class="story-mini-btn" title="Bạn trước đó">
+                <i class="fa-solid fa-chevron-left"></i> Bạn trước
+              </button>
+              <span id="storyStudentCounter" class="story-counter-tag">1 / 23</span>
+              <button id="btnStoryNextStudent" class="story-mini-btn" title="Bạn tiếp theo">
+                Bạn sau <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+
+            <!-- Thumbnail avatar strip 23 bạn nữ -->
+            <div class="story-avatar-strip" id="storyAvatarStrip">
+              <!-- 23 avatars nhỏ để bấm chọn nhanh -->
+            </div>
+          </div>
+
+          <!-- Tùy chỉnh thông điệp -->
+          <div class="story-control-card">
+            <label class="story-ctrl-label" for="storyCustomWish">
+              <i class="fa-solid fa-pen-nib"></i> Lời chúc trên thiệp (có thể chỉnh sửa):
+            </label>
+            <textarea id="storyCustomWish" class="story-textarea-input" rows="3" placeholder="Nhập lời chúc riêng của bạn..."></textarea>
+            
+            <div class="story-quick-wishes" id="storyQuickWishes">
+              <button type="button" class="story-preset-btn" data-preset="default">Lời chúc riêng</button>
+              <button type="button" class="story-preset-btn" data-preset="1">Mãi rực rỡ & tỏa sáng</button>
+              <button type="button" class="story-preset-btn" data-preset="2">Hạnh phúc & điểm 10</button>
+            </div>
+          </div>
+
+          <!-- Cụm nút hành động Tải Về / Chia Sẻ -->
+          <div class="story-actions-card">
+            <button id="btnDownloadStoryCard" class="story-btn-download-primary">
+              <i class="fa-solid fa-download"></i>
+              <span>Tải Ảnh Story HD (1080×1920 PNG)</span>
+            </button>
+
+            <div class="story-sub-actions-row">
+              <button id="btnShareStoryCard" class="story-btn-secondary" title="Chia sẻ trực tiếp lên mạng xã hội">
+                <i class="fa-solid fa-share-nodes"></i> Chia sẻ Story
+              </button>
+              <button id="btnCopyStoryCard" class="story-btn-secondary" title="Sao chép ảnh vào clipboard">
+                <i class="fa-regular fa-copy"></i> Sao chép ảnh
+              </button>
+            </div>
+            <p class="story-download-note">
+              <i class="fa-solid fa-shield-heart"></i> Ảnh PNG chất lượng gốc sắc nét 1080×1920, hiển thị tràn viền hoàn hảo trên mọi điện thoại.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast thông báo hành động Story -->
+  <div class="story-toast-notification" id="storyToast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="storyToastText">Đã tải ảnh thành công!</span>
   </div>
 
   <!-- Audio Element ẩn hỗ trợ nạp MP3 trực tiếp -->
