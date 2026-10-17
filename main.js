@@ -245,8 +245,11 @@ class LuxuryAudioManager {
       filter.frequency.setValueAtTime(centerFreq, t);
       filter.Q.setValueAtTime(isSpace ? 1.4 : 2.5, t);
 
+      // Hệ số giảm âm lượng tiếng gõ phím xuống 28% so với trước để làm nền êm dịu, không lấn át piano
+      const TYPEWRITER_VOL_SCALE = 0.28;
+
       const noiseGain = this.ctx.createGain();
-      const nVol = isSpace ? 0.045 : (0.035 + Math.random() * 0.012);
+      const nVol = (isSpace ? 0.045 : (0.035 + Math.random() * 0.012)) * TYPEWRITER_VOL_SCALE;
       noiseGain.gain.setValueAtTime(nVol, t);
       noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.025);
 
@@ -263,7 +266,7 @@ class LuxuryAudioManager {
       osc.frequency.setValueAtTime(startPitch, t);
       osc.frequency.exponentialRampToValueAtTime(startPitch * 0.45, t + 0.032);
 
-      const thudVol = isSpace ? 0.05 : 0.038;
+      const thudVol = (isSpace ? 0.05 : 0.038) * TYPEWRITER_VOL_SCALE;
       oscGain.gain.setValueAtTime(thudVol, t);
       oscGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.032);
 
@@ -279,7 +282,7 @@ class LuxuryAudioManager {
         ping.type = 'sine';
         ping.frequency.setValueAtTime(2200 + Math.random() * 600, t);
 
-        pingGain.gain.setValueAtTime(0.012, t);
+        pingGain.gain.setValueAtTime(0.012 * TYPEWRITER_VOL_SCALE, t);
         pingGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.022);
 
         ping.connect(pingGain);
@@ -313,7 +316,7 @@ class LuxuryAudioManager {
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(3135.96, t); // Nốt Sol G7 họa âm
 
-      gain.gain.setValueAtTime(0.045, t);
+      gain.gain.setValueAtTime(0.014, t);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
 
       osc1.connect(gain);
@@ -1713,19 +1716,43 @@ async function runCalendarTearOff(withIntro = true) {
 
   await dropCalBoard();
   sayCalCap('Còn 6 ngày');
-  await calSleep(1300);
+  await calSleep(700);
 
-  const T = [720, 560, 450, 380, 340, 1100];
-  for (let i = 0; i < 6; i++) {
-    if (window.currentActiveStage !== 2) {
-      isCalRunning = false;
-      return;
-    }
-    sayCalCap(i < 4 ? `Còn ${5 - i} ngày` : i === 4 ? 'Chỉ còn 1 ngày' : 'Và rồi…');
-    if (i === 5) await calSleep(1100);
-    flipCalPage(ps[i], ps[i + 1], T[i]);
-    await calSleep(i < 5 ? T[i] * 0.6 : T[i]);
-  }
+  // Lật ngày 14 (vừa phải ~600ms) -> Hiện ngày 15
+  if (window.currentActiveStage !== 2) { isCalRunning = false; return; }
+  flipCalPage(ps[0], ps[1], 550);
+  sayCalCap('Còn 5 ngày');
+  await calSleep(600);
+
+  // Lật ngày 15 (vừa phải ~600ms) -> Hiện ngày 16
+  if (window.currentActiveStage !== 2) { isCalRunning = false; return; }
+  flipCalPage(ps[1], ps[2], 550);
+  sayCalCap('Còn 4 ngày');
+  await calSleep(600);
+
+  // Lật ngày 16 (nhanh dần ~350ms) -> Hiện ngày 17
+  if (window.currentActiveStage !== 2) { isCalRunning = false; return; }
+  flipCalPage(ps[2], ps[3], 320);
+  sayCalCap('Còn 3 ngày');
+  await calSleep(360);
+
+  // Lật ngày 17 (nhanh dần ~350ms) -> Hiện ngày 18
+  if (window.currentActiveStage !== 2) { isCalRunning = false; return; }
+  flipCalPage(ps[3], ps[4], 320);
+  sayCalCap('Còn 2 ngày');
+  await calSleep(360);
+
+  // Lật ngày 18 (nhanh dần ~350ms) -> Hiện ngày 19
+  if (window.currentActiveStage !== 2) { isCalRunning = false; return; }
+  flipCalPage(ps[4], ps[5], 320);
+  sayCalCap('Và rồi…');
+  // Ngày 19 chậm lại (~800ms) trước khi sang ngày 20
+  await calSleep(850);
+
+  // Lật ngày 19 sang ngày 20 rực rỡ
+  if (window.currentActiveStage !== 2) { isCalRunning = false; return; }
+  flipCalPage(ps[5], ps[6], 750);
+  await calSleep(750);
 
   if (calCap) {
     calCap.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: 'forwards' });
@@ -1886,11 +1913,11 @@ function initStage3() {
   const ctx = canvas.getContext('2d');
   initGalaxyDust(ctx, canvas.width, canvas.height);
 
-  // Phân bổ 23 bạn nữ trên 3 quỹ đạo rõ ràng (cách xa nhau 85px), không lo chồng lấp
+  // Phân bổ 23 bạn nữ trên 3 quỹ đạo rõ ràng (tốc độ xoay êm ái, thư giãn 35% - 38% so với ban đầu)
   const ORBIT_TRACKS = [
-    { radius: 125, speed: 0.0022, startIndex: 0, count: 5 },
-    { radius: 210, speed: 0.0015, startIndex: 5, count: 8 },
-    { radius: 295, speed: 0.0010, startIndex: 13, count: 10 }
+    { radius: 125, speed: 0.00080, startIndex: 0, count: 5 },
+    { radius: 210, speed: 0.00055, startIndex: 5, count: 8 },
+    { radius: 295, speed: 0.00038, startIndex: 13, count: 10 }
   ];
 
   const girlNodes = [];
@@ -2001,7 +2028,7 @@ function initStage3() {
   function animateGalaxy() {
     if (currentActiveStage === 3) {
       if (!isGalaxyPaused) {
-        galaxyGlobalAngle += 0.0012;
+        galaxyGlobalAngle += 0.00045;
 
         // Cập nhật tọa độ từng bạn nữ trên quỹ đạo thiên hà
         girlNodes.forEach(item => {
@@ -3708,14 +3735,47 @@ function initStage6Atmosphere() {
   }
 }
 
-// Tạo 23 thẻ kỷ niệm theo mô hình 2 VÒNG QUỸ ĐẠO ELIP ĐỒNG TÂM (DUAL-RING ORBIT)
-// Vòng 1 (Inner): 10 thẻ đầu (idx 0..9)
-// Vòng 2 (Outer): 13 thẻ còn lại (idx 10..22)
+// ==========================================================
+// TỌA ĐỘ 23 ĐIỂM CHUẨN HÓA TRÊN VÒNG TRÁI TIM (EQUAL ARC-LENGTH HEART FORMULA)
+// Được tính toán qua mô hình thư giãn đàn hồi (Spring Relaxation) để đảm bảo:
+// 1. Khoảng cách Euclidean giữa tất cả các thẻ liền kề hoàn toàn bằng nhau (~0.265 đơn vị).
+// 2. Không bị co cụm ở đỉnh lõm hoặc đáy nhọn.
+// 3. Đối xứng gương song phương tuyệt đối (Bilateral Symmetry) giữa nửa trái và nửa phải.
+// ==========================================================
+const HEART_23_NORM = [
+  { nx:  0.0000, ny: -0.4545 }, // 0: Đỉnh lõm chính giữa
+  { nx:  0.1052, ny: -0.7643 }, // 1: Cung tròn trên bên phải
+  { nx:  0.3175, ny: -0.9670 }, // 2: Cánh phải trên
+  { nx:  0.5818, ny: -1.0000 }, // 3: Đỉnh cao nhất bên phải
+  { nx:  0.8229, ny: -0.8586 }, // 4: Vòm ngoài phải
+  { nx:  0.9794, ny: -0.5859 }, // 5: Sườn ngoài trên phải
+  { nx:  1.0000, ny: -0.2495 }, // 6: Điểm mở rộng cực đại bên phải
+  { nx:  0.8916, ny:  0.0585 }, // 7: Eo phải
+  { nx:  0.7178, ny:  0.3137 }, // 8: Sườn nghiêng phải
+  { nx:  0.5202, ny:  0.5391 }, // 9: Sườn dốc dưới phải
+  { nx:  0.3193, ny:  0.7598 }, // 10: Tiếp cận đáy phải
+  { nx:  0.1328, ny:  1.0000 }, // 11: Đáy nhọn phải
+  { nx: -0.1328, ny:  1.0000 }, // 12: Đáy nhọn trái
+  { nx: -0.3193, ny:  0.7598 }, // 13: Tiếp cận đáy trái
+  { nx: -0.5202, ny:  0.5391 }, // 14: Sườn dốc dưới trái
+  { nx: -0.7178, ny:  0.3137 }, // 15: Sườn nghiêng trái
+  { nx: -0.8916, ny:  0.0585 }, // 16: Eo trái
+  { nx: -1.0000, ny: -0.2495 }, // 17: Điểm mở rộng cực đại bên trái
+  { nx: -0.9794, ny: -0.5859 }, // 18: Sườn ngoài trên trái
+  { nx: -0.8229, ny: -0.8586 }, // 19: Vòm ngoài trái
+  { nx: -0.5818, ny: -1.0000 }, // 20: Đỉnh cao nhất bên trái
+  { nx: -0.3175, ny: -0.9670 }, // 21: Cánh trái trên
+  { nx: -0.1052, ny: -0.7643 }  // 22: Cung tròn trên bên trái nối về tâm
+];
+
+// Tạo 23 thẻ kỷ niệm Polaroid phóng to 1.5x với thông tin đầy đủ của 23 bạn nữ 12B1
 function buildStage6MiniCards() {
   const cardsLayer = document.getElementById('finaleCardsLayer');
   if (!cardsLayer) return;
   cardsLayer.innerHTML = '';
   finaleCards = [];
+
+  const goldenAngle = 2.3999632; // ~137.5 độ (Golden Phyllotaxis Dispersion)
 
   FEMALE_STUDENTS.forEach((st, idx) => {
     const card = document.createElement('div');
@@ -3744,25 +3804,28 @@ function buildStage6MiniCards() {
       </div>
     `;
 
-    // Tọa độ ban đầu xuất phát từ tâm màn hình và ẩn đi (chờ Giai đoạn 3 tỏa sáng)
+    // Ban đầu ẩn hoàn toàn ở tâm (sẽ bung nở từ giây thứ 14s)
     card.style.transform = 'translate(-50%, -50%) translate3d(0, 0, 0) scale(0)';
     card.style.opacity = '0';
 
-    const isRing1 = idx < 10;
+    // Phân bố các điểm neo lơ lửng ngẫu nhiên nhưng hài hòa khắp viewport
+    const rRatio = Math.sqrt((idx + 1) / 23);
+    const fAngle = idx * goldenAngle + (idx % 2 === 0 ? 0.35 : -0.35);
+    const normFloatX = Math.cos(fAngle) * rRatio * 0.38;
+    const normFloatY = Math.sin(fAngle) * rRatio * 0.34;
+
     const itemData = {
       el: card,
       student: st,
       index: idx,
-      ring: isRing1 ? 1 : 2,
-      baseAngle: isRing1
-        ? (idx / 10) * Math.PI * 2
-        : ((idx - 10) / 13) * Math.PI * 2,
+      normFloatX: normFloatX,
+      normFloatY: normFloatY,
       isHovered: false,
       lastX: 0,
       lastY: 0
     };
 
-    // Tương tác di chuột / Chạm vào: Tạm dừng vị trí, phóng to scale(1.35), z-index 100 và hiện lời chúc
+    // Tương tác di chuột / chạm: Giữ nguyên vị trí, phóng to scale(1.8) với viền phát sáng lộng lẫy
     card.addEventListener('pointerenter', () => {
       itemData.isHovered = true;
       card.classList.add('is-active');
@@ -3773,7 +3836,7 @@ function buildStage6MiniCards() {
       card.classList.remove('is-active');
     });
 
-    // Bấm vào thẻ để xem ảnh gốc kích thước lớn trong Lightbox
+    // Bấm vào thẻ để ngắm ảnh gốc cỡ lớn trong Lightbox
     card.addEventListener('click', (e) => {
       e.stopPropagation();
       if (typeof openOriginalPhotoLightbox === 'function') {
@@ -3936,91 +3999,141 @@ function stage6Frame(now) {
     stage6UserVelPitch *= 0.92;
   }
 
-  // 5. CẬP NHẬT 23 THẺ ẢNH THEO MÔ HÌNH 2 VÒNG QUỸ ĐẠO ELIP ĐỒNG TÂM (DUAL-RING ORBIT)
-  // Bán kính chuẩn theo kích thước viewport (có ngưỡng bảo vệ tối thiểu trên desktop, co giãn an toàn trên mobile)
+  // 5. CẬP NHẬT 23 THẺ ẢNH POLAROID: LƠ LỬNG KHÔNG GIAN (14s-26s) -> TỤ THÀNH HÌNH TRÁI TIM (26s-32s)
   const winW = window.innerWidth || stage6W || 1200;
   const winH = window.innerHeight || stage6H || 800;
   const isMobile = winW < 768;
 
-  // Vòng 1 (Inner Ring - 10 thẻ): Rx1 = winW * 0.33 (tối thiểu 380px), Ry1 = winH * 0.32 (tối thiểu 230px)
-  const Rx1 = isMobile ? Math.max(160, winW * 0.33) : Math.max(380, winW * 0.33);
-  const Ry1 = isMobile ? Math.max(140, winH * 0.32) : Math.max(230, winH * 0.32);
+  // Hệ số mở rộng quy mô vòng Trái Tim (chiếm ~85% - 90% viewport, không đè lấn nhau)
+  let heartScaleX, heartScaleY, heartCenterY, baseCardScale;
 
-  // Vòng 2 (Outer Ring - 13 thẻ): Rx2 = winW * 0.44 (tối thiểu 520px), Ry2 = winH * 0.41 (tối thiểu 310px)
-  const Rx2 = isMobile ? Math.max(175, winW * 0.44) : Math.max(520, winW * 0.44);
-  const Ry2 = isMobile ? Math.max(185, winH * 0.41) : Math.max(310, winH * 0.41);
-
-  // Tốc độ quay chuẩn: Vòng 1 quay thuận (+0.0018), Vòng 2 quay ngược (-0.0012)
-  stage6OrbitAngle1 += 0.0018;
-  stage6OrbitAngle2 -= 0.0012;
+  if (isMobile) {
+    heartScaleX = Math.max(150, winW * 0.44);
+    heartScaleY = Math.max(220, winH * 0.38);
+    heartCenterY = -winH * 0.03;
+    baseCardScale = 1.0;
+  } else {
+    // Desktop: Mở rộng 85% - 90% viewport, giữ dáng tim thanh thoát cân đối
+    const maxW = winW * 0.44;
+    const maxH = winH * 0.40;
+    heartScaleY = Math.max(280, maxH);
+    heartScaleX = Math.max(380, Math.min(maxW, heartScaleY * 1.32));
+    heartCenterY = -winH * 0.02;
+    // Tự động scale thẻ hài hòa trên màn hình laptop nhỏ hơn 900px
+    baseCardScale = Math.min(1.0, Math.max(0.78, winH / 940));
+  }
 
   for (const it of finaleCards) {
     const cardEl = it.el;
     if (!cardEl) continue;
 
-    // Giai đoạn 1 & 2: Chưa đến 11.2s thì ẩn toàn bộ 23 thẻ (opacity: 0, scale: 0)
-    if (time < 11.2) {
+    // Giai đoạn 1 & 2: Trước 14.0s ẩn toàn bộ thẻ để người xem tập trung đọc các câu dẫn đầu tiên
+    if (time < 14.0) {
       cardEl.style.opacity = '0';
       cardEl.style.transform = 'translate(-50%, -50%) translate3d(0px, 0px, 0px) scale(0)';
       continue;
     }
 
-    // Giai đoạn 3: Từ 11.2s bắt đầu bung tỏa từ tâm ra 2 vòng elip (mỗi thẻ stagger cách nhau 40ms)
-    let radiusFactor = 1.0;
-    let scaleFactor = 0.92;
-    let opacityFactor = 0.95;
+    const floatBaseX = it.normFloatX * winW;
+    const floatBaseY = it.normFloatY * winH;
 
-    const cardStartTime = 11.2 + (it.index * 0.040); // Stagger 40ms mỗi thẻ
-    const expandDuration = 0.85; // Thời gian mỗi thẻ bay vút từ tâm ra quỹ đạo (0.85s)
+    let curX = 0, curY = 0, curScale = baseCardScale, curOpacity = 1.0, curRot = 0;
 
-    if (time < cardStartTime) {
-      cardEl.style.opacity = '0';
-      cardEl.style.transform = 'translate(-50%, -50%) translate3d(0px, 0px, 0px) scale(0)';
-      continue;
-    } else if (time < cardStartTime + expandDuration) {
-      const p = (time - cardStartTime) / expandDuration;
-      // Nội suy mượt mà easeOutCubic
-      const easeP = 1 - Math.pow(1 - p, 3);
-      radiusFactor = easeP;
-      scaleFactor = 0.2 + 0.72 * easeP;
-      opacityFactor = Math.min(0.95, easeP * 1.35);
+    // Giai đoạn từ 14.0s đến 22.0s: 23 thẻ lần lượt xuất hiện từ tâm và bay lơ lửng chậm rãi khắp màn hình
+    if (time < 22.0) {
+      const cardStartTime = 14.0 + (it.index * 0.20); // Phân bổ từ 14.0s đến 18.4s
+      const flyDuration = 1.6;
+
+      if (time < cardStartTime) {
+        cardEl.style.opacity = '0';
+        cardEl.style.transform = 'translate(-50%, -50%) translate3d(0px, 0px, 0px) scale(0)';
+        continue;
+      } else if (time < cardStartTime + flyDuration) {
+        const p = (time - cardStartTime) / flyDuration;
+        const easeP = 1 - Math.pow(1 - p, 3);
+        curX = floatBaseX * easeP;
+        curY = floatBaseY * easeP;
+        curScale = (0.2 + 0.8 * easeP) * baseCardScale;
+        curOpacity = Math.min(1.0, easeP * 1.4);
+        curRot = Math.sin(time * 1.2 + it.index) * 6;
+      } else {
+        const driftX = Math.sin(time * 0.9 + it.index * 1.4) * 14;
+        const driftY = Math.cos(time * 0.8 + it.index * 1.2) * 12;
+        curX = floatBaseX + driftX;
+        curY = floatBaseY + driftY;
+        curScale = baseCardScale;
+        curOpacity = 1.0;
+        curRot = Math.sin(time * 0.7 + it.index * 1.5) * 7;
+      }
+    } else if (time < 26.0) {
+      // Từ 22.0s đến 26.0s: Toàn bộ 23 thẻ tiếp tục bay lơ lửng thư thái (chưa xếp thành hình trái tim vội)
+      const driftX = Math.sin(time * 0.9 + it.index * 1.4) * 14;
+      const driftY = Math.cos(time * 0.8 + it.index * 1.2) * 12;
+      curX = floatBaseX + driftX;
+      curY = floatBaseY + driftY;
+      curScale = baseCardScale;
+      curOpacity = 1.0;
+      curRot = Math.sin(time * 0.7 + it.index * 1.5) * 7;
+    } else if (time < 32.0) {
+      // Từ 26.0s đến 32.0s (Cao trào cuối giọng đọc): 23 thẻ tụ lại, khóa vào vị trí Vòng Trái Tim
+      const norm = HEART_23_NORM[it.index];
+      const targetX = norm.nx * heartScaleX;
+      const targetY = norm.ny * heartScaleY + heartCenterY;
+
+      const srcDriftX = Math.sin(26.0 * 0.9 + it.index * 1.4) * 14;
+      const srcDriftY = Math.cos(26.0 * 0.8 + it.index * 1.2) * 12;
+      const srcX = floatBaseX + srcDriftX;
+      const srcY = floatBaseY + srcDriftY;
+      const srcRot = Math.sin(26.0 * 0.7 + it.index * 1.5) * 7;
+
+      const convergeStart = 26.0 + (it.index % 6) * 0.12;
+      const convergeDur = 5.0;
+
+      if (time < convergeStart) {
+        const driftX = Math.sin(time * 0.9 + it.index * 1.4) * 14;
+        const driftY = Math.cos(time * 0.8 + it.index * 1.2) * 12;
+        curX = floatBaseX + driftX;
+        curY = floatBaseY + driftY;
+        curScale = baseCardScale;
+        curOpacity = 1.0;
+        curRot = Math.sin(time * 0.7 + it.index * 1.5) * 7;
+      } else {
+        const p = Math.min(1.0, (time - convergeStart) / convergeDur);
+        const easeP = 0.5 * (1 - Math.cos(Math.PI * p));
+        curX = srcX * (1 - easeP) + targetX * easeP;
+        curY = srcY * (1 - easeP) + targetY * easeP;
+        curRot = srcRot * (1 - easeP) + (Math.sin(it.index * 0.8) * 1.8) * easeP;
+        curScale = baseCardScale;
+        curOpacity = 1.0;
+      }
     } else {
-      radiusFactor = 1.0;
-      scaleFactor = 0.92;
-      opacityFactor = 0.95;
+      // Từ 32.0s trở đi: Đã khóa hoàn chỉnh thành Vòng Trái Tim, giữ nhịp thở êm ái
+      const norm = HEART_23_NORM[it.index];
+      const targetX = norm.nx * heartScaleX;
+      const targetY = norm.ny * heartScaleY + heartCenterY;
+      const breathe = Math.sin(time * 1.4 + it.index * 0.5) * 2.5;
+      const dirX = targetX !== 0 ? (targetX / Math.abs(targetX)) : 0;
+      const dirY = targetY !== 0 ? (targetY / Math.abs(targetY)) : 1;
+      curX = targetX + dirX * breathe;
+      curY = targetY + dirY * breathe;
+      curRot = Math.sin(time * 1.2 + it.index * 0.7) * 1.5;
+      curScale = baseCardScale;
+      curOpacity = 1.0;
     }
 
-    // Khi người dùng hover vào một thẻ: tạm dừng cập nhật vị trí, phóng to scale(1.35) và z-index: 100
     if (it.isHovered) {
-      cardEl.style.transform = `translate(-50%, -50%) translate3d(${it.lastX}px, ${it.lastY}px, 0px) rotate(0deg) scale(1.35)`;
+      cardEl.style.transform = `translate(-50%, -50%) translate3d(${it.lastX}px, ${it.lastY}px, 0px) scale(${baseCardScale.toFixed(3)})`;
       cardEl.style.zIndex = '100';
       cardEl.style.opacity = '1';
       continue;
     }
 
-    const isRing1 = (it.ring === 1);
-    const Rx = (isRing1 ? Rx1 : Rx2) * radiusFactor;
-    const Ry = (isRing1 ? Ry1 : Ry2) * radiusFactor;
-    const orbitAngle = isRing1 ? stage6OrbitAngle1 : stage6OrbitAngle2;
-    const currentAngle = it.baseAngle + orbitAngle + stage6UserYaw;
+    it.lastX = curX.toFixed(1);
+    it.lastY = curY.toFixed(1);
 
-    // Hiệu ứng bồng bềnh nhẹ tại chỗ (chỉ dao động nhẹ 8px)
-    const floatOffset = Math.sin(time * 2 + it.index) * 8 * radiusFactor;
-
-    // Phương trình Elip chuẩn: x = cos(angle) * Rx, y = sin(angle) * Ry + floatOffset
-    const x = Math.cos(currentAngle) * Rx;
-    const y = Math.sin(currentAngle) * Ry + floatOffset;
-
-    // Độ nghiêng nhẹ tự nhiên theo chuyển động: từ -4deg đến 4deg
-    const rot = Math.sin(time * 1.5 + it.index) * 4;
-
-    it.lastX = x.toFixed(1);
-    it.lastY = y.toFixed(1);
-
-    // Áp dụng trực tiếp: translate(-50%, -50%) translate3d(x, y, 0px) rotate(rot) scale(scaleFactor)
-    cardEl.style.transform = `translate(-50%, -50%) translate3d(${it.lastX}px, ${it.lastY}px, 0px) rotate(${rot.toFixed(1)}deg) scale(${scaleFactor.toFixed(3)})`;
-    cardEl.style.opacity = opacityFactor.toFixed(3);
-    cardEl.style.zIndex = isRing1 ? '45' : '35';
+    cardEl.style.transform = `translate(-50%, -50%) translate3d(${it.lastX}px, ${it.lastY}px, 0px) rotate(${curRot.toFixed(1)}deg) scale(${curScale.toFixed(3)})`;
+    cardEl.style.opacity = curOpacity.toFixed(3);
+    cardEl.style.zIndex = '45';
   }
 
   stage6AnimId = requestAnimationFrame(stage6Frame);
@@ -4044,7 +4157,14 @@ function clearStage6Timeline() {
 }
 
 // ==========================================================
-// KỊCH BẢN XUẤT HIỆN TUẦN TỰ ĐIỆN ẢNH (CINEMATIC TIMELINE 4 GIAI ĐOẠN)
+// KỊCH BẢN XUẤT HIỆN TUẦN TỰ ĐIỆN ẢNH ĐỒNG BỘ CHÍNH XÁC VỚI GIỌNG ĐỌC (VOICEOVER TIMELINE)
+// Đồng bộ 100% từ t = 0s khớp chuẩn với file audio giọng đọc 34s:
+// 0s - 6s: Câu 1 ("10 năm sau, 20 năm sau, hay 30 năm sau nữa...")
+// 6s - 12s: Câu 2 ("Những chuyến đi này sẽ hóa thành ký ức vô giá của tuổi thanh xuân...")
+// 12s - 19s: Câu 3 ("50 năm sau đó, trong một chiều nắng ngập tràn...") + 14s-22s: 23 ảnh tỏa ra lơ lửng
+// 19s - 26s: Câu 4 ("Nhớ lại những chuyến đi, nhớ hết tất cả những con người...")
+// 26s - 32s: 23 ảnh tụ lại khóa vào Vòng Trái Tim hoàn chỉnh
+// 29.5s - 30.8s: Cụm thông điệp trung tâm xuất hiện và gõ lời chúc từ tập thể nam
 // ==========================================================
 function runStage6CinematicTimeline() {
   clearStage6Timeline();
@@ -4082,121 +4202,116 @@ function runStage6CinematicTimeline() {
   if (cursor) cursor.classList.remove('hide');
   if (actionOverlay) actionOverlay.classList.remove('show');
 
-  // GIAI ĐOẠN 1: NHỊP ĐẬP TRÁI TIM MỞ MÀN (0s -> 2.5s)
+  // Chuẩn hóa mốc thời gian t = 0s trùng khớp với thời điểm giọng đọc cất lên
+  stage6T0 = performance.now();
+  stage6LastTime = stage6T0;
+
+  // Kích hoạt giọng đọc dẫn chuyện đoạn kết & tự động giảm nhỏ nhạc nền piano (Audio Ducking)
+  if (typeof playEndingVoiceover === 'function') {
+    playEndingVoiceover();
+  }
+
+  // GIAI ĐOẠN 1: TRÁI TIM MỞ MÀN ĐẬP NHẸ RỒI NỞ BUNG RA VŨ TRỤ (0s -> 1.0s)
   if (heartWrap && heart) {
     heartWrap.style.display = 'flex';
     heartWrap.style.opacity = '1';
     heart.className = 'finale-opening-heart beating';
 
-    // Âm thanh nhịp đập 1, 2, 3
-    stage6Timers.push(setTimeout(() => {
-      try {
-        if (window.audioManager?.playBellSound) audioManager.playBellSound(440, 0.7);
-      } catch (e) {}
-    }, 200));
-
-    stage6Timers.push(setTimeout(() => {
-      try {
-        if (window.audioManager?.playBellSound) audioManager.playBellSound(554, 0.85);
-      } catch (e) {}
-    }, 900));
-
-    // Chuẩn bị giảm nhỏ nhạc nền êm ái trước khi tiếng lồng tiếng cất lên
-    stage6Timers.push(setTimeout(() => {
-      try {
-        if (window.audioManager?.playBellSound) audioManager.playBellSound(659, 1.1);
-        if (typeof setBgmVolumeSmooth === 'function') setBgmVolumeSmooth(BGM_DUCKED_VOL, 1000);
-      } catch (e) {}
-    }, 1700));
-
-    // Nổ tung pháo giấy & hoa lửa ở 2.4s (Thời khắc Trái Tim Mở Màn nở bung ra vũ trụ)
-    stage6Timers.push(setTimeout(() => {
-      try {
-        if (window.audioManager?.playCrystalChime) audioManager.playCrystalChime();
-        if (window.FX?.triggerFirework) window.FX.triggerFirework();
-        if (window.confetti) {
-          window.confetti({
-            particleCount: 120,
-            spread: 100,
-            origin: { x: 0.5, y: 0.5 },
-            colors: ['#ffd700', '#ff1493', '#ff69b4', '#ffffff', '#e11d48']
-          });
-        }
-      } catch (e) {}
-
-      // Kích hoạt giọng đọc dẫn chuyện đoạn kết & tự động giảm nhỏ nhạc nền (Audio Ducking)
-      if (typeof playEndingVoiceover === 'function') {
-        playEndingVoiceover();
+    try {
+      if (window.audioManager?.playBellSound) audioManager.playBellSound(554, 0.85);
+      if (window.audioManager?.playCrystalChime) audioManager.playCrystalChime();
+      if (window.confetti) {
+        window.confetti({
+          particleCount: 80,
+          spread: 80,
+          origin: { x: 0.5, y: 0.5 },
+          colors: ['#ffd700', '#ff1493', '#ff69b4', '#ffffff', '#e11d48']
+        });
       }
-    }, 2400));
+    } catch (e) {}
 
-    // Ẩn trái tim mở màn ở 2.5s
+    // Trái tim tan biến êm dịu ở 0.85s để nhường trọn không gian cho lời dẫn
     stage6Timers.push(setTimeout(() => {
-      heartWrap.style.display = 'none';
-      heart.className = 'finale-opening-heart';
-    }, 2500));
+      heartWrap.style.transition = 'opacity 0.35s ease';
+      heartWrap.style.opacity = '0';
+      setTimeout(() => {
+        heartWrap.style.display = 'none';
+        heart.className = 'finale-opening-heart';
+      }, 350);
+    }, 850));
   }
 
-  // GIAI ĐOẠN 2: LỜI DẪN CẢM XÚC TỪNG NHỊP (2.5s -> 11.2s) - Khớp với giọng đọc voiceover
+  // GIAI ĐOẠN 2: LỜI DẪN CẢM XÚC 4 CÂU ĐỒNG BỘ TUYỆT ĐỐI VỚI GIỌNG ĐỌC
   if (storyWrap && storyText) {
     storyWrap.style.display = 'flex';
 
-    // Câu 1 (từ 2.5s đến 5.5s)
+    // Câu 1 (từ 0s đến 6s)
     stage6Timers.push(setTimeout(() => {
       storyText.textContent = '“10 năm sau, 20 năm sau, hay 30 năm sau nữa...”';
       storyText.className = 'finale-story-text visible';
-    }, 2500));
+    }, 400));
 
     stage6Timers.push(setTimeout(() => {
       storyText.className = 'finale-story-text fade-out';
-    }, 5300));
+    }, 5200));
 
-    // Câu 2 (từ 5.6s đến 8.2s)
+    // Câu 2 (từ 6s đến 12s)
     stage6Timers.push(setTimeout(() => {
       storyText.textContent = '“Những chuyến đi này sẽ hóa thành ký ức vô giá của tuổi thanh xuân...”';
       storyText.className = 'finale-story-text visible';
-    }, 5600));
+    }, 6000));
 
     stage6Timers.push(setTimeout(() => {
       storyText.className = 'finale-story-text fade-out';
-    }, 8100));
+    }, 11200));
 
-    // Câu 3 (từ 8.4s đến 11.2s)
+    // Câu 3 (từ 12s đến 19s) - Khớp câu nói về 50 năm sau
     stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“Nhớ hết tất cả những con người, và những nụ cười rực tươi nhất...”';
+      storyText.textContent = '“50 năm sau đó, trong một chiều nắng ngập tràn, những tấm hình cũ sẽ làm kỷ niệm bất chợt ùa về...”';
       storyText.className = 'finale-story-text visible';
-    }, 8400));
+    }, 12000));
 
     stage6Timers.push(setTimeout(() => {
       storyText.className = 'finale-story-text fade-out';
-    }, 10700));
+    }, 18200));
 
+    // Câu 4 (từ 19s đến 26s)
+    stage6Timers.push(setTimeout(() => {
+      storyText.textContent = '“Nhớ lại những chuyến đi, nhớ hết tất cả những con người, và những nụ cười rực tươi nhất...”';
+      storyText.className = 'finale-story-text visible';
+    }, 19000));
+
+    stage6Timers.push(setTimeout(() => {
+      storyText.className = 'finale-story-text fade-out';
+    }, 25200));
+
+    // Kết thúc lời dẫn ở 26s
     stage6Timers.push(setTimeout(() => {
       storyWrap.style.display = 'none';
       storyText.textContent = '';
       storyText.className = 'finale-story-text';
-    }, 11200));
+    }, 26000));
   }
 
-  // GIAI ĐOẠN 3: BẤT NGỜ BUNG TỎA 23 VÌ TINH TÚ (11.2s -> 13.0s)
+  // GIAI ĐOẠN 3: CAO TRÀO TỤ LẠI XẾP THÀNH HÌNH TRÁI TIM (26s -> 32s)
   stage6Timers.push(setTimeout(() => {
     try {
       if (window.audioManager?.playCrystalChime) audioManager.playCrystalChime();
-      if (window.audioManager?.playBellSound) audioManager.playBellSound(1046, 1.5);
+      if (window.audioManager?.playBellSound) audioManager.playBellSound(1046, 1.3);
       if (window.FX?.triggerFirework) window.FX.triggerFirework();
       if (window.confetti) {
         window.confetti({
-          particleCount: 90,
+          particleCount: 110,
           spread: 90,
           origin: { x: 0.5, y: 0.5 },
-          colors: ['#ffd700', '#ff69b4', '#ffffff', '#e11d48']
+          colors: ['#ffd700', '#ff1493', '#ff69b4', '#ffffff', '#e11d48']
         });
       }
     } catch (e) {}
-  }, 11200));
+  }, 26000));
 
-  // GIAI ĐOẠN 4: XUẤT HIỆN KHUNG THÔNG ĐIỆP ĐÍCH (13.0s trở đi)
-  // Bước 4.1 (13.0s): Khung nền kính mờ & Huy hiệu nhỏ hiện ra
+  // GIAI ĐOẠN 4: KHUNG THÔNG ĐIỆP CHÍNH XUẤT HIỆN Ở TRUNG TÂM TRÁI TIM (Từ 29.5s trở đi)
+  // Bước 4.1 (29.5s): Khung thông điệp và huy hiệu trung tâm nhẹ nhàng xuất hiện
   stage6Timers.push(setTimeout(() => {
     if (centerpiece) {
       centerpiece.style.display = 'block';
@@ -4211,72 +4326,76 @@ function runStage6CinematicTimeline() {
       badge.style.transform = 'translateY(0)';
       badge.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
     }
-  }, 13000));
+  }, 29500));
 
-  // Bước 4.2 (13.8s): Dòng tiêu đề lớn hiện lên sắc nét, sang trọng (đúng 2 dòng)
+  // Bước 4.2 (30.0s): Dòng tiêu đề trang trọng hiển thị
   stage6Timers.push(setTimeout(() => {
     if (title) {
       title.innerHTML = 'Gửi 23 Đóa Hoa Rạng Rỡ Nhất<br>Của Tập Thể 12B1';
       title.classList.add('visible');
       title.style.opacity = '1';
     }
-  }, 13800));
+  }, 30000));
 
-  // Bước 4.3 (15.2s): Gõ lời chúc với hiệu ứng Typewriter nhẹ nhàng (đúng 2 dòng cân xứng)
+  // Bước 4.3 (30.8s): Gõ lời nhắn chân thành từ tập thể nam bằng hiệu ứng Typewriter
   stage6Timers.push(setTimeout(() => {
-    const line1 = "Thanh xuân của chúng mình đẹp nhất là vì có các bạn.";
-    const line2 = "Luôn mỉm cười, rạng rỡ và hạnh phúc nhé! ❤️";
-    let curLine = 1;
+    const part1 = "Thanh xuân của chúng mình đẹp nhất là vì có sự xuất hiện của các bạn. Món quà nhỏ này tụi con trai 12B1 đã cố gắng chuẩn bị bằng tất cả tấm lòng, dù đôi chỗ có thể còn vụng về hay thiếu sót, mong các bạn nữ nhẹ nhàng bỏ qua nhé.";
+    const part2 = "Chúc 23 đóa hoa của lớp mình luôn mỉm cười, rạng rỡ và hạnh phúc! ❤️";
+
+    let curPart = 1;
     let charIdx = 0;
     if (typeBody) typeBody.innerHTML = '';
 
-    function typeQuoteChar() {
+    function typeClimaxChar() {
       if (window.currentActiveStage !== 6) return;
-      if (curLine === 1) {
-        if (charIdx < line1.length) {
-          const ch = line1[charIdx];
+
+      if (curPart === 1) {
+        if (charIdx < part1.length) {
+          const ch = part1[charIdx];
           charIdx++;
-          if (typeBody) typeBody.innerHTML = line1.slice(0, charIdx);
+          if (typeBody) typeBody.innerHTML = part1.slice(0, charIdx);
           try {
             if (window.audioManager && audioManager.playTypewriterASMR) {
               audioManager.playTypewriterASMR(ch);
             }
           } catch (e) {}
-          window.stage6TypeTimer = setTimeout(typeQuoteChar, 42);
+          window.stage6TypeTimer = setTimeout(typeClimaxChar, 33);
         } else {
-          curLine = 2;
+          curPart = 2;
           charIdx = 0;
-          if (typeBody) typeBody.innerHTML = line1 + '<br>';
+          if (typeBody) typeBody.innerHTML = part1 + '<br><br>';
           try {
             if (window.audioManager && audioManager.playVintageBell) {
               audioManager.playVintageBell();
             }
           } catch (e) {}
-          window.stage6TypeTimer = setTimeout(typeQuoteChar, 240);
+          window.stage6TypeTimer = setTimeout(typeClimaxChar, 300);
         }
       } else {
-        if (charIdx < line2.length) {
-          const ch = line2[charIdx];
+        if (charIdx < part2.length) {
+          const ch = part2[charIdx];
           charIdx++;
-          if (typeBody) typeBody.innerHTML = line1 + '<br>' + line2.slice(0, charIdx);
+          if (typeBody) typeBody.innerHTML = part1 + '<br><br>' + part2.slice(0, charIdx);
           try {
             if (window.audioManager && audioManager.playTypewriterASMR) {
               audioManager.playTypewriterASMR(ch);
             }
           } catch (e) {}
-          window.stage6TypeTimer = setTimeout(typeQuoteChar, 42);
+          window.stage6TypeTimer = setTimeout(typeClimaxChar, 33);
         } else {
-          // Gõ xong lời chúc!
+          // Gõ xong toàn bộ thông điệp!
           try {
             if (window.audioManager && audioManager.playVintageBell) {
               audioManager.playVintageBell();
             }
           } catch (e) {}
           if (cursor) cursor.classList.add('hide');
+
           // Bước 4.4: Bảng điều khiển góc dưới nhẹ nhàng hiện lên
           if (actionOverlay) {
             actionOverlay.classList.add('show');
           }
+
           // BÙNG NỔ ĐẠI TIỆC PHÁO HOA TRÁI TIM & KIM TUYẾN KHI KẾT THÚC THÔNG ĐIỆP
           try {
             if (window.FX && window.FX.launchGrandFinaleBarrage) {
@@ -4286,8 +4405,9 @@ function runStage6CinematicTimeline() {
         }
       }
     }
-    typeQuoteChar();
-  }, 15200));
+
+    typeClimaxChar();
+  }, 30800));
 }
 
 // ==========================================================
@@ -4558,12 +4678,20 @@ function initStage6HeartNames() {
   buildStage6MiniCards();
   setupStage6Interactions();
 
+  const heartWrap = document.getElementById('finaleOpeningHeartWrap');
+  if (heartWrap) {
+    heartWrap.onclick = (e) => {
+      e.stopPropagation();
+      runStage6CinematicTimeline();
+    };
+  }
+
   stage6T0 = performance.now();
   stage6LastTime = performance.now();
   stage6OrbitAngle1 = 0;
   stage6OrbitAngle2 = 0;
 
-  // Khởi động chuỗi kịch bản điện ảnh 4 giai đoạn
+  // Khởi động chuỗi kịch bản điện ảnh
   runStage6CinematicTimeline();
 
   if (stage6AnimId) cancelAnimationFrame(stage6AnimId);
