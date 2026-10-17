@@ -2332,7 +2332,9 @@ body.universe-body {
 .letter-signature-area {
   border-top: 2px dashed #fbcfe8;
   padding-top: 18px;
+  padding-bottom: 24px;
   text-align: left;
+  overflow: visible;
 }
 
 .sig-note {
@@ -2345,8 +2347,15 @@ body.universe-body {
 
 .handwriting-svg {
   width: 100%;
-  max-width: 540px;
-  height: 80px;
+  max-width: 600px;
+  height: auto;
+  min-height: 60px;
+  overflow: visible !important;
+  display: block;
+}
+
+.handwriting-svg text {
+  overflow: visible;
 }
 
 .sig-path {
