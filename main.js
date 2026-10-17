@@ -499,17 +499,55 @@ class LuxuryAudioManager {
 const audioManager = new LuxuryAudioManager();
 window.audioManager = audioManager;
 const bgmEl = document.getElementById('bgmAudio');
+const voiceoverEl = document.getElementById('voiceoverAudio');
 let isAudioActive = false;
+
+// Cấu hình âm lượng tiêu chuẩn: Giảm nhạc nền nhẹ nhàng (0.55), khi lồng tiếng nói thì ducking xuống 0.18
+const BGM_NORMAL_VOL = 0.55;
+const BGM_DUCKED_VOL = 0.18;
+let currentBgmTargetVol = BGM_NORMAL_VOL;
+let bgmFadeInterval = null;
+
+function setBgmVolumeSmooth(targetVol, durationMs = 1200) {
+  if (!bgmEl) return;
+  if (bgmFadeInterval) clearInterval(bgmFadeInterval);
+  const startVol = (typeof bgmEl.volume === 'number' && !isNaN(bgmEl.volume)) ? bgmEl.volume : BGM_NORMAL_VOL;
+  const startTime = performance.now();
+  currentBgmTargetVol = targetVol;
+
+  bgmFadeInterval = setInterval(() => {
+    const elapsed = performance.now() - startTime;
+    const progress = Math.min(1, elapsed / durationMs);
+    const easeProgress = 0.5 * (1 - Math.cos(Math.PI * progress));
+    bgmEl.volume = Math.max(0, Math.min(1, startVol + (targetVol - startVol) * easeProgress));
+    if (progress >= 1) {
+      clearInterval(bgmFadeInterval);
+      bgmFadeInterval = null;
+    }
+  }, 30);
+}
 
 // Đảm bảo đường dẫn nguồn nhạc chính xác: ưu tiên file audio/music.mp3 hoặc Base64 offline
 function ensureAudioSource() {
   if (!bgmEl) return;
+  bgmEl.volume = currentBgmTargetVol;
   if (typeof BGM_BASE64 !== 'undefined' && BGM_BASE64) {
     if (window.location.protocol === 'file:' || !bgmEl.src || bgmEl.src === window.location.href) {
       bgmEl.src = BGM_BASE64;
     }
   } else if (!bgmEl.src || bgmEl.src === window.location.href) {
     bgmEl.src = 'audio/music.mp3';
+  }
+}
+
+function ensureVoiceoverSource() {
+  if (!voiceoverEl) return;
+  if (typeof VOICEOVER_ENDING_BASE64 !== 'undefined' && VOICEOVER_ENDING_BASE64) {
+    if (window.location.protocol === 'file:' || !voiceoverEl.src || voiceoverEl.src === window.location.href) {
+      voiceoverEl.src = VOICEOVER_ENDING_BASE64;
+    }
+  } else if (!voiceoverEl.src || voiceoverEl.src === window.location.href) {
+    voiceoverEl.src = 'audio/voiceover_ending.mp3';
   }
 }
 
@@ -524,6 +562,48 @@ if (bgmEl) {
       }
     }
   });
+}
+
+if (voiceoverEl) {
+  ensureVoiceoverSource();
+  voiceoverEl.addEventListener('error', () => {
+    console.warn("audio/voiceover_ending.mp3 note, switching to embedded VOICEOVER_ENDING_BASE64...");
+    if (typeof VOICEOVER_ENDING_BASE64 !== 'undefined' && VOICEOVER_ENDING_BASE64 && voiceoverEl.src !== VOICEOVER_ENDING_BASE64) {
+      voiceoverEl.src = VOICEOVER_ENDING_BASE64;
+    }
+  });
+}
+
+function playEndingVoiceover() {
+  if (!voiceoverEl) return;
+  ensureVoiceoverSource();
+  voiceoverEl.volume = 1.0;
+  voiceoverEl.currentTime = 0;
+
+  // Giảm nhỏ nhạc nền (Audio Ducking) để giọng đọc truyền cảm rõ ràng, ấm áp
+  setBgmVolumeSmooth(BGM_DUCKED_VOL, 1000);
+
+  if (isAudioActive) {
+    const p = voiceoverEl.play();
+    if (p) p.catch(err => console.warn("Voiceover play note:", err));
+  }
+
+  // Khi giọng đọc kết thúc (sau 33s) -> Tự động đưa nhạc nền to dần trở lại
+  voiceoverEl.onended = () => {
+    if (window.currentActiveStage === 6) {
+      setBgmVolumeSmooth(BGM_NORMAL_VOL, 1800);
+    }
+  };
+}
+
+function stopEndingVoiceover() {
+  if (voiceoverEl) {
+    try {
+      voiceoverEl.pause();
+      voiceoverEl.currentTime = 0;
+    } catch (e) {}
+  }
+  setBgmVolumeSmooth(BGM_NORMAL_VOL, 800);
 }
 
 function updateAudioButtonUI(active) {
@@ -571,6 +651,7 @@ function showAutoplayPrompt() {
 function playGlobalAudio() {
   isAudioActive = true;
   ensureAudioSource();
+  ensureVoiceoverSource();
   updateAudioButtonUI(true);
   removeAutoplayPrompt();
 
@@ -593,6 +674,11 @@ function playGlobalAudio() {
     audioManager.startMelody();
   }
 
+  // Nếu đang ở Stage 6 và giọng đọc đang dở dang thì tiếp tục phát
+  if (window.currentActiveStage === 6 && voiceoverEl && voiceoverEl.paused && voiceoverEl.currentTime > 0 && !voiceoverEl.ended) {
+    voiceoverEl.play().catch(() => {});
+  }
+
   if (audioManager && audioManager.ctx && audioManager.ctx.state === 'suspended') {
     try { audioManager.ctx.resume(); } catch (e) {}
   }
@@ -603,6 +689,9 @@ function pauseGlobalAudio() {
   updateAudioButtonUI(false);
   if (bgmEl && !bgmEl.paused) {
     try { bgmEl.pause(); } catch (e) {}
+  }
+  if (voiceoverEl && !voiceoverEl.paused) {
+    try { voiceoverEl.pause(); } catch (e) {}
   }
   audioManager.stopMelody();
 }
@@ -3941,6 +4030,9 @@ function stage6Frame(now) {
 let stage6Timers = [];
 
 function clearStage6Timeline() {
+  if (typeof stopEndingVoiceover === 'function') {
+    stopEndingVoiceover();
+  }
   if (stage6Timers && Array.isArray(stage6Timers)) {
     stage6Timers.forEach(t => clearTimeout(t));
     stage6Timers = [];
@@ -4009,13 +4101,15 @@ function runStage6CinematicTimeline() {
       } catch (e) {}
     }, 900));
 
+    // Chuẩn bị giảm nhỏ nhạc nền êm ái trước khi tiếng lồng tiếng cất lên
     stage6Timers.push(setTimeout(() => {
       try {
         if (window.audioManager?.playBellSound) audioManager.playBellSound(659, 1.1);
+        if (typeof setBgmVolumeSmooth === 'function') setBgmVolumeSmooth(BGM_DUCKED_VOL, 1000);
       } catch (e) {}
     }, 1700));
 
-    // Nổ tung pháo giấy & hoa lửa ở 2.4s
+    // Nổ tung pháo giấy & hoa lửa ở 2.4s (Thời khắc Trái Tim Mở Màn nở bung ra vũ trụ)
     stage6Timers.push(setTimeout(() => {
       try {
         if (window.audioManager?.playCrystalChime) audioManager.playCrystalChime();
@@ -4029,6 +4123,11 @@ function runStage6CinematicTimeline() {
           });
         }
       } catch (e) {}
+
+      // Kích hoạt giọng đọc dẫn chuyện đoạn kết & tự động giảm nhỏ nhạc nền (Audio Ducking)
+      if (typeof playEndingVoiceover === 'function') {
+        playEndingVoiceover();
+      }
     }, 2400));
 
     // Ẩn trái tim mở màn ở 2.5s
@@ -4038,39 +4137,39 @@ function runStage6CinematicTimeline() {
     }, 2500));
   }
 
-  // GIAI ĐOẠN 2: LỜI DẪN CẢM XÚC TỪNG NHỊP (2.5s -> 11.2s)
+  // GIAI ĐOẠN 2: LỜI DẪN CẢM XÚC TỪNG NHỊP (2.5s -> 11.2s) - Khớp với giọng đọc voiceover
   if (storyWrap && storyText) {
     storyWrap.style.display = 'flex';
 
-    // Câu 1 (từ 2.5s đến 5.2s)
+    // Câu 1 (từ 2.5s đến 5.5s)
     stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“Thanh xuân cấp 3 giống như một bầu trời đêm rực rỡ...”';
+      storyText.textContent = '“10 năm sau, 20 năm sau, hay 30 năm sau nữa...”';
       storyText.className = 'finale-story-text visible';
     }, 2500));
 
     stage6Timers.push(setTimeout(() => {
       storyText.className = 'finale-story-text fade-out';
-    }, 4700));
+    }, 5300));
 
-    // Câu 2 (từ 5.5s đến 8.2s)
+    // Câu 2 (từ 5.6s đến 8.2s)
     stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“Nơi mỗi khoảnh khắc bên nhau đều hóa thành kỷ niệm vô giá.”';
+      storyText.textContent = '“Những chuyến đi này sẽ hóa thành ký ức vô giá của tuổi thanh xuân...”';
       storyText.className = 'finale-story-text visible';
-    }, 5500));
+    }, 5600));
 
     stage6Timers.push(setTimeout(() => {
       storyText.className = 'finale-story-text fade-out';
-    }, 7700));
+    }, 8100));
 
-    // Câu 3 (từ 8.5s đến 11.2s)
+    // Câu 3 (từ 8.4s đến 11.2s)
     stage6Timers.push(setTimeout(() => {
-      storyText.textContent = '“Và điều kỳ diệu nhất của tập thể 12B1 chính là...”';
+      storyText.textContent = '“Nhớ hết tất cả những con người, và những nụ cười rực tươi nhất...”';
       storyText.className = 'finale-story-text visible';
-    }, 8500));
+    }, 8400));
 
     stage6Timers.push(setTimeout(() => {
       storyText.className = 'finale-story-text fade-out';
-    }, 10600));
+    }, 10700));
 
     stage6Timers.push(setTimeout(() => {
       storyWrap.style.display = 'none';
