@@ -4860,6 +4860,7 @@ const StoryCardManager = {
 
     this.populateStudentOptions();
     this.setupEvents();
+    this.preloadAllImages();
   },
 
   populateStudentOptions() {
@@ -5061,12 +5062,18 @@ const StoryCardManager = {
 
   getStudentImage(student, idx, callback) {
     const photoUrl = getStudentPhoto(student, idx);
+    if (!photoUrl) {
+      callback(null);
+      return;
+    }
     if (this.cachedImages[photoUrl] && this.cachedImages[photoUrl].complete) {
       callback(this.cachedImages[photoUrl]);
       return;
     }
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    if (!photoUrl.startsWith('data:')) {
+      img.crossOrigin = 'anonymous';
+    }
     img.onload = () => {
       this.cachedImages[photoUrl] = img;
       callback(img);
@@ -5077,23 +5084,35 @@ const StoryCardManager = {
     img.src = photoUrl;
   },
 
+  preloadAllImages() {
+    FEMALE_STUDENTS.forEach((st, idx) => {
+      this.getStudentImage(st, idx, () => {});
+    });
+  },
+
   // Helper vẽ hình chữ nhật bo góc
   roundRect(ctx, x, y, width, height, radius) {
-    if (typeof radius === 'number') {
-      radius = { tl: radius, tr: radius, br: radius, bl: radius };
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x, y, width, height, radius);
+      return;
+    }
+    let r = radius;
+    if (typeof r === 'number') {
+      r = { tl: r, tr: r, br: r, bl: r };
     } else {
-      radius = Object.assign({ tl: 0, tr: 0, br: 0, bl: 0 }, radius);
+      r = Object.assign({ tl: 0, tr: 0, br: 0, bl: 0 }, r);
     }
     ctx.beginPath();
-    ctx.moveTo(x + radius.tl, y);
-    ctx.lineTo(x + width - radius.tr, y);
-    ctx.quadraticCurveTo(x + width, y, x + width, y + radius.tr);
-    ctx.lineTo(x + width, y + height - radius.br);
-    ctx.quadraticCurveTo(x + width, y + height, x + width - radius.br, y + height);
-    ctx.lineTo(x + radius.bl, y + height);
-    ctx.quadraticCurveTo(x, y + height, x, y + height - radius.bl);
-    ctx.lineTo(x + radius.tl);
-    ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+    ctx.moveTo(x + r.tl, y);
+    ctx.lineTo(x + width - r.tr, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r.tr);
+    ctx.lineTo(x + width, y + height - r.br);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r.br, y + height);
+    ctx.lineTo(x + r.bl, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r.bl);
+    ctx.lineTo(x, y + r.tl);
+    ctx.quadraticCurveTo(x, y, x + r.tl, y);
     ctx.closePath();
   },
 
@@ -5135,8 +5154,9 @@ const StoryCardManager = {
     const wishText = (textarea && textarea.value.trim()) ? textarea.value.trim() : (student.wish || '');
 
     this.getStudentImage(student, this.currentStudentIdx, (img) => {
-      // 1. NỀN THIÊN HÀ SÂU THẲM (DEEP LUXURY GALAXY BACKGROUND)
-      ctx.clearRect(0, 0, width, height);
+      try {
+        // 1. NỀN THIÊN HÀ SÂU THẲM (DEEP LUXURY GALAXY BACKGROUND)
+        ctx.clearRect(0, 0, width, height);
 
       const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
       bgGradient.addColorStop(0.00, '#070110');
@@ -5449,6 +5469,9 @@ const StoryCardManager = {
       ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
       ctx.fillText('HIGH RESOLUTION STORY CARD • 1080 × 1920 PX', width / 2, 1835);
       ctx.restore();
+      } catch (err) {
+        console.error('Lỗi khi render Story Canvas:', err);
+      }
     });
   },
 
