@@ -4855,4 +4855,23 @@ body.universe-body {
   }
 }
 
+/* ========================================================
+   ẨN CÁC THANH NÚT CHUYỂN TIẾP TRUNG GIAN & THANH ĐIỀU KHIỂN ĐÁY
+   Theo yêu cầu người dùng: Hệ thống đã tự động chuyển cảnh hoàn toàn
+   1. Nút "Mở Bức Thư Tri Ân" (Stage 4 tự động chuyển sau khi xem tường ảnh)
+   2. Nút "Đến Đoạn Kết: 23 Đóa Hoa 12B1" (Stage 5 tự động chuyển sang Stage 6)
+   3. Thanh nút điều khiển dưới đáy Stage 6 (để lộ trọn vẹn vòng trái tim & pháo hoa)
+   ======================================================== */
+#photoGalaxyHud,
+.photo-galaxy-hud,
+#finalClimaxActions,
+.final-climax-actions,
+#stage6ActionOverlay,
+.stage6-action-overlay {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 
