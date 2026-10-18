@@ -2084,11 +2084,11 @@ body.universe-body {
 /* Khung bọc phong bì thư Hoàng gia */
 .envelope-presentation-wrap {
   position: relative;
-  width: 560px;
-  max-width: 92vw;
-  height: 440px;
+  width: min(880px, 94vw);
+  max-width: 94vw;
+  height: 480px;
   perspective: 1200px;
-  margin: 30px auto 25px;
+  margin: 15px auto 20px;
   z-index: 80;
 }
 
@@ -2114,16 +2114,15 @@ body.universe-body {
   z-index: 1;
 }
 
-/* Nắp gập 3D của phong bì thư */
+/* Nắp gập 3D của phong bì thư - Tự co giãn theo chiều rộng phong bì bằng clip-path */
 .env-flap-3d {
   position: absolute;
   top: 0;
   left: 0;
-  width: 0;
-  height: 0;
-  border-left: 280px solid transparent;
-  border-right: 280px solid transparent;
-  border-top: 185px solid #9f1239;
+  width: 100%;
+  height: 185px;
+  background: linear-gradient(180deg, #be123c 0%, #9f1239 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
   transform-origin: top center;
   transition: transform 1.1s cubic-bezier(0.34, 1.1, 0.64, 1), z-index 0.1s 0.55s;
   z-index: 4;
@@ -2246,21 +2245,23 @@ body.universe-body {
 .unfolding-letter-paper {
   position: absolute;
   top: 15px;
-  left: 20px;
-  width: 520px;
+  left: 18px;
+  right: 18px;
+  width: calc(100% - 36px);
   background: linear-gradient(180deg, #fffdfa 0%, #fffbf5 50%, #fdf8ef 100%);
   color: #1f2937;
-  border-radius: 18px;
-  padding: 24px 30px 24px;
+  border-radius: 20px;
+  padding: 22px 32px 18px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 0 50px rgba(251, 207, 232, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.35);
   z-index: 2;
   transition: transform 1.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 1.25s;
-  max-height: clamp(380px, 58vh, 520px);
+  max-height: clamp(420px, 68vh, 600px);
   overflow-y: auto;
   scroll-behavior: smooth;
   scrollbar-width: thin;
   scrollbar-color: rgba(225, 29, 72, 0.4) transparent;
+  box-sizing: border-box;
 }
 
 .unfolding-letter-paper::-webkit-scrollbar {
@@ -2282,44 +2283,47 @@ body.universe-body {
 }
 
 .luxury-envelope-box.opened .unfolding-letter-paper {
-  transform: translateY(-245px);
+  transform: translateY(-240px);
   z-index: 100;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 45px rgba(255, 105, 180, 0.35);
 }
 
 .letter-top-meta {
-  border-bottom: 2px dashed #fbcfe8;
-  padding-bottom: 15px;
-  margin-bottom: 20px;
+  border-bottom: 1.5px dashed #fbcfe8;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .letter-recipient-title {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
   font-weight: 800;
   color: #be123c;
   text-align: left;
+  margin: 0;
 }
 
 .meta-tag {
   background: #ffe4e6;
   color: #e11d48;
-  padding: 5px 14px;
+  padding: 4px 12px;
   border-radius: 20px;
-  font-size: 0.92rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
 .letter-text-viewport {
   text-align: left;
-  font-size: clamp(1.15rem, 1.85vw, 1.28rem);
-  line-height: 1.9;
+  font-size: clamp(1.02rem, 1.45vw, 1.15rem);
+  line-height: 1.8;
   color: #374151;
-  min-height: 160px;
-  margin-bottom: 22px;
+  min-height: 100px;
+  margin-bottom: 12px;
 }
 
 /* Tên 23 bạn nữ in đậm và màu hồng đậm tinh tế trên nền giấy trắng */
@@ -2368,21 +2372,37 @@ body.universe-body {
   50% { opacity: 0; }
 }
 
-/* Chữ ký viết tay cảm xúc */
+/* Chữ ký viết tay cảm xúc - Cân đối thanh thoát, ẩn khi đang gõ để dành trọn chỗ cho thư */
 .letter-signature-area {
-  border-top: 2px dashed #fbcfe8;
-  padding-top: 22px;
-  padding-bottom: 28px;
+  border-top: 1px dashed rgba(225, 29, 72, 0.22);
+  padding-top: 0;
+  padding-bottom: 0;
   text-align: left;
-  overflow: visible;
+  overflow: hidden;
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(8px);
+  transition: opacity 0.7s ease, max-height 0.7s ease, transform 0.7s ease, padding 0.7s ease;
+  pointer-events: none;
+  border-top-color: transparent;
+}
+
+.letter-signature-area.visible {
+  opacity: 1;
+  max-height: 180px;
+  transform: translateY(0);
+  pointer-events: auto;
+  padding-top: 10px;
+  padding-bottom: 12px;
+  border-top-color: rgba(225, 29, 72, 0.22);
 }
 
 .sig-note {
-  font-size: clamp(1.15rem, 2vw, 1.35rem);
-  color: #4b5563;
-  font-weight: 600;
+  font-size: clamp(0.85rem, 1.1vw, 0.95rem);
+  color: #6b7280;
+  font-weight: 500;
   font-style: italic;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .sig-handwriting-wrap {
@@ -2394,23 +2414,23 @@ body.universe-body {
 .sig-handwriting-text {
   display: block;
   font-family: 'Dancing Script', cursive, sans-serif;
-  font-size: clamp(1.85rem, 3.4vw, 2.55rem);
+  font-size: clamp(1.2rem, 1.7vw, 1.45rem);
   font-weight: 700;
   color: #be123c;
-  line-height: 1.35;
-  letter-spacing: 0.5px;
-  text-shadow: 0 1px 3px rgba(190, 18, 60, 0.18);
+  line-height: 1.3;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 2px rgba(190, 18, 60, 0.15);
   word-break: break-word;
 }
 
 .handwriting-svg {
   width: 100%;
-  max-width: 580px;
-  height: 18px;
-  min-height: 14px;
+  max-width: 420px;
+  height: 12px;
+  min-height: 8px;
   overflow: visible !important;
   display: block;
-  margin-top: -2px;
+  margin-top: -1px;
 }
 
 .sig-path {
@@ -2697,29 +2717,33 @@ body.universe-body {
   }
 
   .envelope-presentation-wrap {
-    width: 350px !important;
-    height: 380px !important;
+    width: 95vw !important;
+    max-width: 95vw !important;
+    height: 400px !important;
   }
   .luxury-envelope-box {
-    height: 230px !important;
+    height: 240px !important;
   }
   .env-flap-3d {
-    border-left: 175px solid transparent !important;
-    border-right: 175px solid transparent !important;
-    border-top: 125px solid #9f1239 !important;
+    width: 100% !important;
+    height: 135px !important;
+    border: none !important;
+    clip-path: polygon(0 0, 100% 0, 50% 100%) !important;
   }
   .ruby-wax-seal {
-    top: 110px !important;
-    width: 68px !important;
-    height: 68px !important;
+    top: 105px !important;
+    width: 66px !important;
+    height: 66px !important;
   }
   .unfolding-letter-paper {
-    width: 310px !important;
-    padding: 20px 22px !important;
-    max-height: 440px !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: calc(100% - 16px) !important;
+    padding: 16px 16px !important;
+    max-height: clamp(390px, 70vh, 520px) !important;
   }
   .luxury-envelope-box.opened .unfolding-letter-paper {
-    transform: translateY(-220px) !important;
+    transform: translateY(-205px) !important;
   }
   .floating-photo-item {
     width: 72px !important;

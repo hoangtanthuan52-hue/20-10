@@ -3214,6 +3214,8 @@ function initStage5WaxLetter() {
   }
   if (typeBody) typeBody.innerHTML = '';
   if (sigPath) sigPath.classList.remove('drawn');
+  const signatureArea = document.getElementById('signatureArea');
+  if (signatureArea) signatureArea.classList.remove('visible');
   if (actions) actions.classList.remove('show');
   cleanupStage5Highlight();
 
@@ -3578,7 +3580,9 @@ function startNaturalTypewriter() {
     } else {
       cleanupStage5Highlight();
 
-      // 4. Kích hoạt chữ ký viết tay SVG Handwriting chạy nét
+      // 4. Kích hoạt chữ ký viết tay SVG Handwriting chạy nét & hiển thị vùng chữ ký
+      const signatureArea = document.getElementById('signatureArea');
+      if (signatureArea) signatureArea.classList.add('visible');
       sigPath.classList.add('drawn');
 
       // Cuộn êm đến cuối bức thư để lộ trọn vẹn chữ ký và lời chúc kết
