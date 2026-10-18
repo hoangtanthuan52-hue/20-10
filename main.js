@@ -3945,15 +3945,25 @@ function buildStage6MiniCards() {
       lastY: 0
     };
 
-    // Tương tác di chuột / chạm: Giữ nguyên vị trí, phóng to scale(1.8) với viền phát sáng lộng lẫy
+    // Tương tác di chuột / chạm: Giữ nguyên vị trí, phóng to scale(1.85) với viền phát sáng lộng lẫy
     card.addEventListener('pointerenter', () => {
+      // Tạm tắt bạn tour đang bật nếu người dùng chủ động rê chuột vào bạn khác
+      if (typeof stage6HeartTourCurrentIdx !== 'undefined' && stage6HeartTourCurrentIdx >= 0 && stage6HeartTourCurrentIdx !== idx) {
+        const tourItem = finaleCards[stage6HeartTourCurrentIdx];
+        if (tourItem && tourItem.el) {
+          tourItem.el.classList.remove('is-active', 'tour-active');
+          tourItem.el.style.zIndex = '45';
+          tourItem.isHovered = false;
+        }
+      }
       itemData.isHovered = true;
       card.classList.add('is-active');
-      card.style.zIndex = '100';
+      card.style.zIndex = '130';
     });
     card.addEventListener('pointerleave', () => {
       itemData.isHovered = false;
       card.classList.remove('is-active');
+      card.style.zIndex = '45';
     });
 
     // Bấm vào thẻ để ngắm ảnh gốc cỡ lớn trong Lightbox
@@ -4363,6 +4373,9 @@ function clearStage6Timeline() {
   if (typeof stopEndingVoiceover === 'function') {
     stopEndingVoiceover();
   }
+  if (typeof stopStage6HeartSequentialTour === 'function') {
+    stopStage6HeartSequentialTour();
+  }
   if (stage6Timers && Array.isArray(stage6Timers)) {
     stage6Timers.forEach(t => clearTimeout(t));
     stage6Timers = [];
@@ -4373,6 +4386,119 @@ function clearStage6Timeline() {
   }
   stage6HasStartedCenterpiece = false;
   stage6HasTriggeredConfetti26 = false;
+}
+
+// ==========================================================
+// 8.6. CHU KỲ TỰ ĐỘNG FOCUS TỪNG BẠN NỮ TRÊN VÒNG TRÁI TIM (SEQUENTIAL HEART TOUR)
+// Khi thông điệp hiện ra xong: Tự động kích hoạt hiệu ứng hover từ bạn đầu (idx 0)
+// đến bạn cuối (idx 22), mỗi bạn hiển thị ~2.5s với bong bóng lời chúc & ánh sáng lung linh
+// ==========================================================
+let stage6HeartTourTimer = null;
+let stage6HeartTourCurrentIdx = -1;
+const STAGE6_CARD_TOUR_DURATION = 2500; // 2.5s mỗi bạn nữ theo đúng yêu cầu
+
+function stopStage6HeartSequentialTour() {
+  if (stage6HeartTourTimer) {
+    clearTimeout(stage6HeartTourTimer);
+    stage6HeartTourTimer = null;
+  }
+  if (stage6HeartTourCurrentIdx >= 0 && stage6HeartTourCurrentIdx < finaleCards.length) {
+    const prev = finaleCards[stage6HeartTourCurrentIdx];
+    if (prev && prev.el) {
+      prev.el.classList.remove('is-active', 'tour-active');
+      prev.el.style.zIndex = '45';
+      prev.isHovered = false;
+    }
+  }
+  stage6HeartTourCurrentIdx = -1;
+}
+
+function startStage6HeartSequentialTour() {
+  stopStage6HeartSequentialTour();
+  if (window.currentActiveStage !== 6 || !finaleCards || finaleCards.length === 0) return;
+
+  function highlightNextCard(idx) {
+    if (window.currentActiveStage !== 6) {
+      stopStage6HeartSequentialTour();
+      return;
+    }
+
+    // Nếu đã hoàn tất qua cả 23 bạn nữ:
+    if (idx >= finaleCards.length) {
+      if (stage6HeartTourCurrentIdx >= 0 && stage6HeartTourCurrentIdx < finaleCards.length) {
+        const prev = finaleCards[stage6HeartTourCurrentIdx];
+        if (prev && prev.el) {
+          prev.el.classList.remove('is-active', 'tour-active');
+          prev.el.style.zIndex = '45';
+          prev.isHovered = false;
+        }
+      }
+      stage6HeartTourCurrentIdx = -1;
+
+      // Nghỉ 3.5s rồi nhẹ nhàng lặp lại một vòng mới để trái tim luôn sống động
+      stage6HeartTourTimer = setTimeout(() => {
+        highlightNextCard(0);
+      }, 3500);
+      return;
+    }
+
+    // Tắt highlight của bạn trước
+    if (stage6HeartTourCurrentIdx >= 0 && stage6HeartTourCurrentIdx < finaleCards.length) {
+      const prev = finaleCards[stage6HeartTourCurrentIdx];
+      if (prev && prev.el) {
+        prev.el.classList.remove('is-active', 'tour-active');
+        prev.el.style.zIndex = '45';
+        prev.isHovered = false;
+      }
+    }
+
+    // Bật highlight bạn tiếp theo
+    stage6HeartTourCurrentIdx = idx;
+    const it = finaleCards[idx];
+    if (it && it.el) {
+      it.isHovered = true;
+      it.el.classList.add('is-active', 'tour-active');
+      it.el.style.zIndex = '120';
+
+      // Âm thanh chuông pha lê trong trẻo
+      try {
+        if (window.audioManager && audioManager.playCrystalChime) {
+          audioManager.playCrystalChime();
+        } else if (window.audioManager && audioManager.playBellSound) {
+          audioManager.playBellSound(784 + (idx % 7) * 65, 0.35);
+        }
+      } catch (e) {}
+
+      // Bắn vài hạt kim tuyến lấp lánh nhẹ nhàng quanh ảnh bạn nữ
+      try {
+        if (window.confetti && it.el) {
+          const rect = it.el.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            const originX = (rect.left + rect.width / 2) / window.innerWidth;
+            const originY = (rect.top + rect.height / 2) / window.innerHeight;
+            window.confetti({
+              particleCount: 16,
+              spread: 45,
+              origin: { x: originX, y: originY },
+              colors: ['#ffd700', '#ff69b4', '#ffffff', '#e11d48'],
+              scalar: 0.7,
+              ticks: 80
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Đúng 2.5s chuyển sang bạn tiếp theo (từ bạn đầu đến bạn cuối)
+    stage6HeartTourTimer = setTimeout(() => {
+      highlightNextCard(idx + 1);
+    }, STAGE6_CARD_TOUR_DURATION);
+  }
+
+  // Bắt đầu từ bạn đầu tiên (Index 0) sau 1.2s nghỉ
+  stage6HeartTourTimer = setTimeout(() => {
+    highlightNextCard(0);
+  }, 1200);
 }
 
 // BƯỚC 3: HIỆN BẢNG THÔNG ĐIỆP CHÍNH VÀ CHẠY HIỆU ỨNG GÕ CHỮ (ĐÚNG GIÂY THỨ 34.5s)
@@ -4472,6 +4598,13 @@ function showStage6CenterpieceAndTypewriter() {
         try {
           if (window.FX && window.FX.launchGrandFinaleBarrage) {
             window.FX.launchGrandFinaleBarrage();
+          }
+        } catch (e) {}
+
+        // TỰ ĐỘNG FOCUS TỪNG BẠN NỮ TRÊN VÒNG TRÁI TIM (TỪ BẠN ĐẦU ĐẾN BẠN CUỐI, 2.5S MỖI BẠN)
+        try {
+          if (typeof startStage6HeartSequentialTour === 'function') {
+            startStage6HeartSequentialTour();
           }
         } catch (e) {}
       }

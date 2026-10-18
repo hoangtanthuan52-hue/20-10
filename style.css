@@ -3081,12 +3081,14 @@ body.universe-body {
 
 /* Hover & Active Highlight trạng thái */
 .finale-mini-card:hover,
-.finale-mini-card.is-active {
-  z-index: 100 !important;
+.finale-mini-card.is-active,
+.finale-mini-card.tour-active {
+  z-index: 120 !important;
 }
 
 .finale-mini-card:hover .finale-card-frame,
-.finale-mini-card.is-active .finale-card-frame {
+.finale-mini-card.is-active .finale-card-frame,
+.finale-mini-card.tour-active .finale-card-frame {
   transform: scale(1.85) !important;
   border-color: #ffd700;
   background: #ffffff;
@@ -3094,7 +3096,8 @@ body.universe-body {
 }
 
 .finale-mini-card:hover .finale-card-pill,
-.finale-mini-card.is-active .finale-card-pill {
+.finale-mini-card.is-active .finale-card-pill,
+.finale-mini-card.tour-active .finale-card-pill {
   background: #e11d48;
   color: #ffffff;
   border-color: #ffd700;
@@ -3102,7 +3105,8 @@ body.universe-body {
 }
 
 .finale-mini-card:hover .finale-card-pill i,
-.finale-mini-card.is-active .finale-card-pill i {
+.finale-mini-card.is-active .finale-card-pill i,
+.finale-mini-card.tour-active .finale-card-pill i {
   color: #ffd700;
 }
 
@@ -3146,7 +3150,8 @@ body.universe-body {
 }
 
 .finale-mini-card:hover .finale-wish-bubble,
-.finale-mini-card.is-active .finale-wish-bubble {
+.finale-mini-card.is-active .finale-wish-bubble,
+.finale-mini-card.tour-active .finale-wish-bubble {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px) scale(1);
   pointer-events: auto;
