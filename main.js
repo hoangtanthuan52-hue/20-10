@@ -3888,6 +3888,31 @@ const HEART_23_NORM = [
   { nx: -0.1100, ny: -0.7900 }  // 22: Cung tròn trên bên trái nối về tâm
 ];
 
+// Tự động điều chỉnh hướng hiển thị Bong bóng lời chúc (Speech Bubble)
+// Nếu thẻ ở nửa trên màn hình (hoặc gần mép trên < 250px): Bubble hiển thị ở DƯỚI để không bị che
+function updateCardBubblePosition(cardEl) {
+  if (!cardEl) return;
+  const rect = cardEl.getBoundingClientRect();
+  if (rect.top < 250) {
+    cardEl.classList.add('bubble-below');
+  } else {
+    cardEl.classList.remove('bubble-below');
+  }
+
+  const bubble = cardEl.querySelector('.finale-wish-bubble');
+  if (bubble) {
+    if (rect.left < 130) {
+      bubble.classList.add('align-left');
+      bubble.classList.remove('align-right');
+    } else if (window.innerWidth - rect.right < 130) {
+      bubble.classList.add('align-right');
+      bubble.classList.remove('align-left');
+    } else {
+      bubble.classList.remove('align-left', 'align-right');
+    }
+  }
+}
+
 // Tạo 23 thẻ kỷ niệm Polaroid phóng to 1.5x với thông tin đầy đủ của 23 bạn nữ 12B1
 function buildStage6MiniCards() {
   const cardsLayer = document.getElementById('finaleCardsLayer');
@@ -3902,6 +3927,12 @@ function buildStage6MiniCards() {
     card.className = 'finale-mini-card';
     card.id = `finaleCard_${idx}`;
     card.setAttribute('data-idx', idx);
+
+    // Mặc định các bạn ở nửa trên trái tim thì bong bóng hiển thị bên DƯỚI để không bị tràn mép trên
+    const norm = HEART_23_NORM[idx];
+    if (norm && norm.ny < 0.1) {
+      card.classList.add('bubble-below');
+    }
 
     const photoUrl = getStudentPhoto(st, idx);
     const shortName = getStudentShortName(st);
@@ -3947,6 +3978,7 @@ function buildStage6MiniCards() {
 
     // Tương tác di chuột / chạm: Giữ nguyên vị trí, phóng to scale(1.85) với viền phát sáng lộng lẫy
     card.addEventListener('pointerenter', () => {
+      updateCardBubblePosition(card);
       // Tạm tắt bạn tour đang bật nếu người dùng chủ động rê chuột vào bạn khác
       if (typeof stage6HeartTourCurrentIdx !== 'undefined' && stage6HeartTourCurrentIdx >= 0 && stage6HeartTourCurrentIdx !== idx) {
         const tourItem = finaleCards[stage6HeartTourCurrentIdx];
@@ -4456,6 +4488,9 @@ function startStage6HeartSequentialTour() {
     stage6HeartTourCurrentIdx = idx;
     const it = finaleCards[idx];
     if (it && it.el) {
+      if (typeof updateCardBubblePosition === 'function') {
+        updateCardBubblePosition(it.el);
+      }
       it.isHovered = true;
       it.el.classList.add('is-active', 'tour-active');
       it.el.style.zIndex = '120';

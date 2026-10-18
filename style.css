@@ -3170,12 +3170,60 @@ body.universe-body {
   border-top: 7px solid rgba(22, 6, 32, 0.95);
 }
 
-.finale-mini-card:hover .finale-wish-bubble,
-.finale-mini-card.is-active .finale-wish-bubble,
-.finale-mini-card.tour-active .finale-wish-bubble {
+/* Tooltip mặc định ở TRÊN (cho các bạn ở nửa dưới màn hình) */
+.finale-mini-card:not(.bubble-below):hover .finale-wish-bubble,
+.finale-mini-card:not(.bubble-below).is-active .finale-wish-bubble,
+.finale-mini-card:not(.bubble-below).tour-active .finale-wish-bubble {
   opacity: 1;
   transform: translateX(-50%) translateY(-10px) scale(1);
   pointer-events: auto;
+}
+
+/* Tooltip hiển thị ở DƯỚI (cho các bạn ở nửa trên màn hình - KHÔNG BAO GIỜ BỊ CHE MÉP TRÊN MÀN HÌNH) */
+.finale-mini-card.bubble-below .finale-wish-bubble {
+  bottom: auto;
+  top: 100%;
+  transform: translateX(-50%) translateY(-4px) scale(0.9);
+}
+
+.finale-mini-card.bubble-below .finale-wish-bubble .bubble-arrow {
+  top: auto;
+  bottom: 100%;
+  border-top: none;
+  border-bottom: 7px solid rgba(22, 6, 32, 0.95);
+}
+
+.finale-mini-card.bubble-below:hover .finale-wish-bubble,
+.finale-mini-card.bubble-below.is-active .finale-wish-bubble,
+.finale-mini-card.bubble-below.tour-active .finale-wish-bubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(70px) scale(1);
+  pointer-events: auto;
+}
+
+/* Canh lề nếu gần mép trái hoặc mép phải màn hình */
+.finale-wish-bubble.align-left {
+  left: 0 !important;
+  transform: translateX(0) translateY(-10px) scale(1) !important;
+}
+.finale-mini-card.bubble-below .finale-wish-bubble.align-left {
+  transform: translateX(0) translateY(70px) scale(1) !important;
+}
+.finale-wish-bubble.align-left .bubble-arrow {
+  left: 28px !important;
+}
+
+.finale-wish-bubble.align-right {
+  left: auto !important;
+  right: 0 !important;
+  transform: translateX(0) translateY(-10px) scale(1) !important;
+}
+.finale-mini-card.bubble-below .finale-wish-bubble.align-right {
+  transform: translateX(0) translateY(70px) scale(1) !important;
+}
+.finale-wish-bubble.align-right .bubble-arrow {
+  left: auto !important;
+  right: 28px !important;
 }
 
 /* ----------------------------------------------------------
