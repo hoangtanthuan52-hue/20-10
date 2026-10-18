@@ -3849,8 +3849,8 @@ function initStage6Atmosphere() {
 // 3. Đối xứng gương song phương tuyệt đối (Bilateral Symmetry) giữa nửa trái và nửa phải.
 // ==========================================================
 const HEART_23_NORM = [
-  { nx:  0.0000, ny: -0.4545 }, // 0: Đỉnh lõm chính giữa
-  { nx:  0.1052, ny: -0.7643 }, // 1: Cung tròn trên bên phải
+  { nx:  0.0000, ny: -0.5800 }, // 0: Đỉnh lõm chính giữa (nâng cao để hoàn toàn không bị bảng trung tâm che)
+  { nx:  0.1100, ny: -0.7900 }, // 1: Cung tròn trên bên phải
   { nx:  0.3175, ny: -0.9670 }, // 2: Cánh phải trên
   { nx:  0.5818, ny: -1.0000 }, // 3: Đỉnh cao nhất bên phải
   { nx:  0.8229, ny: -0.8586 }, // 4: Vòm ngoài phải
@@ -3871,7 +3871,7 @@ const HEART_23_NORM = [
   { nx: -0.8229, ny: -0.8586 }, // 19: Vòm ngoài trái
   { nx: -0.5818, ny: -1.0000 }, // 20: Đỉnh cao nhất bên trái
   { nx: -0.3175, ny: -0.9670 }, // 21: Cánh trái trên
-  { nx: -0.1052, ny: -0.7643 }  // 22: Cung tròn trên bên trái nối về tâm
+  { nx: -0.1100, ny: -0.7900 }  // 22: Cung tròn trên bên trái nối về tâm
 ];
 
 // Tạo 23 thẻ kỷ niệm Polaroid phóng to 1.5x với thông tin đầy đủ của 23 bạn nữ 12B1
@@ -4114,23 +4114,21 @@ function stage6Frame(now) {
   const winH = window.innerHeight || stage6H || 800;
   const isMobile = winW < 768;
 
-  // Hệ số mở rộng quy mô vòng Trái Tim (chiếm ~85% - 90% viewport, không đè lấn nhau)
+  // Hệ số mở rộng quy mô vòng Trái Tim (chiếm ~88% - 94% viewport, thoáng đãng không che khuất bảng chữ)
   let heartScaleX, heartScaleY, heartCenterY, baseCardScale;
 
   if (isMobile) {
-    heartScaleX = Math.max(150, winW * 0.44);
-    heartScaleY = Math.max(220, winH * 0.38);
-    heartCenterY = -winH * 0.03;
-    baseCardScale = 1.0;
-  } else {
-    // Desktop: Mở rộng 85% - 90% viewport, giữ dáng tim thanh thoát cân đối
-    const maxW = winW * 0.44;
-    const maxH = winH * 0.40;
-    heartScaleY = Math.max(280, maxH);
-    heartScaleX = Math.max(380, Math.min(maxW, heartScaleY * 1.32));
+    heartScaleX = Math.max(160, winW * 0.46);
+    heartScaleY = Math.max(260, winH * 0.44);
     heartCenterY = -winH * 0.02;
-    // Tự động scale thẻ hài hòa trên màn hình laptop nhỏ hơn 900px
-    baseCardScale = Math.min(1.0, Math.max(0.78, winH / 940));
+    baseCardScale = 0.92;
+  } else {
+    // Desktop: Mở rộng 88% - 94% viewport, giữ dáng tim thanh thoát bao bọc bảng trung tâm
+    heartScaleY = Math.max(340, Math.min(winH * 0.47, 460));
+    heartScaleX = Math.max(460, Math.min(winW * 0.48, heartScaleY * 1.36));
+    heartCenterY = -winH * 0.015;
+    // Tự động scale thẻ hài hòa trên màn hình laptop
+    baseCardScale = Math.min(1.0, Math.max(0.82, winH / 920));
   }
 
   // Lấy mốc thời gian thực từ audio giọng đọc (hoặc fallback chính xác từ lúc bắt đầu)

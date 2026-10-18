@@ -2980,7 +2980,7 @@ body.universe-body {
   overflow: hidden !important;
   perspective: 1000px !important;
   pointer-events: none !important;
-  z-index: 30 !important;
+  z-index: 45 !important;
   cursor: grab;
 }
 
@@ -3250,10 +3250,10 @@ body.universe-body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 40;
-  width: 90vw;
-  max-width: 660px;
-  min-width: 480px;
+  z-index: 35;
+  width: 88vw;
+  max-width: 480px;
+  min-width: 320px;
   text-align: center;
   pointer-events: none;
   opacity: 0;
@@ -3270,15 +3270,15 @@ body.universe-body {
 
 .finale-centerpiece-card {
   width: 100%;
-  padding: 26px 34px;
-  border-radius: 24px;
+  padding: 16px 24px;
+  border-radius: 20px;
   text-align: center;
   box-sizing: border-box;
-  background: rgba(20, 6, 28, 0.82);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(18, 5, 26, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 192, 203, 0.25);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(255, 105, 180, 0.15);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 25px rgba(255, 105, 180, 0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3297,12 +3297,12 @@ body.universe-body {
   align-items: center;
   gap: 8px;
   width: auto;
-  padding: 6px 18px;
+  padding: 5px 16px;
   border-radius: 999px;
   font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   color: #ffd700;
   background: rgba(255, 215, 0, 0.08);
   border: 1px solid rgba(255, 215, 0, 0.35);
@@ -3314,10 +3314,10 @@ body.universe-body {
 
 .finale-title {
   font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
-  font-size: 30px;
+  font-size: clamp(20px, 2.2vw, 24px);
   font-weight: 700;
   line-height: 1.35;
-  margin: 18px 0;
+  margin: 10px 0 8px;
   background: linear-gradient(135deg, #fff0f5 0%, #ffb6c1 50%, #ffd700 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -3336,22 +3336,22 @@ body.universe-body {
 }
 
 .finale-divider {
-  width: 80px;
+  width: 70px;
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 182, 193, 0.6), transparent);
-  margin: 0 auto 16px auto;
+  margin: 0 auto 10px auto;
 }
 
 .finale-subtitle {
   font-family: 'Be Vietnam Pro', system-ui, sans-serif;
-  font-size: 15.5px;
-  line-height: 1.65;
+  font-size: 13.5px;
+  line-height: 1.55;
   color: rgba(255, 255, 255, 0.92);
   font-weight: 400;
   margin: 0;
   text-align: center;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
-  min-height: 5.5em;
+  min-height: 4.5em;
 }
 
 .finale-type-body {
