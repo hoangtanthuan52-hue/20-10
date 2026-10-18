@@ -23,7 +23,7 @@
   <!-- GSAP Animation Library (Offline Ready) -->
   <script src="libs/gsap.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=2.2.3">
+  <link rel="stylesheet" href="style.css?v=2.2.4">
 </head>
 <body class="universe-body">
 
@@ -354,13 +354,15 @@
                   <span id="typewriterBody" class="typewriter-body"></span><span class="typing-caret" id="typingCaret">|</span>
                 </div>
 
-                <!-- Chữ ký viết tay Handwriting SVG chạy nét -->
+                <!-- Chữ ký viết tay Handwriting cảm xúc -->
                 <div class="letter-signature-area" id="signatureArea">
                   <div class="sig-note">Mãi là người bạn đồng hành chân thành nhất</div>
-                  <svg class="handwriting-svg" viewBox="0 0 600 75" overflow="visible" preserveAspectRatio="xMinYMid meet">
-                    <path class="sig-path" id="sigPath" d="M10,48 Q60,18 110,46 T195,46 Q235,18 280,45 T370,47 Q420,18 470,46 T560,48" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round"/>
-                    <text x="8" y="46" font-family="'Dancing Script', cursive" font-size="24" fill="#be123c" font-weight="700">Tập thể nam lớp 12B1 với tất cả sự trân trọng ❤️</text>
-                  </svg>
+                  <div class="sig-handwriting-wrap">
+                    <span class="sig-handwriting-text">Tập thể nam lớp 12B1 với tất cả sự trân trọng ❤️</span>
+                    <svg class="handwriting-svg" viewBox="0 0 600 24" overflow="visible" preserveAspectRatio="none">
+                      <path class="sig-path" id="sigPath" d="M10,12 Q80,2 160,12 T320,12 Q420,2 500,12 T590,14" fill="none" stroke="#e11d48" stroke-width="3" stroke-linecap="round"/>
+                    </svg>
+                  </div>
                 </div>
 
               </div>
@@ -686,7 +688,7 @@
   <!-- Module JS (100% Offline Ready) -->
   <script src="images_data.js"></script>
   <script src="audio_data.js"></script>
-  <script src="fx.js?v=2.2.3"></script>
-  <script src="main.js?v=2.2.3"></script>
+  <script src="fx.js?v=2.2.4"></script>
+  <script src="main.js?v=2.2.4"></script>
 </body>
 </html>
