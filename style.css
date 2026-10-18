@@ -1348,14 +1348,35 @@ body.universe-body {
 /* ==========================================================
    STAGE 3: THIÊN HÀ NGÂN HÀ 23 VÌ TINH TÚ (INTERACTIVE SPIRAL GALAXY)
    ========================================================== */
+#stage3.stage-section {
+  padding: 18px 20px 8px !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+}
+
+#stage3 .cinematic-heading {
+  margin-top: 4px;
+  margin-bottom: 2px;
+  font-size: clamp(1.85rem, 3.4vw, 2.6rem);
+  letter-spacing: 1px;
+  line-height: 1.15;
+}
+
+#stage3 .cinematic-sub {
+  margin-top: 2px;
+  margin-bottom: 8px;
+  font-size: clamp(0.92rem, 1.35vw, 1.12rem);
+  color: var(--text-soft-pink);
+}
+
 .galaxy-stage {
-  max-width: 980px;
+  max-width: 1140px;
   width: 100%;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 /* Thanh nút điều khiển thiên hà */
@@ -1395,14 +1416,14 @@ body.universe-body {
 .galaxy-viewport {
   position: relative;
   width: 100%;
-  max-width: 880px;
-  height: 490px;
+  max-width: 1060px;
+  height: clamp(520px, 70vh, 600px);
   perspective: 1200px;
   display: flex;
   justify-content: center;
   align-items: center;
   overflow: visible;
-  margin: 0 auto 12px;
+  margin: 0 auto;
 }
 
 /* Canvas vẽ dải bụi sao xoắn ốc (Spiral Galaxy Canvas) */
@@ -1422,14 +1443,14 @@ body.universe-body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 120px;
-  height: 120px;
+  width: 136px;
+  height: 136px;
   border-radius: 50%;
   background: radial-gradient(circle, #ffffff 0%, #fef08a 25%, #ff758c 60%, transparent 80%);
   box-shadow: 
-    0 0 45px rgba(255, 215, 0, 0.9),
-    0 0 90px rgba(255, 105, 180, 0.7),
-    0 0 140px rgba(168, 85, 247, 0.5);
+    0 0 50px rgba(255, 215, 0, 0.95),
+    0 0 100px rgba(255, 105, 180, 0.75),
+    0 0 150px rgba(168, 85, 247, 0.55);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1446,8 +1467,8 @@ body.universe-body {
 
 .core-singularity-flare {
   position: absolute;
-  width: 160px;
-  height: 160px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   background: conic-gradient(from 0deg, transparent 0%, rgba(255, 215, 0, 0.6) 25%, transparent 50%, rgba(255, 105, 180, 0.6) 75%, transparent 100%);
   animation: spinFlare 8s linear infinite;
@@ -1460,18 +1481,18 @@ body.universe-body {
 }
 
 .core-star-icon {
-  font-size: 1.8rem;
+  font-size: 2.1rem;
   color: #1a051d;
   z-index: 2;
 }
 
 .core-label {
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 900;
   color: #1a051d;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   z-index: 2;
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 /* Mặt phẳng Quỹ đạo Thiên Hà (Galaxy Orbit Plane) */
@@ -1479,10 +1500,10 @@ body.universe-body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 660px;
-  height: 660px;
-  margin-top: -330px;
-  margin-left: -330px;
+  width: 680px;
+  height: 680px;
+  margin-top: -340px;
+  margin-left: -340px;
   transform-style: preserve-3d;
   transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
   z-index: 4;
@@ -1496,7 +1517,7 @@ body.universe-body {
   transform: rotateX(0deg);
 }
 
-/* 4 Vòng Quỹ Đạo Ánh Sáng Neon (Keplerian Orbits đều đặn 60px) */
+/* 4 Vòng Quỹ Đạo Ánh Sáng Neon */
 .galaxy-track {
   position: absolute;
   top: 50%;
@@ -1507,22 +1528,22 @@ body.universe-body {
 }
 
 .track-1 {
-  width: 250px;
-  height: 250px;
+  width: 260px;
+  height: 260px;
   border: 1.5px dashed rgba(255, 105, 180, 0.45);
   box-shadow: 0 0 15px rgba(255, 105, 180, 0.15);
 }
 
 .track-2 {
-  width: 420px;
-  height: 420px;
+  width: 430px;
+  height: 430px;
   border: 1.5px dashed rgba(247, 231, 206, 0.4);
   box-shadow: 0 0 18px rgba(247, 231, 206, 0.15);
 }
 
 .track-3 {
-  width: 590px;
-  height: 590px;
+  width: 600px;
+  height: 600px;
   border: 1.5px dashed rgba(192, 132, 252, 0.4);
   box-shadow: 0 0 20px rgba(192, 132, 252, 0.15);
 }
@@ -1563,12 +1584,12 @@ body.universe-body {
 
 /* Avatar hình quả cầu sao phát sáng */
 .node-avatar-orb {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   position: relative;
   border: 2px solid var(--accent-champagne-gold);
-  box-shadow: 0 0 12px rgba(255, 105, 180, 0.8), inset 0 0 6px rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 14px rgba(255, 105, 180, 0.85), inset 0 0 8px rgba(255, 255, 255, 0.6);
   overflow: hidden;
   flex-shrink: 0;
   transition: transform 0.3s, border-color 0.3s;
@@ -1591,9 +1612,9 @@ body.universe-body {
   background: rgba(18, 5, 26, 0.88);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(247, 231, 206, 0.55);
-  padding: 2.5px 8px;
+  padding: 3.5px 10px;
   border-radius: 20px;
-  font-size: 0.68rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #ffffff;
   white-space: nowrap;
@@ -1601,7 +1622,7 @@ body.universe-body {
   transition: all 0.25s;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .star-planet-node:hover .node-name-pill {
@@ -1614,7 +1635,7 @@ body.universe-body {
 
 .node-name-pill i {
   color: #ffd700;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
 }
 
 /* Bảng Tri Ân Tinh Tú Nổi Bật (Spotlight Card) */

@@ -1948,7 +1948,7 @@ function initGalaxyDust(ctx, w, h) {
   for (let a = 0; a < arms; a++) {
     const armAngle = (a / arms) * Math.PI * 2;
     for (let i = 0; i < countPerArm; i++) {
-      const distance = 30 + Math.pow(Math.random(), 1.5) * 300;
+      const distance = 35 + Math.pow(Math.random(), 1.5) * 330;
       // Công thức xoắn ốc Logarithmic Spiral
       const curvature = 0.007;
       const angle = armAngle + distance * curvature + (Math.random() - 0.5) * 0.45;
@@ -2019,9 +2019,9 @@ function initStage3() {
 
   // Phân bổ 23 bạn nữ trên 3 quỹ đạo rõ ràng (tốc độ xoay êm ái, thư giãn 35% - 38% so với ban đầu)
   const ORBIT_TRACKS = [
-    { radius: 125, speed: 0.00080, startIndex: 0, count: 5 },
-    { radius: 210, speed: 0.00055, startIndex: 5, count: 8 },
-    { radius: 295, speed: 0.00038, startIndex: 13, count: 10 }
+    { radius: 130, speed: 0.00080, startIndex: 0, count: 5 },
+    { radius: 215, speed: 0.00055, startIndex: 5, count: 8 },
+    { radius: 300, speed: 0.00038, startIndex: 13, count: 10 }
   ];
 
   const girlNodes = [];
@@ -2140,11 +2140,11 @@ function initStage3() {
           const x = Math.cos(item.angle) * item.radius;
           const y = Math.sin(item.angle) * item.radius;
 
-          // Counter-rotate trục X và bù trừ -18px để tâm avatar orb 36px nằm chính xác trên quỹ đạo
+          // Counter-rotate trục X và bù trừ -21px để tâm avatar orb 42px nằm chính xác trên quỹ đạo
           if (isGalaxy3D) {
-            item.el.style.transform = `translate3d(${x - 18}px, ${y - 18}px, 0px) rotateX(-42deg)`;
+            item.el.style.transform = `translate3d(${x - 21}px, ${y - 21}px, 0px) rotateX(-42deg)`;
           } else {
-            item.el.style.transform = `translate3d(${x - 18}px, ${y - 18}px, 0px) rotateX(0deg)`;
+            item.el.style.transform = `translate3d(${x - 21}px, ${y - 21}px, 0px) rotateX(0deg)`;
           }
         });
       }
