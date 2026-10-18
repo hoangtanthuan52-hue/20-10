@@ -3570,9 +3570,6 @@ function startNaturalTypewriter() {
       if (letterPaper) {
         letterPaper.scrollTop = letterPaper.scrollHeight;
       }
-      if (caret && caret.scrollIntoView) {
-        caret.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
-      }
 
       // Tốc độ gõ ngẫu nhiên 30ms - 65ms tạo cảm giác gõ chữ thanh thoát
       const randDelay = Math.floor(Math.random() * 35) + 30;
@@ -3583,13 +3580,26 @@ function startNaturalTypewriter() {
       // 4. Kích hoạt chữ ký viết tay SVG Handwriting chạy nét & hiển thị vùng chữ ký
       const signatureArea = document.getElementById('signatureArea');
       if (signatureArea) signatureArea.classList.add('visible');
-      sigPath.classList.add('drawn');
+      if (sigPath) sigPath.classList.add('drawn');
 
-      // Cuộn êm đến cuối bức thư để lộ trọn vẹn chữ ký và lời chúc kết
-      if (letterPaper) {
+      // Cuộn êm ái xuống tận đáy bức thư để lộ trọn vẹn đoạn cảm ơn và chữ ký
+      const performSmoothScrollToBottom = () => {
+        if (!letterPaper) return;
         letterPaper.style.scrollBehavior = 'smooth';
-        letterPaper.scrollTo({ top: letterPaper.scrollHeight, behavior: 'smooth' });
-      }
+        letterPaper.scrollTo({ top: letterPaper.scrollHeight + 500, behavior: 'smooth' });
+
+        const sigEl = document.getElementById('signatureArea');
+        if (sigEl && sigEl.scrollIntoView) {
+          sigEl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+      };
+
+      // Kích hoạt cuộn mượt mà ngay lập tức và liên tục để đảm bảo 100% cuộn hết thư
+      performSmoothScrollToBottom();
+      setTimeout(performSmoothScrollToBottom, 120);
+      setTimeout(performSmoothScrollToBottom, 400);
+      setTimeout(performSmoothScrollToBottom, 800);
+      setTimeout(performSmoothScrollToBottom, 1400);
 
       // 5. Màn kết Cao trào (Final Climax): Bắn bóng bay trái tim & pháo hoa rực rỡ
       actions.classList.add('show');
@@ -3600,13 +3610,13 @@ function startNaturalTypewriter() {
         window.confetti({ particleCount: 110, spread: 90, origin: { y: 0.6 } });
       }
 
-      // Tự động chuyển tiếp sang Stage 6 (Vũ điệu trái tim vô tận) sau 7.5s để ngắm trọn vẹn thư và chữ ký
+      // Tự động chuyển tiếp sang Stage 6 (Vũ điệu trái tim vô tận) sau 9.5s để ngắm trọn vẹn thư và chữ ký
       if (window.stage5ToStage6Timer) clearTimeout(window.stage5ToStage6Timer);
       window.stage5ToStage6Timer = setTimeout(() => {
         if (currentActiveStage === 5) {
           switchStage(6);
         }
-      }, 7500);
+      }, 9500);
     }
   }
 
