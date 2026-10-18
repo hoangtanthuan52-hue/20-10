@@ -643,7 +643,7 @@ body.universe-body {
   left: 50%;
   bottom: 40px;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: 35;
   border: 0;
   border-radius: 999px;
   padding: 16px 40px;
@@ -3434,24 +3434,6 @@ body.universe-body {
     transform: scale(1.05);
     box-shadow: 0 0 35px rgba(255, 215, 0, 0.85);
   }
-}
-
-/* ========================================================
-   TỰ ĐỘNG HÓA HOÀN TOÀN: ẨN CÁC NÚT ĐIỀU HƯỚNG / CHUYỂN CẢNH TRUNG GIAN
-   Theo yêu cầu: Giao diện điện ảnh xuyên suốt không cần nút bấm
-   ======================================================== */
-.btn-rose-open,
-.rose-stage-actions,
-#stage1Action,
-.cal-actions-row,
-.galaxy-control-pills,
-.galaxy-action-wrap,
-.photo-galaxy-hud,
-#photoGalaxyHud {
-  display: none !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  visibility: hidden !important;
 }
 /* ========================================================
    POPUP THÔNG BÁO BẬT NHẠC NỀN KHI TRÌNH DUYỆT CHẶN AUTOPLAY

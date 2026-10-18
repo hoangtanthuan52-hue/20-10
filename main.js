@@ -1235,24 +1235,47 @@ function initRoseIntro3D() {
   window.addEventListener('resize', resizeRoseIntro);
 
   if (btnOpen) {
-    btnOpen.onclick = startRoseBloom;
+    btnOpen.onclick = (e) => {
+      e.stopPropagation();
+      playGlobalAudio();
+      startRoseBloom();
+    };
     setTimeout(() => {
       if (roseState === 'idle') btnOpen.classList.add('on');
-    }, 1200);
+    }, 400);
   }
 
   if (btnReplay) {
-    btnReplay.onclick = replayRoseIntro;
+    btnReplay.onclick = (e) => {
+      e.stopPropagation();
+      replayRoseIntro();
+    };
   }
 
   canvas.addEventListener('click', () => {
-    if (roseState === 'idle') startRoseBloom();
+    if (roseState === 'idle') {
+      playGlobalAudio();
+      startRoseBloom();
+    }
   });
 
-  // Tự động bung nở bó hoa sau 1.4s mở web để người xem không cần bấm nút
+  const stage1El = document.getElementById('stage1');
+  if (stage1El) {
+    stage1El.addEventListener('click', (e) => {
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.story-modal')) return;
+      if (roseState === 'idle') {
+        playGlobalAudio();
+        startRoseBloom();
+      }
+    });
+  }
+
+  // Tự động bung nở bó hoa sau 1.8s mở web để trải nghiệm mượt mà không bị kẹt
   setTimeout(() => {
-    if (roseState === 'idle') startRoseBloom();
-  }, 1400);
+    if (roseState === 'idle') {
+      startRoseBloom();
+    }
+  }, 1800);
 }
 
 function resizeRoseIntro() {
@@ -1268,6 +1291,11 @@ function resizeRoseIntro() {
 
 function startRoseBloom() {
   if (roseState === 'running') return;
+  try {
+    if (!isAudioActive) {
+      playGlobalAudio();
+    }
+  } catch (e) {}
   if (roseState === 'done') {
     flowerSprites.forEach(f => {
       f.s.visible = false;
@@ -1493,9 +1521,12 @@ window.addEventListener('keydown', e => {
   }
 });
 
-document.getElementById('btnStage1Next').addEventListener('click', () => {
-  switchStage(2);
-});
+const btnStage1Next = document.getElementById('btnStage1Next');
+if (btnStage1Next) {
+  btnStage1Next.addEventListener('click', () => {
+    switchStage(2);
+  });
+}
 
 // ==========================================================
 // 5. STAGE 2: LỊCH BÓC TƯỜNG TRUYỀN THỐNG 20/10 (TRADITIONAL TEAR-OFF CALENDAR)
