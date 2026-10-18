@@ -4861,13 +4861,22 @@ body.universe-body {
    1. Nút "Mở Bức Thư Tri Ân" (Stage 4 tự động chuyển sau khi xem tường ảnh)
    2. Nút "Đến Đoạn Kết: 23 Đóa Hoa 12B1" (Stage 5 tự động chuyển sang Stage 6)
    3. Thanh nút điều khiển dưới đáy Stage 6 (để lộ trọn vẹn vòng trái tim & pháo hoa)
+   4. Dòng chữ phụ "Tribute to 23 Stars" dưới logo 12B1
+   5. Nút "Hành Trình Kỷ Niệm" ở Stage 3 (tự động chuyển cảnh sau 10s)
+   6. Huy hiệu "INTERACTIVE SPIRAL GALAXY • 23 CELESTIAL STARS" ở Stage 3
+   7. Cụm 3 nút tròn góc phải Header (Cube 3D, Bật/Tắt nhạc, Nạp MP3 trống)
    ======================================================== */
 #photoGalaxyHud,
 .photo-galaxy-hud,
 #finalClimaxActions,
 .final-climax-actions,
 #stage6ActionOverlay,
-.stage6-action-overlay {
+.stage6-action-overlay,
+.brand-sub,
+#stage3 .cosmic-tag-badge,
+.galaxy-action-wrap,
+#btnStage3Next,
+.audio-controls-wrap .cosmic-icon-btn:not(.story-header-btn) {
   display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
