@@ -23,7 +23,7 @@
   <!-- GSAP Animation Library (Offline Ready) -->
   <script src="libs/gsap.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=2.2.6">
+  <link rel="stylesheet" href="style.css?v=2.2.7">
 </head>
 <body class="universe-body">
 
@@ -157,8 +157,8 @@
 
 
 
-      <!-- Cụm nút chuyển tiếp khi hoa nở xong (Xem lại & Tiếp nào) -->
-      <div class="stage-action-wrap rose-stage-actions" id="stage1Action">
+      <!-- Cụm nút chuyển tiếp khi hoa nở xong (Xem lại & Tiếp nào) - Đã ẩn vì hệ thống chạy tự động -->
+      <div class="stage-action-wrap rose-stage-actions" id="stage1Action" style="display: none !important;">
         <button id="btnRoseReplay" class="luxury-btn btn-secondary-lux">
           <i class="fa-solid fa-rotate-right"></i>
           <span>Xem lại hoa</span>
@@ -194,7 +194,7 @@
           <div class="cal-msg" id="calMsg">
             <h1>Chúc mừng ngày 20/10</h1>
             <p>Chúc 23 đóa hoa của tập thể lớp 12B1 luôn rạng rỡ, bình an và được yêu thương mỗi ngày.</p>
-            <div class="cal-actions-row">
+            <div class="cal-actions-row" style="display: none !important;">
               <button id="calBtn" class="cal-btn-outline" disabled>
                 <i class="fa-solid fa-rotate-left"></i> Xem lại
               </button>
@@ -210,7 +210,7 @@
 
         <div class="cal-veil" id="calVeil">
           <p id="calLn"></p>
-          <button class="cal-skip" id="calSkip">Bỏ qua</button>
+          <button class="cal-skip" id="calSkip" style="display: none !important;">Bỏ qua</button>
         </div>
 
       </div>
@@ -688,7 +688,7 @@
   <!-- Module JS (100% Offline Ready) -->
   <script src="images_data.js"></script>
   <script src="audio_data.js"></script>
-  <script src="fx.js?v=2.2.6"></script>
-  <script src="main.js?v=2.2.6"></script>
+  <script src="fx.js?v=2.2.7"></script>
+  <script src="main.js?v=2.2.7"></script>
 </body>
 </html>

@@ -4904,6 +4904,9 @@ body.universe-body {
    5. Nút "Hành Trình Kỷ Niệm" ở Stage 3 (tự động chuyển cảnh sau 10s)
    6. Huy hiệu "INTERACTIVE SPIRAL GALAXY • 23 CELESTIAL STARS" ở Stage 3
    7. Cụm 3 nút tròn góc phải Header (Cube 3D, Bật/Tắt nhạc, Nạp MP3 trống)
+   8. Cụm nút "Xem lại hoa" & "Tiếp nào" ở Stage 1 (Hoa hồng tự chuyển sang bóc lịch)
+   9. Nút "Bỏ qua" ở Stage 2 (Lịch bóc tự động)
+   10. Cụm nút "Xem lại" & "Khám Phá Thiên Hà Tinh Tú" ở Stage 2 (Tự chuyển sang Stage 3)
    ======================================================== */
 #photoGalaxyHud,
 .photo-galaxy-hud,
@@ -4915,6 +4918,15 @@ body.universe-body {
 #stage3 .cosmic-tag-badge,
 .galaxy-action-wrap,
 #btnStage3Next,
+#stage1Action,
+.rose-stage-actions,
+#stage1Action.show-btn,
+.rose-stage-actions.show-btn,
+.cal-actions-row,
+#calBtn,
+#btnStage2Next,
+.cal-skip,
+#calSkip,
 .audio-controls-wrap .cosmic-icon-btn:not(.story-header-btn) {
   display: none !important;
   opacity: 0 !important;
