@@ -2022,12 +2022,12 @@ function initGalaxyDust(ctx, w, h) {
   for (let a = 0; a < arms; a++) {
     const armAngle = (a / arms) * Math.PI * 2;
     for (let i = 0; i < countPerArm; i++) {
-      const distance = 40 + Math.pow(Math.random(), 1.5) * 440;
+      const distance = 35 + Math.pow(Math.random(), 1.5) * 330;
       // Công thức xoắn ốc Logarithmic Spiral
-      const curvature = 0.006;
+      const curvature = 0.007;
       const angle = armAngle + distance * curvature + (Math.random() - 0.5) * 0.45;
       
-      const size = Math.random() * 2.4 + 0.7;
+      const size = Math.random() * 2.2 + 0.6;
       const colors = ['#f7e7ce', '#ffd700', '#ff69b4', '#c084fc', '#38bdf8', '#ffffff'];
       const color = colors[Math.floor(Math.random() * colors.length)];
       const alpha = Math.random() * 0.7 + 0.3;
@@ -2045,7 +2045,7 @@ function renderGalaxyCanvas(ctx, canvas) {
   const cy = canvas.height / 2;
 
   // Lõi thiên hà gradient tỏa sáng rực rỡ
-  const coreGrad = ctx.createRadialGradient(cx, cy, 15, cx, cy, 220);
+  const coreGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 180);
   coreGrad.addColorStop(0, 'rgba(255, 235, 170, 0.45)');
   coreGrad.addColorStop(0.3, 'rgba(255, 105, 180, 0.25)');
   coreGrad.addColorStop(0.7, 'rgba(192, 132, 252, 0.1)');
@@ -2086,16 +2086,16 @@ function initStage3() {
   }
 
   // Kích thước canvas thiên hà
-  canvas.width = canvas.parentElement.clientWidth || 1080;
-  canvas.height = canvas.parentElement.clientHeight || 650;
+  canvas.width = canvas.parentElement.clientWidth || 880;
+  canvas.height = canvas.parentElement.clientHeight || 490;
   const ctx = canvas.getContext('2d');
   initGalaxyDust(ctx, canvas.width, canvas.height);
 
-  // Phân bổ 23 bạn nữ trên 3 quỹ đạo rộng mở, hoành tráng (tốc độ xoay êm ái, thư giãn)
+  // Phân bổ 23 bạn nữ trên 3 quỹ đạo rõ ràng (tốc độ xoay êm ái, thư giãn 35% - 38% so với ban đầu)
   const ORBIT_TRACKS = [
-    { radius: 170, speed: 0.00080, startIndex: 0, count: 5 },
-    { radius: 275, speed: 0.00055, startIndex: 5, count: 8 },
-    { radius: 380, speed: 0.00038, startIndex: 13, count: 10 }
+    { radius: 130, speed: 0.00080, startIndex: 0, count: 5 },
+    { radius: 215, speed: 0.00055, startIndex: 5, count: 8 },
+    { radius: 300, speed: 0.00038, startIndex: 13, count: 10 }
   ];
 
   const girlNodes = [];
@@ -2214,11 +2214,11 @@ function initStage3() {
           const x = Math.cos(item.angle) * item.radius;
           const y = Math.sin(item.angle) * item.radius;
 
-          // Counter-rotate trục X và bù trừ -31px để tâm avatar orb 62px nằm chính xác trên quỹ đạo
+          // Counter-rotate trục X và bù trừ -21px để tâm avatar orb 42px nằm chính xác trên quỹ đạo
           if (isGalaxy3D) {
-            item.el.style.transform = `translate3d(${x - 31}px, ${y - 31}px, 0px) rotateX(-42deg)`;
+            item.el.style.transform = `translate3d(${x - 21}px, ${y - 21}px, 0px) rotateX(-42deg)`;
           } else {
-            item.el.style.transform = `translate3d(${x - 31}px, ${y - 31}px, 0px) rotateX(0deg)`;
+            item.el.style.transform = `translate3d(${x - 21}px, ${y - 21}px, 0px) rotateX(0deg)`;
           }
         });
       }

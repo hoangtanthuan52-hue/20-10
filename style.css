@@ -1416,8 +1416,8 @@ body.universe-body {
 .galaxy-viewport {
   position: relative;
   width: 100%;
-  max-width: 1260px;
-  height: clamp(620px, 80vh, 880px);
+  max-width: 1060px;
+  height: clamp(520px, 70vh, 600px);
   perspective: 1200px;
   display: flex;
   justify-content: center;
@@ -1443,14 +1443,14 @@ body.universe-body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 156px;
-  height: 156px;
+  width: 136px;
+  height: 136px;
   border-radius: 50%;
   background: radial-gradient(circle, #ffffff 0%, #fef08a 25%, #ff758c 60%, transparent 80%);
   box-shadow: 
-    0 0 60px rgba(255, 215, 0, 0.95),
-    0 0 110px rgba(255, 105, 180, 0.8),
-    0 0 160px rgba(168, 85, 247, 0.6);
+    0 0 50px rgba(255, 215, 0, 0.95),
+    0 0 100px rgba(255, 105, 180, 0.75),
+    0 0 150px rgba(168, 85, 247, 0.55);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1467,8 +1467,8 @@ body.universe-body {
 
 .core-singularity-flare {
   position: absolute;
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   background: conic-gradient(from 0deg, transparent 0%, rgba(255, 215, 0, 0.6) 25%, transparent 50%, rgba(255, 105, 180, 0.6) 75%, transparent 100%);
   animation: spinFlare 8s linear infinite;
@@ -1481,18 +1481,18 @@ body.universe-body {
 }
 
 .core-star-icon {
-  font-size: 2.5rem;
+  font-size: 2.1rem;
   color: #1a051d;
   z-index: 2;
 }
 
 .core-label {
-  font-size: 0.92rem;
+  font-size: 0.78rem;
   font-weight: 900;
   color: #1a051d;
   letter-spacing: 2px;
   z-index: 2;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 /* Mặt phẳng Quỹ đạo Thiên Hà (Galaxy Orbit Plane) */
@@ -1500,10 +1500,10 @@ body.universe-body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 840px;
-  height: 840px;
-  margin-top: -420px;
-  margin-left: -420px;
+  width: 680px;
+  height: 680px;
+  margin-top: -340px;
+  margin-left: -340px;
   transform-style: preserve-3d;
   transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
   z-index: 4;
@@ -1528,24 +1528,24 @@ body.universe-body {
 }
 
 .track-1 {
-  width: 340px;
-  height: 340px;
+  width: 260px;
+  height: 260px;
   border: 1.5px dashed rgba(255, 105, 180, 0.45);
-  box-shadow: 0 0 16px rgba(255, 105, 180, 0.18);
+  box-shadow: 0 0 15px rgba(255, 105, 180, 0.15);
 }
 
 .track-2 {
-  width: 550px;
-  height: 550px;
+  width: 430px;
+  height: 430px;
   border: 1.5px dashed rgba(247, 231, 206, 0.4);
-  box-shadow: 0 0 20px rgba(247, 231, 206, 0.18);
+  box-shadow: 0 0 18px rgba(247, 231, 206, 0.15);
 }
 
 .track-3 {
-  width: 760px;
-  height: 760px;
+  width: 600px;
+  height: 600px;
   border: 1.5px dashed rgba(192, 132, 252, 0.4);
-  box-shadow: 0 0 24px rgba(192, 132, 252, 0.18);
+  box-shadow: 0 0 20px rgba(192, 132, 252, 0.15);
 }
 
 .track-4 {
@@ -1582,23 +1582,23 @@ body.universe-body {
   filter: drop-shadow(0 0 16px #ffd700);
 }
 
-/* Avatar hình quả cầu sao phát sáng - PHÓNG TO RÕ NÉT */
+/* Avatar hình quả cầu sao phát sáng */
 .node-avatar-orb {
-  width: 62px;
-  height: 62px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   position: relative;
-  border: 2.5px solid var(--accent-champagne-gold);
-  box-shadow: 0 0 18px rgba(255, 105, 180, 0.9), inset 0 0 10px rgba(255, 255, 255, 0.65);
+  border: 2px solid var(--accent-champagne-gold);
+  box-shadow: 0 0 14px rgba(255, 105, 180, 0.85), inset 0 0 8px rgba(255, 255, 255, 0.6);
   overflow: hidden;
   flex-shrink: 0;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s, box-shadow 0.3s;
+  transition: transform 0.3s, border-color 0.3s;
 }
 
 .star-planet-node:hover .node-avatar-orb {
-  transform: scale(1.22);
+  transform: scale(1.18);
   border-color: #ffd700;
-  box-shadow: 0 0 28px #ffd700, 0 0 16px #ff69b4;
+  box-shadow: 0 0 25px #ffd700;
 }
 
 .node-avatar-orb img {
@@ -1607,35 +1607,35 @@ body.universe-body {
   object-fit: cover;
 }
 
-/* Thẻ tên tinh tú (Pill Tag) - THOÁNG ĐÃNG, RÕ ĐẸP */
+/* Thẻ tên tinh tú (Pill Tag) - THOÁNG ĐÃNG, KHÔNG BAO GIỜ BỊ CHE */
 .node-name-pill {
-  background: rgba(18, 5, 26, 0.9);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(247, 231, 206, 0.6);
-  padding: 4.5px 12px;
+  background: rgba(18, 5, 26, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(247, 231, 206, 0.55);
+  padding: 3.5px 10px;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: #ffffff;
   white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.75), 0 0 10px rgba(255, 105, 180, 0.35);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7), 0 0 8px rgba(255, 105, 180, 0.3);
   transition: all 0.25s;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .star-planet-node:hover .node-name-pill {
-  background: linear-gradient(135deg, rgba(255, 75, 125, 0.95), rgba(192, 132, 252, 0.9));
+  background: linear-gradient(135deg, rgba(255, 75, 125, 0.9), rgba(192, 132, 252, 0.85));
   border-color: #ffd700;
   color: #ffffff;
-  transform: scale(1.1);
-  box-shadow: 0 0 22px rgba(255, 215, 0, 0.7);
+  transform: scale(1.08);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
 }
 
 .node-name-pill i {
   color: #ffd700;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
 }
 
 /* Bảng Tri Ân Tinh Tú Nổi Bật (Spotlight Card) */
@@ -2592,33 +2592,6 @@ body.universe-body {
 }
 
 /* ==========================================================
-   TỰ ĐỘNG CO GIÃN THIÊN HÀ THEO CHIỀU CAO MÀN HÌNH (LAPTOP / DESKTOP)
-   ========================================================== */
-@media (max-height: 840px) and (min-width: 641px) {
-  .galaxy-viewport {
-    height: clamp(540px, 78vh, 740px);
-  }
-  .galaxy-orbit-plane {
-    transform: scale(0.85) rotateX(42deg);
-  }
-  .galaxy-orbit-plane.view-2d {
-    transform: scale(0.85) rotateX(0deg);
-  }
-}
-
-@media (max-height: 720px) and (min-width: 641px) {
-  .galaxy-viewport {
-    height: clamp(480px, 74vh, 640px);
-  }
-  .galaxy-orbit-plane {
-    transform: scale(0.72) rotateX(42deg);
-  }
-  .galaxy-orbit-plane.view-2d {
-    transform: scale(0.72) rotateX(0deg);
-  }
-}
-
-/* ==========================================================
    RESPONSIVE DESIGN CHO THIẾT BỊ DI ĐỘNG & TABLET
    ========================================================== */
 @media (max-width: 900px) {
@@ -2627,12 +2600,6 @@ body.universe-body {
   .brand-title { font-size: 1.05rem; }
   .brand-sub { display: none; }
   .timeline-stepper { display: none; }
-  .galaxy-orbit-plane {
-    transform: scale(0.72) rotateX(42deg);
-  }
-  .galaxy-orbit-plane.view-2d {
-    transform: scale(0.72) rotateX(0deg);
-  }
   
   .stage-section {
     padding: 60px 8px 16px !important;
