@@ -854,6 +854,13 @@ document.querySelectorAll('.step-node').forEach(node => {
   });
 });
 
+const headerBrandGroup = document.getElementById('headerBrandGroup');
+if (headerBrandGroup) {
+  headerBrandGroup.addEventListener('click', () => {
+    switchStage(1);
+  });
+}
+
 // ==========================================================
 // 4. STAGE 1: BÓ HOA NỞ RỘ THREE.JS 3D SIÊU ĐIỆN ẢNH (CINEMATIC INTRO)
 // ==========================================================

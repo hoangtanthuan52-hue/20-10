@@ -197,15 +197,53 @@ body.universe-body {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.25s ease;
+}
+
+.brand-group:hover {
+  transform: translateY(-1px);
+}
+
+.brand-logo-wrap {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 215, 0, 0.85);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.45), 0 0 24px rgba(225, 29, 72, 0.35);
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.35s ease;
+  display: block;
+}
+
+.brand-group:hover .brand-logo-img {
+  transform: scale(1.1) rotate(4deg);
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.9), 0 0 35px rgba(255, 105, 180, 0.65);
 }
 
 .star-orb {
-  width: 14px;
-  height: 14px;
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   background: radial-gradient(circle, #ffd700, #ff69b4);
-  box-shadow: 0 0 15px #ffd700;
+  box-shadow: 0 0 12px #ffd700;
   animation: orbFlicker 2s infinite alternate;
+  border: 1.5px solid rgba(15, 5, 24, 0.85);
 }
 
 @keyframes orbFlicker {
@@ -220,11 +258,12 @@ body.universe-body {
 
 .brand-title {
   font-family: 'Montserrat', sans-serif;
-  font-size: 1.05rem;
+  font-size: 1.22rem;
   font-weight: 800;
   letter-spacing: 2px;
   color: var(--accent-champagne-gold);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85), 0 0 14px rgba(255, 215, 0, 0.45);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85), 0 0 16px rgba(255, 215, 0, 0.5);
+  line-height: 1.15;
 }
 
 .brand-sub {
@@ -232,6 +271,7 @@ body.universe-body {
   color: var(--accent-rose-gold);
   letter-spacing: 1px;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+  line-height: 1.2;
 }
 
 /* Stepper Timeline (Ẩn theo yêu cầu) */
@@ -2508,7 +2548,8 @@ body.universe-body {
    ========================================================== */
 @media (max-width: 900px) {
   .galaxy-header { padding: 12px 14px; }
-  .brand-title { font-size: 0.9rem; }
+  .brand-logo-wrap { width: 32px; height: 32px; }
+  .brand-title { font-size: 1.05rem; }
   .brand-sub { display: none; }
   .timeline-stepper { display: none; }
   
