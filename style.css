@@ -4924,6 +4924,9 @@ body.universe-body {
 #btnStage2Next,
 .cal-skip,
 #calSkip,
+.galaxy-control-pills,
+#btnToggleGalaxyAngle,
+#btnToggleGalaxyOrbit,
 .audio-controls-wrap .cosmic-icon-btn:not(.story-header-btn) {
   display: none !important;
   opacity: 0 !important;
