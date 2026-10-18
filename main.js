@@ -503,6 +503,7 @@ const audioManager = new LuxuryAudioManager();
 window.audioManager = audioManager;
 const bgmEl = document.getElementById('bgmAudio');
 const voiceoverEl = document.getElementById('voiceoverAudio');
+const voiceoverTourEl = document.getElementById('voiceoverTourAudio');
 let isAudioActive = false;
 let userExplicitlyPaused = false;
 
@@ -642,6 +643,72 @@ function stopEndingVoiceover() {
   setBgmVolumeSmooth(BGM_NORMAL_VOL, 800);
 }
 
+function ensureVoiceoverTourSource() {
+  if (!voiceoverTourEl) return;
+  if (window.location.protocol === 'file:') {
+    if (typeof VOICEOVER_TOUR_BASE64 !== 'undefined' && VOICEOVER_TOUR_BASE64 && voiceoverTourEl.src !== VOICEOVER_TOUR_BASE64) {
+      voiceoverTourEl.src = VOICEOVER_TOUR_BASE64;
+    }
+    return;
+  }
+  if (!voiceoverTourEl.src || voiceoverTourEl.src === window.location.href || voiceoverTourEl.src.endsWith('/')) {
+    voiceoverTourEl.src = 'audio/voiceover_heart_tour.mp3';
+  }
+}
+
+if (voiceoverTourEl) {
+  ensureVoiceoverTourSource();
+  voiceoverTourEl.addEventListener('error', (e) => {
+    console.warn("audio/voiceover_heart_tour.mp3 load error, fallback to embedded VOICEOVER_TOUR_BASE64...", e);
+    if (typeof VOICEOVER_TOUR_BASE64 !== 'undefined' && VOICEOVER_TOUR_BASE64 && voiceoverTourEl.src !== VOICEOVER_TOUR_BASE64) {
+      voiceoverTourEl.src = VOICEOVER_TOUR_BASE64;
+      voiceoverTourEl.load();
+      if (window.currentActiveStage === 6 && isAudioActive && typeof stage6HeartTourCurrentIdx !== 'undefined' && stage6HeartTourCurrentIdx >= 0) {
+        voiceoverTourEl.play().catch(err => console.warn("Fallback tour voiceover error:", err));
+      }
+    }
+  });
+}
+
+function playTourVoiceover() {
+  if (!voiceoverTourEl) return;
+  ensureVoiceoverTourSource();
+  voiceoverTourEl.volume = 1.0;
+  voiceoverTourEl.currentTime = 0;
+
+  // Giảm nhỏ nhạc nền (Audio Ducking) để giọng đọc suy ngẫm rõ nét, ấm áp
+  setBgmVolumeSmooth(BGM_DUCKED_VOL, 1000);
+
+  if (isAudioActive && !userExplicitlyPaused) {
+    const p = voiceoverTourEl.play();
+    if (p) {
+      p.catch(err => {
+        console.warn("Tour voiceover play note:", err);
+        setBgmVolumeSmooth(BGM_NORMAL_VOL, 1000);
+      });
+    }
+  } else {
+    setBgmVolumeSmooth(BGM_NORMAL_VOL, 500);
+  }
+
+  // Khi giọng đọc kết thúc (sau ~83.6s) -> Tự động đưa nhạc nền to dần trở lại
+  voiceoverTourEl.onended = () => {
+    if (window.currentActiveStage === 6) {
+      setBgmVolumeSmooth(BGM_NORMAL_VOL, 1800);
+    }
+  };
+}
+
+function stopTourVoiceover() {
+  if (voiceoverTourEl) {
+    try {
+      voiceoverTourEl.pause();
+      voiceoverTourEl.currentTime = 0;
+    } catch (e) {}
+  }
+  setBgmVolumeSmooth(BGM_NORMAL_VOL, 800);
+}
+
 function updateAudioButtonUI(active) {
   const btn = document.getElementById('btnAudioToggle');
   if (!btn) return;
@@ -689,6 +756,7 @@ function playGlobalAudio() {
   userExplicitlyPaused = false;
   ensureAudioSource();
   ensureVoiceoverSource();
+  ensureVoiceoverTourSource();
 
   if (audioManager && audioManager.ctx && audioManager.ctx.state === 'suspended') {
     try { audioManager.ctx.resume(); } catch (e) {}
@@ -739,6 +807,9 @@ function playGlobalAudio() {
   if (window.currentActiveStage === 6 && voiceoverEl && voiceoverEl.paused && voiceoverEl.currentTime > 0 && !voiceoverEl.ended) {
     voiceoverEl.play().catch(() => {});
   }
+  if (window.currentActiveStage === 6 && voiceoverTourEl && voiceoverTourEl.paused && voiceoverTourEl.currentTime > 0 && !voiceoverTourEl.ended) {
+    voiceoverTourEl.play().catch(() => {});
+  }
 }
 
 function pauseGlobalAudio() {
@@ -751,6 +822,9 @@ function pauseGlobalAudio() {
   }
   if (voiceoverEl && !voiceoverEl.paused) {
     try { voiceoverEl.pause(); } catch (e) {}
+  }
+  if (voiceoverTourEl && !voiceoverTourEl.paused) {
+    try { voiceoverTourEl.pause(); } catch (e) {}
   }
   audioManager.stopMelody();
 }
@@ -4405,6 +4479,9 @@ function clearStage6Timeline() {
   if (typeof stopEndingVoiceover === 'function') {
     stopEndingVoiceover();
   }
+  if (typeof stopTourVoiceover === 'function') {
+    stopTourVoiceover();
+  }
   if (typeof stopStage6HeartSequentialTour === 'function') {
     stopStage6HeartSequentialTour();
   }
@@ -4448,6 +4525,11 @@ function stopStage6HeartSequentialTour() {
 function startStage6HeartSequentialTour() {
   stopStage6HeartSequentialTour();
   if (window.currentActiveStage !== 6 || !finaleCards || finaleCards.length === 0) return;
+
+  // Bổ sung đoạn audio lắng đọng khi trái tim ảnh chạy
+  if (typeof playTourVoiceover === 'function') {
+    playTourVoiceover();
+  }
 
   function highlightNextCard(idx) {
     if (window.currentActiveStage !== 6) {
@@ -4745,6 +4827,9 @@ const TOUR_SLIDE_DURATION = 3000; // 3 giây mỗi bạn nữ theo yêu cầu
 function openCinematicTour(startIndex = 0) {
   const modal = document.getElementById('cinematicTourModal');
   if (!modal) return;
+  if (typeof stopTourVoiceover === 'function') {
+    stopTourVoiceover();
+  }
   stopTourTimer();
   resetTourProgress();
   tourCurrentIndex = (startIndex >= 0 && startIndex < FEMALE_STUDENTS.length) ? startIndex : 0;
