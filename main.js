@@ -504,6 +504,7 @@ window.audioManager = audioManager;
 const bgmEl = document.getElementById('bgmAudio');
 const voiceoverEl = document.getElementById('voiceoverAudio');
 let isAudioActive = false;
+let userExplicitlyPaused = false;
 
 // Cấu hình âm lượng tiêu chuẩn: Giảm nhạc nền nhẹ nhàng (0.55), khi lồng tiếng nói thì ducking xuống 0.18
 const BGM_NORMAL_VOL = 0.55;
@@ -534,34 +535,44 @@ function setBgmVolumeSmooth(targetVol, durationMs = 1200) {
 function ensureAudioSource() {
   if (!bgmEl) return;
   bgmEl.volume = currentBgmTargetVol;
-  if (typeof BGM_BASE64 !== 'undefined' && BGM_BASE64) {
-    if (window.location.protocol === 'file:' || !bgmEl.src || bgmEl.src === window.location.href) {
+  if (window.location.protocol === 'file:') {
+    if (typeof BGM_BASE64 !== 'undefined' && BGM_BASE64 && bgmEl.src !== BGM_BASE64) {
       bgmEl.src = BGM_BASE64;
     }
-  } else if (!bgmEl.src || bgmEl.src === window.location.href) {
+    return;
+  }
+  if (!bgmEl.src || bgmEl.src === window.location.href || bgmEl.src.endsWith('/')) {
     bgmEl.src = 'audio/music.mp3';
   }
 }
 
 function ensureVoiceoverSource() {
   if (!voiceoverEl) return;
-  if (typeof VOICEOVER_ENDING_BASE64 !== 'undefined' && VOICEOVER_ENDING_BASE64) {
-    if (window.location.protocol === 'file:' || !voiceoverEl.src || voiceoverEl.src === window.location.href) {
+  if (window.location.protocol === 'file:') {
+    if (typeof VOICEOVER_ENDING_BASE64 !== 'undefined' && VOICEOVER_ENDING_BASE64 && voiceoverEl.src !== VOICEOVER_ENDING_BASE64) {
       voiceoverEl.src = VOICEOVER_ENDING_BASE64;
     }
-  } else if (!voiceoverEl.src || voiceoverEl.src === window.location.href) {
+    return;
+  }
+  if (!voiceoverEl.src || voiceoverEl.src === window.location.href || voiceoverEl.src.endsWith('/')) {
     voiceoverEl.src = 'audio/voiceover_ending.mp3';
   }
 }
 
 if (bgmEl) {
   ensureAudioSource();
-  bgmEl.addEventListener('error', () => {
-    console.warn("audio/music.mp3 note, switching to embedded BGM_BASE64...");
+  bgmEl.addEventListener('error', (e) => {
+    console.warn("audio/music.mp3 load error, fallback to embedded BGM_BASE64...", e);
     if (typeof BGM_BASE64 !== 'undefined' && BGM_BASE64 && bgmEl.src !== BGM_BASE64) {
       bgmEl.src = BGM_BASE64;
-      if (isAudioActive) {
-        bgmEl.play().catch(e => console.warn(e));
+      bgmEl.load();
+      if (isAudioActive || !userExplicitlyPaused) {
+        bgmEl.play().then(() => {
+          isAudioActive = true;
+          updateAudioButtonUI(true);
+          removeAutoplayPrompt();
+          audioManager.stopMelody();
+        }).catch(err => console.warn("Fallback play error:", err));
       }
     }
   });
@@ -569,10 +580,14 @@ if (bgmEl) {
 
 if (voiceoverEl) {
   ensureVoiceoverSource();
-  voiceoverEl.addEventListener('error', () => {
-    console.warn("audio/voiceover_ending.mp3 note, switching to embedded VOICEOVER_ENDING_BASE64...");
+  voiceoverEl.addEventListener('error', (e) => {
+    console.warn("audio/voiceover_ending.mp3 load error, fallback to embedded VOICEOVER_ENDING_BASE64...", e);
     if (typeof VOICEOVER_ENDING_BASE64 !== 'undefined' && VOICEOVER_ENDING_BASE64 && voiceoverEl.src !== VOICEOVER_ENDING_BASE64) {
       voiceoverEl.src = VOICEOVER_ENDING_BASE64;
+      voiceoverEl.load();
+      if (window.currentActiveStage === 6 && isAudioActive) {
+        voiceoverEl.play().catch(err => console.warn("Fallback voiceover error:", err));
+      }
     }
   });
 }
@@ -586,9 +601,16 @@ function playEndingVoiceover() {
   // Giảm nhỏ nhạc nền (Audio Ducking) để giọng đọc truyền cảm rõ ràng, ấm áp
   setBgmVolumeSmooth(BGM_DUCKED_VOL, 1000);
 
-  if (isAudioActive) {
+  if (isAudioActive && !userExplicitlyPaused) {
     const p = voiceoverEl.play();
-    if (p) p.catch(err => console.warn("Voiceover play note:", err));
+    if (p) {
+      p.catch(err => {
+        console.warn("Voiceover play note:", err);
+        setBgmVolumeSmooth(BGM_NORMAL_VOL, 1000);
+      });
+    }
+  } else {
+    setBgmVolumeSmooth(BGM_NORMAL_VOL, 500);
   }
 
   // Khi giọng đọc kết thúc (sau 35s) -> Tự động đưa nhạc nền to dần trở lại và hiện bảng thông điệp kết
@@ -601,6 +623,13 @@ function playEndingVoiceover() {
       }
     }
   };
+
+  // Fallback an toàn: Sau 35.5 giây tự động phục hồi âm lượng chuẩn
+  setTimeout(() => {
+    if (window.currentActiveStage === 6 && bgmEl && bgmEl.volume < BGM_NORMAL_VOL) {
+      setBgmVolumeSmooth(BGM_NORMAL_VOL, 1500);
+    }
+  }, 35500);
 }
 
 function stopEndingVoiceover() {
@@ -636,7 +665,7 @@ function removeAutoplayPrompt() {
 }
 
 function showAutoplayPrompt() {
-  if (isAudioActive) return;
+  if (isAudioActive || (bgmEl && !bgmEl.paused) || userExplicitlyPaused) return;
   let prompt = document.getElementById('audioAutoplayPrompt');
   if (!prompt) {
     prompt = document.createElement('div');
@@ -648,6 +677,7 @@ function showAutoplayPrompt() {
     `;
     prompt.onclick = (e) => {
       e.stopPropagation();
+      userExplicitlyPaused = false;
       playGlobalAudio();
     };
     document.body.appendChild(prompt);
@@ -656,28 +686,52 @@ function showAutoplayPrompt() {
 }
 
 function playGlobalAudio() {
-  isAudioActive = true;
+  userExplicitlyPaused = false;
   ensureAudioSource();
   ensureVoiceoverSource();
-  updateAudioButtonUI(true);
-  removeAutoplayPrompt();
+
+  if (audioManager && audioManager.ctx && audioManager.ctx.state === 'suspended') {
+    try { audioManager.ctx.resume(); } catch (e) {}
+  }
 
   if (bgmEl) {
+    if (typeof bgmEl.volume !== 'number' || isNaN(bgmEl.volume) || bgmEl.volume <= 0.01) {
+      bgmEl.volume = BGM_NORMAL_VOL;
+    }
+
     const playPromise = bgmEl.play();
     if (playPromise !== undefined) {
       playPromise.then(() => {
+        isAudioActive = true;
+        updateAudioButtonUI(true);
+        removeAutoplayPrompt();
         audioManager.stopMelody();
       }).catch(err => {
-        console.warn("BGM play error, attempting fallback to BGM_BASE64:", err);
-        if (typeof BGM_BASE64 !== 'undefined' && BGM_BASE64 && bgmEl.src !== BGM_BASE64) {
+        console.warn("BGM play error / blocked:", err);
+        // Fallback sang BGM_BASE64 nếu trước đó đang dùng file URL và không phải do chặn autoplay
+        if (typeof BGM_BASE64 !== 'undefined' && BGM_BASE64 && bgmEl.src !== BGM_BASE64 && err.name !== 'NotAllowedError') {
           bgmEl.src = BGM_BASE64;
-          bgmEl.play().then(() => audioManager.stopMelody()).catch(() => audioManager.startMelody());
+          bgmEl.load();
+          bgmEl.play().then(() => {
+            isAudioActive = true;
+            updateAudioButtonUI(true);
+            removeAutoplayPrompt();
+            audioManager.stopMelody();
+          }).catch(err2 => {
+            isAudioActive = false;
+            updateAudioButtonUI(false);
+            if (!userExplicitlyPaused) showAutoplayPrompt();
+          });
         } else {
-          audioManager.startMelody();
+          isAudioActive = false;
+          updateAudioButtonUI(false);
+          if (!userExplicitlyPaused) showAutoplayPrompt();
         }
       });
     }
   } else {
+    isAudioActive = true;
+    updateAudioButtonUI(true);
     audioManager.startMelody();
   }
 
@@ -685,15 +739,13 @@ function playGlobalAudio() {
   if (window.currentActiveStage === 6 && voiceoverEl && voiceoverEl.paused && voiceoverEl.currentTime > 0 && !voiceoverEl.ended) {
     voiceoverEl.play().catch(() => {});
   }
-
-  if (audioManager && audioManager.ctx && audioManager.ctx.state === 'suspended') {
-    try { audioManager.ctx.resume(); } catch (e) {}
-  }
 }
 
 function pauseGlobalAudio() {
   isAudioActive = false;
+  userExplicitlyPaused = true;
   updateAudioButtonUI(false);
+  removeAutoplayPrompt();
   if (bgmEl && !bgmEl.paused) {
     try { bgmEl.pause(); } catch (e) {}
   }
@@ -704,25 +756,29 @@ function pauseGlobalAudio() {
 }
 
 function toggleGlobalAudio() {
-  if (isAudioActive) {
+  if (bgmEl && !bgmEl.paused) {
     pauseGlobalAudio();
   } else {
+    userExplicitlyPaused = false;
     playGlobalAudio();
   }
 }
 
-// Tự động phát nhạc khi người dùng tương tác lần đầu (Click chuột, Chạm màn hình điện thoại, Bấm phím)
-function handleUserGestureActivation() {
-  if (!isAudioActive) {
+// Bắt tương tác người dùng toàn trang để mở khóa âm thanh ngay tức thì
+function onGlobalUserInteraction(e) {
+  if (e.target && (e.target.id === 'audioUploadInput' || e.target.closest('#audioUploadInput') || e.target.closest('.story-modal'))) {
+    return;
+  }
+  if (audioManager && audioManager.ctx && audioManager.ctx.state === 'suspended') {
+    try { audioManager.ctx.resume(); } catch (err) {}
+  }
+  if (!userExplicitlyPaused && bgmEl && bgmEl.paused) {
     playGlobalAudio();
   }
-  ['click', 'pointerdown', 'touchstart', 'keydown'].forEach(evt => {
-    window.removeEventListener(evt, handleUserGestureActivation);
-  });
 }
 
 ['click', 'pointerdown', 'touchstart', 'keydown'].forEach(evt => {
-  window.addEventListener(evt, handleUserGestureActivation, { passive: true });
+  window.addEventListener(evt, onGlobalUserInteraction, { capture: true, passive: true });
 });
 
 // Thử tự động phát ngay khi vào web nếu trình duyệt cho phép autoplay
@@ -733,10 +789,13 @@ function initAutoplay() {
     if (p !== undefined) {
       p.then(() => {
         isAudioActive = true;
+        userExplicitlyPaused = false;
         updateAudioButtonUI(true);
         removeAutoplayPrompt();
       }).catch(() => {
-        showAutoplayPrompt();
+        isAudioActive = false;
+        updateAudioButtonUI(false);
+        if (!userExplicitlyPaused) showAutoplayPrompt();
       });
     }
   }
@@ -1244,6 +1303,7 @@ function initRoseIntro3D() {
   if (btnOpen) {
     btnOpen.onclick = (e) => {
       e.stopPropagation();
+      userExplicitlyPaused = false;
       playGlobalAudio();
       startRoseBloom();
     };
@@ -1261,6 +1321,7 @@ function initRoseIntro3D() {
 
   canvas.addEventListener('click', () => {
     if (roseState === 'idle') {
+      userExplicitlyPaused = false;
       playGlobalAudio();
       startRoseBloom();
     }
@@ -1271,6 +1332,7 @@ function initRoseIntro3D() {
     stage1El.addEventListener('click', (e) => {
       if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.story-modal')) return;
       if (roseState === 'idle') {
+        userExplicitlyPaused = false;
         playGlobalAudio();
         startRoseBloom();
       }
@@ -1299,7 +1361,7 @@ function resizeRoseIntro() {
 function startRoseBloom() {
   if (roseState === 'running') return;
   try {
-    if (!isAudioActive) {
+    if (!userExplicitlyPaused && bgmEl && bgmEl.paused) {
       playGlobalAudio();
     }
   } catch (e) {}
@@ -3682,7 +3744,9 @@ document.getElementById('audioUploadInput').addEventListener('change', (e) => {
     bgmEl.src = url;
     bgmEl.play().then(() => {
       isAudioActive = true;
-      document.getElementById('btnAudioToggle').innerHTML = '<i class="fa-solid fa-music"></i><span class="audio-wave-bars"><span></span><span></span><span></span></span>';
+      userExplicitlyPaused = false;
+      updateAudioButtonUI(true);
+      removeAutoplayPrompt();
       audioManager.stopMelody();
       alert(`🎵 Đã nhận bài hát: ${file.name}`);
     }).catch(err => {

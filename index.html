@@ -23,7 +23,7 @@
   <!-- GSAP Animation Library (Offline Ready) -->
   <script src="libs/gsap.min.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=2.2.1">
+  <link rel="stylesheet" href="style.css?v=2.2.2">
 </head>
 <body class="universe-body">
 
@@ -104,8 +104,8 @@
         <i class="fa-solid fa-cube"></i>
       </a>
       <button id="btnAudioToggle" class="cosmic-icon-btn" title="Bật/Tắt nhạc nền lãng mạn">
-        <i class="fa-solid fa-music"></i>
-        <span class="audio-wave-bars is-playing">
+        <i class="fa-solid fa-volume-xmark"></i>
+        <span class="audio-wave-bars is-paused">
           <span></span><span></span><span></span><span></span><span></span>
         </span>
       </button>
@@ -679,18 +679,14 @@
     <span id="storyToastText">Đã tải ảnh thành công!</span>
   </div>
 
-  <!-- Audio Element ẩn hỗ trợ nạp MP3 trực tiếp -->
-  <audio id="bgmAudio" loop preload="auto" src="audio/music.mp3">
-    <source src="audio/music.mp3" type="audio/mpeg">
-  </audio>
-  <audio id="voiceoverAudio" preload="auto" src="audio/voiceover_ending.mp3">
-    <source src="audio/voiceover_ending.mp3" type="audio/mpeg">
-  </audio>
+  <!-- Audio Element ẩn hỗ trợ nạp MP3 trực tiếp & Base64 offline -->
+  <audio id="bgmAudio" loop preload="auto"></audio>
+  <audio id="voiceoverAudio" preload="auto"></audio>
 
   <!-- Module JS (100% Offline Ready) -->
   <script src="images_data.js"></script>
   <script src="audio_data.js"></script>
-  <script src="fx.js?v=2.2.1"></script>
-  <script src="main.js?v=2.2.1"></script>
+  <script src="fx.js?v=2.2.2"></script>
+  <script src="main.js?v=2.2.2"></script>
 </body>
 </html>
