@@ -4346,7 +4346,7 @@ const STAGE6_SUBTITLES = [
   { start: 0.0,  end: 3.6,  text: "10 năm sau, hay 20 năm sau, hay 30 năm sau nữa..." },
   { start: 3.8,  end: 6.2,  text: "Những chuyến đi này sẽ là ký ức..." },
   { start: 6.4,  end: 10.2, text: "Có khi lúc đó chúng ta quên mất những tháng ngày cùng nhau này..." },
-  { start: 10.4, end: 14.3, text: "Nhưng mà biết đâu, 50 năm sau đó trong một chiều nắng ngập tràn..." },
+  { start: 10.4, end: 14.3, text: "Nhưng mà biết đâu, 50 năm sau đó trong một chiều nắng ngập vàng..." },
   { start: 14.5, end: 18.8, text: "Những tấm hình cũ sẽ nằm trên đôi tay run rẩy, rồi bất chợt kỷ niệm sẽ ùa về..." },
   { start: 19.0, end: 22.8, text: "Và ta nhớ lại cái lần đầu tiên bỡ ngỡ trước biển trời rộng lớn..." },
   { start: 23.0, end: 25.5, text: "Nhớ lại cái nôn nao khi thấy tuyết ngập tràn..." },
