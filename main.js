@@ -2091,11 +2091,11 @@ function initStage3() {
   const ctx = canvas.getContext('2d');
   initGalaxyDust(ctx, canvas.width, canvas.height);
 
-  // Phân bổ 23 bạn nữ trên 3 quỹ đạo rõ ràng (tốc độ xoay êm ái, thư giãn 35% - 38% so với ban đầu)
+  // Phân bổ 23 bạn nữ trên 3 quỹ đạo rõ ràng, đồng tốc êm ái, khoảng cách cân đối hoàn hảo
   const ORBIT_TRACKS = [
-    { radius: 130, speed: 0.00080, startIndex: 0, count: 5 },
-    { radius: 215, speed: 0.00055, startIndex: 5, count: 8 },
-    { radius: 300, speed: 0.00038, startIndex: 13, count: 10 }
+    { radius: 145, speed: 0.00045, startIndex: 0, count: 5, offset: 0 },
+    { radius: 228, speed: 0.00045, startIndex: 5, count: 8, offset: (22 * Math.PI) / 180 },
+    { radius: 312, speed: 0.00045, startIndex: 13, count: 10, offset: 0 }
   ];
 
   const girlNodes = [];
@@ -2108,7 +2108,7 @@ function initStage3() {
       const photoUrl = getStudentPhoto(girl, girlIndex);
       const shortName = getStudentShortName(girl);
 
-      const initialAngle = (i / track.count) * Math.PI * 2 + (track.radius * 0.005);
+      const initialAngle = track.offset + (i / track.count) * Math.PI * 2;
 
       const node = document.createElement('div');
       node.className = 'star-planet-node';
@@ -2214,11 +2214,11 @@ function initStage3() {
           const x = Math.cos(item.angle) * item.radius;
           const y = Math.sin(item.angle) * item.radius;
 
-          // Counter-rotate trục X và bù trừ -21px để tâm avatar orb 42px nằm chính xác trên quỹ đạo
+          // Counter-rotate trục X và bù trừ -22px để tâm avatar orb 44px nằm chính xác trên quỹ đạo
           if (isGalaxy3D) {
-            item.el.style.transform = `translate3d(${x - 21}px, ${y - 21}px, 0px) rotateX(-42deg)`;
+            item.el.style.transform = `translate3d(${x - 22}px, ${y - 22}px, 0px) rotateX(-42deg)`;
           } else {
-            item.el.style.transform = `translate3d(${x - 21}px, ${y - 21}px, 0px) rotateX(0deg)`;
+            item.el.style.transform = `translate3d(${x - 22}px, ${y - 22}px, 0px) rotateX(0deg)`;
           }
         });
       }
