@@ -4264,12 +4264,12 @@ function stage6Frame(now) {
   // Lấy mốc thời gian thực từ audio giọng đọc (hoặc fallback chính xác từ lúc bắt đầu)
   const timelineTime = getStage6TimelineTime();
 
-  // ĐỒNG BỘ CÁC CÂU PHỤ ĐỀ TRỰC TIẾP TỪ AUDIO CURRENTTIME (0.0s -> 45.8s)
+  // ĐỒNG BỘ 9 CÂU PHỤ ĐỀ TRỰC TIẾP TỪ AUDIO CURRENTTIME (0.0s -> 34.2s)
   const storyWrap = document.getElementById('finaleStorytellingWrap');
   const storyText = document.getElementById('finaleStoryText');
 
   if (storyWrap && storyText) {
-    if (timelineTime < 46.0) {
+    if (timelineTime < 34.5) {
       storyWrap.style.display = 'flex';
 
       let activeSub = null;
@@ -4306,11 +4306,11 @@ function stage6Frame(now) {
     }
   }
 
-  // TRONG SUỐT GIAI ĐOẠN BÀI HÁT MỞ MÀN: TUYỆT ĐỐI ẨN BẢNG TRUNG TÂM VÀ THANH ĐIỀU KHIỂN
+  // TRONG SUỐT 34 GIÂY GIỌNG ĐỌC: TUYỆT ĐỐI ẨN BẢNG TRUNG TÂM VÀ THANH ĐIỀU KHIỂN
   const centerpiece = document.getElementById('finaleCenterpiece');
   const actionOverlay = document.getElementById('stage6ActionOverlay');
 
-  if (timelineTime < 46.0) {
+  if (timelineTime < 34.5) {
     if (centerpiece && !stage6HasStartedCenterpiece) {
       centerpiece.style.display = 'none';
       centerpiece.style.opacity = '0';
@@ -4322,7 +4322,7 @@ function stage6Frame(now) {
       actionOverlay.classList.remove('show');
     }
   } else {
-    // Đúng giây thứ 46.0s: Hiện bảng trung tâm mượt mà và bắt đầu chạy typewriter
+    // Đúng giây thứ 34.5s: Hiện bảng trung tâm mượt mà và bắt đầu chạy typewriter
     if (!stage6HasStartedCenterpiece) {
       stage6HasStartedCenterpiece = true;
       showStage6CenterpieceAndTypewriter();
@@ -4334,8 +4334,8 @@ function stage6Frame(now) {
     const cardEl = it.el;
     if (!cardEl) continue;
 
-    // Trước 6.0s (lúc câu chào mở đầu nói): Ẩn tuyệt đối toàn bộ 23 ảnh
-    if (timelineTime < 6.0) {
+    // Trước 14.5s: Ẩn tuyệt đối toàn bộ 23 ảnh
+    if (timelineTime < 14.5) {
       cardEl.style.opacity = '0';
       cardEl.style.transform = 'translate(-50%, -50%) translate3d(0px, 0px, 0px) scale(0)';
       continue;
@@ -4346,11 +4346,11 @@ function stage6Frame(now) {
 
     let curX = 0, curY = 0, curScale = baseCardScale, curOpacity = 1.0, curRot = 0;
 
-    if (timelineTime < 24.0) {
-      // Giai đoạn 1 (từ 6.0s đến 24.0s):
+    if (timelineTime < 26.0) {
+      // Giai đoạn 1 (từ 14.5s đến 26.0s):
       // 23 ảnh tỏa ra từ tâm và bay lơ lửng chậm rãi khắp màn hình quanh dòng chữ
-      const cardStartTime = 6.0 + (it.index * 0.25); // Phân bổ từ 6.0s đến 11.75s
-      const flyDur = 1.5;
+      const cardStartTime = 14.5 + (it.index * 0.16); // Phân bổ từ 14.5s đến 18.02s
+      const flyDur = 1.4;
 
       if (timelineTime < cardStartTime) {
         cardEl.style.opacity = '0';
@@ -4374,8 +4374,8 @@ function stage6Frame(now) {
         curOpacity = 1.0;
         curRot = Math.sin(timelineTime * 0.7 + it.index * 1.5) * 7;
       }
-    } else if (timelineTime < 32.0) {
-      // Giai đoạn 2 (từ 24.0s đến 32.0s - kéo dài 8.0s):
+    } else if (timelineTime < 30.5) {
+      // Giai đoạn 2 (từ 26.0s đến 30.5s - kéo dài 4.5s):
       // 23 ảnh di chuyển tụ lại dần về vị trí vòng cung Hình Trái Tim
       if (!stage6HasTriggeredConfetti26) {
         stage6HasTriggeredConfetti26 = true;
@@ -4398,14 +4398,14 @@ function stage6Frame(now) {
       const targetX = norm.nx * heartScaleX;
       const targetY = norm.ny * heartScaleY + heartCenterY;
 
-      // Vị trí xuất phát từ trạng thái lơ lửng lúc t = 24.0s
-      const srcDriftX = Math.sin(24.0 * 0.9 + it.index * 1.4) * 15;
-      const srcDriftY = Math.cos(24.0 * 0.8 + it.index * 1.2) * 12;
+      // Vị trí xuất phát từ trạng thái lơ lửng lúc t = 26.0s
+      const srcDriftX = Math.sin(26.0 * 0.9 + it.index * 1.4) * 15;
+      const srcDriftY = Math.cos(26.0 * 0.8 + it.index * 1.2) * 12;
       const srcX = floatBaseX + srcDriftX;
       const srcY = floatBaseY + srcDriftY;
-      const srcRot = Math.sin(24.0 * 0.7 + it.index * 1.5) * 7;
+      const srcRot = Math.sin(26.0 * 0.7 + it.index * 1.5) * 7;
 
-      const p = Math.min(1.0, (timelineTime - 24.0) / 8.0);
+      const p = Math.min(1.0, (timelineTime - 26.0) / 4.5);
       const easeP = 0.5 * (1 - Math.cos(Math.PI * p)); // Cosine easing êm dịu
       curX = srcX * (1 - easeP) + targetX * easeP;
       curY = srcY * (1 - easeP) + targetY * easeP;
@@ -4413,7 +4413,7 @@ function stage6Frame(now) {
       curScale = baseCardScale;
       curOpacity = 1.0;
     } else {
-      // Từ 32.0s trở đi: Hoàn tất xếp hình trái tim, khóa vào vị trí và giữ nhịp thở êm ái
+      // Từ 30.5s trở đi: Hoàn tất xếp hình trái tim, khóa vào vị trí và giữ nhịp thở êm ái
       const norm = HEART_23_NORM[it.index];
       const targetX = norm.nx * heartScaleX;
       const targetY = norm.ny * heartScaleY + heartCenterY;
@@ -4446,17 +4446,18 @@ function stage6Frame(now) {
 }
 
 // ==========================================================
-// BẢNG CUE SHEET PHỤ ĐỀ ĐOẠN KẾT (KHỚP 100% VỚI AUDIO MỞ MÀN 46S)
+// BẢNG CUE SHEET 9 CÂU PHỤ ĐỀ ĐOẠN KẾT (KHỚP 100% VỚI GIỌNG ĐỌC AUDIO 35S)
 // ==========================================================
 const STAGE6_SUBTITLES = [
-  { start: 0.0,  end: 2.3,  text: "20 tháng 10 xin phép không tặng hoa hồng..." },
-  { start: 2.4,  end: 5.5,  text: "Vì tôi không thể tặng một bông hồng cho một đóa hoa. 🌹" },
-  { start: 6.5,  end: 10.2, text: "Đợi khi mùa đông rồi xa, sát lại hết một năm..." },
-  { start: 10.5, end: 14.0, text: "Chờ chút thôi, rồi anh sẽ tìm tới..." },
-  { start: 14.3, end: 18.5, text: "Chờ anh chút thôi, làm phiền em phải đợi..." },
-  { start: 19.0, end: 25.5, text: "Có anh ở đây rồi... Thật là bình yên em thôi, dù xa cách không rời..." },
-  { start: 26.0, end: 36.5, text: "Có em và anh nè, em với anh cùng xây ngôi nhà... bằng cái tên của anh và em..." },
-  { start: 37.0, end: 45.8, text: "Thương, dẫu mỗi năm lại thêm một tuổi... Em có anh ở trong nhà, anh có em... ❤️" }
+  { start: 0.0,  end: 3.6,  text: "10 năm sau, hay 20 năm sau, hay 30 năm sau nữa..." },
+  { start: 3.8,  end: 6.2,  text: "Những chuyến đi này sẽ là ký ức..." },
+  { start: 6.4,  end: 10.2, text: "Có khi lúc đó chúng ta quên mất những tháng ngày cùng nhau này..." },
+  { start: 10.4, end: 14.3, text: "Nhưng mà biết đâu, 50 năm sau đó trong một chiều nắng ngập vàng..." },
+  { start: 14.5, end: 18.8, text: "Những tấm hình cũ sẽ nằm trên đôi tay run rẩy, rồi bất chợt kỷ niệm sẽ ùa về..." },
+  { start: 19.0, end: 22.8, text: "Và ta nhớ lại cái lần đầu tiên bỡ ngỡ trước biển trời rộng lớn..." },
+  { start: 23.0, end: 25.5, text: "Nhớ lại cái nôn nao khi thấy tuyết ngập tràn..." },
+  { start: 25.7, end: 29.0, text: "Nhớ lại những chuyến đi, nhớ hết tất cả những con người..." },
+  { start: 29.2, end: 34.2, text: "Và nhớ lại những nụ cười rất tươi... của một thời tuổi trẻ." }
 ];
 
 let stage6VoiceStartT0 = 0;
