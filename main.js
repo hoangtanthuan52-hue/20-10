@@ -593,6 +593,8 @@ if (voiceoverEl) {
   });
 }
 
+let isHeartTourAudioPlaying = false;
+
 function playEndingVoiceover() {
   if (!voiceoverEl) return;
   ensureVoiceoverSource();
@@ -617,7 +619,9 @@ function playEndingVoiceover() {
   // Khi giọng đọc kết thúc (sau 35s) -> Tự động đưa nhạc nền to dần trở lại và hiện bảng thông điệp kết
   voiceoverEl.onended = () => {
     if (window.currentActiveStage === 6) {
-      setBgmVolumeSmooth(BGM_NORMAL_VOL, 1800);
+      if (!isHeartTourAudioPlaying) {
+        setBgmVolumeSmooth(BGM_NORMAL_VOL, 1800);
+      }
       if (typeof showStage6CenterpieceAndTypewriter === 'function' && !stage6HasStartedCenterpiece) {
         stage6HasStartedCenterpiece = true;
         showStage6CenterpieceAndTypewriter();
@@ -625,9 +629,9 @@ function playEndingVoiceover() {
     }
   };
 
-  // Fallback an toàn: Sau 47.0 giây tự động phục hồi âm lượng chuẩn
+  // Fallback an toàn: Sau 47.0 giây tự động phục hồi âm lượng chuẩn nếu chưa bước vào chu kỳ bài hát trái tim
   setTimeout(() => {
-    if (window.currentActiveStage === 6 && bgmEl && bgmEl.volume < BGM_NORMAL_VOL) {
+    if (window.currentActiveStage === 6 && !isHeartTourAudioPlaying && bgmEl && bgmEl.volume < BGM_NORMAL_VOL && (!voiceoverTourEl || voiceoverTourEl.paused)) {
       setBgmVolumeSmooth(BGM_NORMAL_VOL, 1500);
     }
   }, 47000);
@@ -640,7 +644,9 @@ function stopEndingVoiceover() {
       voiceoverEl.currentTime = 0;
     } catch (e) {}
   }
-  setBgmVolumeSmooth(BGM_NORMAL_VOL, 800);
+  if (!isHeartTourAudioPlaying) {
+    setBgmVolumeSmooth(BGM_NORMAL_VOL, 800);
+  }
 }
 
 function ensureVoiceoverTourSource() {
@@ -673,40 +679,63 @@ if (voiceoverTourEl) {
 function playTourVoiceover() {
   if (!voiceoverTourEl) return;
   ensureVoiceoverTourSource();
+  isHeartTourAudioPlaying = true;
+
+  // TẠM DỪNG HOÀN TOÀN NHẠC NỀN (BGM) ĐỂ ĐOẠN BÀI HÁT 20/10 MỚI PHÁT TRỌN VẸN, RÕ NÉT, KHÔNG BỊ CHỒNG TIẾNG
+  if (bgmEl && !bgmEl.paused) {
+    setBgmVolumeSmooth(0, 400);
+    setTimeout(() => {
+      if (isHeartTourAudioPlaying && bgmEl) {
+        try { bgmEl.pause(); } catch (e) {}
+      }
+    }, 450);
+  }
+
   voiceoverTourEl.volume = 1.0;
   voiceoverTourEl.currentTime = 0;
-
-  // Giảm nhỏ nhạc nền (Audio Ducking) để giọng đọc suy ngẫm rõ nét, ấm áp
-  setBgmVolumeSmooth(BGM_DUCKED_VOL, 1000);
 
   if (isAudioActive && !userExplicitlyPaused) {
     const p = voiceoverTourEl.play();
     if (p) {
       p.catch(err => {
         console.warn("Tour voiceover play note:", err);
-        setBgmVolumeSmooth(BGM_NORMAL_VOL, 1000);
+        if (typeof VOICEOVER_TOUR_BASE64 !== 'undefined' && VOICEOVER_TOUR_BASE64 && voiceoverTourEl.src !== VOICEOVER_TOUR_BASE64) {
+          voiceoverTourEl.src = VOICEOVER_TOUR_BASE64;
+          voiceoverTourEl.load();
+          voiceoverTourEl.play().catch(e => console.warn("Tour base64 fallback error:", e));
+        }
       });
     }
-  } else {
-    setBgmVolumeSmooth(BGM_NORMAL_VOL, 500);
   }
 
-  // Khi giọng đọc kết thúc (sau ~83.6s) -> Tự động đưa nhạc nền to dần trở lại
+  // Khi bài hát kết thúc (sau ~46s) -> Tự động đưa nhạc nền BGM to dần trở lại
   voiceoverTourEl.onended = () => {
-    if (window.currentActiveStage === 6) {
-      setBgmVolumeSmooth(BGM_NORMAL_VOL, 1800);
+    isHeartTourAudioPlaying = false;
+    if (window.currentActiveStage === 6 && isAudioActive && !userExplicitlyPaused) {
+      if (bgmEl) {
+        bgmEl.volume = 0;
+        bgmEl.play().then(() => {
+          setBgmVolumeSmooth(BGM_NORMAL_VOL, 1800);
+        }).catch(() => {});
+      }
     }
   };
 }
 
 function stopTourVoiceover() {
+  isHeartTourAudioPlaying = false;
   if (voiceoverTourEl) {
     try {
       voiceoverTourEl.pause();
       voiceoverTourEl.currentTime = 0;
     } catch (e) {}
   }
-  setBgmVolumeSmooth(BGM_NORMAL_VOL, 800);
+  if (window.currentActiveStage === 6 && bgmEl && isAudioActive && !userExplicitlyPaused) {
+    bgmEl.volume = 0;
+    bgmEl.play().then(() => {
+      setBgmVolumeSmooth(BGM_NORMAL_VOL, 1000);
+    }).catch(() => {});
+  }
 }
 
 function updateAudioButtonUI(active) {
@@ -760,6 +789,26 @@ function playGlobalAudio() {
 
   if (audioManager && audioManager.ctx && audioManager.ctx.state === 'suspended') {
     try { audioManager.ctx.resume(); } catch (e) {}
+  }
+
+  // Pre-warm / unlock voiceoverTourEl trên tương tác người dùng
+  if (voiceoverTourEl && !voiceoverTourEl._unlocked) {
+    try {
+      voiceoverTourEl._unlocked = true;
+      voiceoverTourEl.load();
+    } catch (e) {}
+  }
+
+  // Nếu đang ở Stage 6 và đang trong chu kỳ bài hát 20/10 chạy vòng trái tim:
+  if (window.currentActiveStage === 6 && isHeartTourAudioPlaying && voiceoverTourEl) {
+    isAudioActive = true;
+    updateAudioButtonUI(true);
+    removeAutoplayPrompt();
+    if (bgmEl && !bgmEl.paused) {
+      try { bgmEl.pause(); } catch (e) {}
+    }
+    voiceoverTourEl.play().catch(() => {});
+    return;
   }
 
   if (bgmEl) {
@@ -830,7 +879,8 @@ function pauseGlobalAudio() {
 }
 
 function toggleGlobalAudio() {
-  if (bgmEl && !bgmEl.paused) {
+  const isPlaying = (bgmEl && !bgmEl.paused) || (voiceoverTourEl && !voiceoverTourEl.paused) || (voiceoverEl && !voiceoverEl.paused);
+  if (isPlaying) {
     pauseGlobalAudio();
   } else {
     userExplicitlyPaused = false;
@@ -4577,12 +4627,14 @@ function startStage6HeartSequentialTour() {
       it.el.classList.add('is-active', 'tour-active');
       it.el.style.zIndex = '120';
 
-      // Âm thanh chuông pha lê trong trẻo
+      // Âm thanh chuông pha lê nhẹ nhàng (chỉ khi không phát bài hát để tránh chồng âm)
       try {
-        if (window.audioManager && audioManager.playCrystalChime) {
-          audioManager.playCrystalChime();
-        } else if (window.audioManager && audioManager.playBellSound) {
-          audioManager.playBellSound(784 + (idx % 7) * 65, 0.35);
+        if (!isHeartTourAudioPlaying) {
+          if (window.audioManager && audioManager.playCrystalChime) {
+            audioManager.playCrystalChime();
+          } else if (window.audioManager && audioManager.playBellSound) {
+            audioManager.playBellSound(784 + (idx % 7) * 65, 0.35);
+          }
         }
       } catch (e) {}
 
