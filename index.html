@@ -580,7 +580,7 @@
     <div class="story-modal-dialog">
       <div class="story-modal-header">
         <div class="story-header-title-wrap">
-          <div class="story-header-badge"><i class="fa-solid fa-sparkles"></i> MÓN QUÀ MANG VỀ • 20.10.2026</div>
+          <div class="story-header-badge"><i class="fa-solid fa-sparkles"></i> MÓN QUÀ KỶ NIỆM • 20.10.2026</div>
           <h2 class="story-header-title">Thiệp Kỷ Niệm 12B1 (Story 9:16 HD)</h2>
           <p class="story-header-sub">Ảnh chuẩn 1080 × 1920 px sắc nét — Tải về đăng ngay lên Facebook, Instagram hoặc Zalo Story</p>
         </div>
@@ -593,7 +593,7 @@
           <div class="story-preview-frame">
             <canvas id="storyCanvas" width="1080" height="1920" class="story-preview-canvas"></canvas>
             <div class="story-preview-watermark">
-              <i class="fa-solid fa-mobile-screen"></i> Chuẩn Story 9:16 (1080 × 1920 px)
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Chuẩn Story 9:16 (1080 × 1920 px)
             </div>
           </div>
         </div>
@@ -603,7 +603,7 @@
           <!-- Chọn bạn nữ -->
           <div class="story-control-card">
             <label class="story-ctrl-label" for="storyStudentSelect">
-              <i class="fa-solid fa-users"></i> Chọn đóa hoa của bạn:
+              <i class="fa-solid fa-sparkles story-label-icon"></i> Chọn đóa hoa của bạn:
             </label>
             <div class="story-select-row">
               <select id="storyStudentSelect" class="story-select-input">
@@ -611,14 +611,16 @@
               </select>
             </div>
 
-            <!-- Nút chuyển bạn trước / tiếp theo -->
-            <div class="story-nav-btns-row">
-              <button id="btnStoryPrevStudent" class="story-mini-btn" title="Bạn trước đó">
-                <i class="fa-solid fa-chevron-left"></i> Bạn trước
+            <!-- Thanh chuyển nhanh (Pagination Bar) phong cách kính mờ -->
+            <div class="story-nav-bar">
+              <button id="btnStoryPrevStudent" class="story-nav-btn" title="Bạn trước đó">
+                <i class="fa-solid fa-chevron-left"></i> <span>Trước</span>
               </button>
-              <span id="storyStudentCounter" class="story-counter-tag">1 / 23</span>
-              <button id="btnStoryNextStudent" class="story-mini-btn" title="Bạn tiếp theo">
-                Bạn sau <i class="fa-solid fa-chevron-right"></i>
+              <div class="story-nav-divider"></div>
+              <span id="storyStudentCounter" class="story-nav-counter">1 / 23</span>
+              <div class="story-nav-divider"></div>
+              <button id="btnStoryNextStudent" class="story-nav-btn" title="Bạn tiếp theo">
+                <span>Sau</span> <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
 
@@ -631,7 +633,7 @@
           <!-- Tùy chỉnh thông điệp -->
           <div class="story-control-card">
             <label class="story-ctrl-label" for="storyCustomWish">
-              <i class="fa-solid fa-pen-nib"></i> Lời chúc trên thiệp (có thể chỉnh sửa):
+              <i class="fa-solid fa-feather-pointed story-label-icon"></i> Lời chúc trên thiệp (có thể chỉnh sửa):
             </label>
             <textarea id="storyCustomWish" class="story-textarea-input" rows="3" placeholder="Nhập lời chúc riêng của bạn..."></textarea>
             
@@ -651,14 +653,14 @@
 
             <div class="story-sub-actions-row">
               <button id="btnShareStoryCard" class="story-btn-secondary" title="Chia sẻ trực tiếp lên mạng xã hội">
-                <i class="fa-solid fa-share-nodes"></i> Chia sẻ Story
+                <i class="fa-solid fa-share-nodes"></i> <span>Chia sẻ Story</span>
               </button>
               <button id="btnCopyStoryCard" class="story-btn-secondary" title="Sao chép ảnh vào clipboard">
-                <i class="fa-regular fa-copy"></i> Sao chép ảnh
+                <i class="fa-regular fa-copy"></i> <span>Sao chép ảnh</span>
               </button>
             </div>
             <p class="story-download-note">
-              <i class="fa-solid fa-shield-heart"></i> Ảnh PNG chất lượng gốc sắc nét 1080×1920, hiển thị tràn viền hoàn hảo trên mọi điện thoại.
+              <i class="fa-solid fa-gem"></i> Ảnh PNG 1080×1920 sắc nét, viền sang trọng chuẩn tỉ lệ Story mọi điện thoại.
             </p>
           </div>
         </div>
@@ -679,8 +681,8 @@
 
   <!-- Module JS (100% Offline Ready) -->
   <script src="images_data.js"></script>
-  <script src="audio_data.js?v=2.3.9"></script>
-  <script src="fx.js?v=2.3.9"></script>
-  <script src="main.js?v=2.3.9"></script>
+  <script src="audio_data.js?v=2.4.0"></script>
+  <script src="fx.js?v=2.4.0"></script>
+  <script src="main.js?v=2.4.0"></script>
 </body>
 </html>

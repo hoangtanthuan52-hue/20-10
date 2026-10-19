@@ -5510,7 +5510,7 @@ const StoryCardManager = {
     return lines.length;
   },
 
-  // RENDER TOÀN BỘ CANVAS 1080 x 1920 PX
+  // RENDER TOÀN BỘ CANVAS 1080 x 1920 PX (MODERN GLASSMORPHISM & LUXURY CELESTIAL PHOTOCARD)
   render() {
     if (!this.canvas || !this.ctx) return;
     const ctx = this.ctx;
@@ -5522,320 +5522,331 @@ const StoryCardManager = {
 
     this.getStudentImage(student, this.currentStudentIdx, (img) => {
       try {
-        // 1. NỀN THIÊN HÀ SÂU THẲM (DEEP LUXURY GALAXY BACKGROUND)
+        // 1. NỀN THIÊN HÀ SÂU THẲM (DEEP COSMIC NEBULA & LUXURY ROSE GOLD TONES)
         ctx.clearRect(0, 0, width, height);
 
-      const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
-      bgGradient.addColorStop(0.00, '#070110');
-      bgGradient.addColorStop(0.20, '#150322');
-      bgGradient.addColorStop(0.50, '#2c0633');
-      bgGradient.addColorStop(0.80, '#190326');
-      bgGradient.addColorStop(1.00, '#06010d');
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(0, 0, width, height);
+        const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+        bgGradient.addColorStop(0.00, '#090212');
+        bgGradient.addColorStop(0.25, '#130524');
+        bgGradient.addColorStop(0.50, '#1d0936');
+        bgGradient.addColorStop(0.75, '#140426');
+        bgGradient.addColorStop(1.00, '#06010d');
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(0, 0, width, height);
 
-      // Quầng sáng tinh vân (Cosmic Nebula Glows)
-      const radialNebula1 = ctx.createRadialGradient(width * 0.5, height * 0.28, 50, width * 0.5, height * 0.28, 650);
-      radialNebula1.addColorStop(0, 'rgba(225, 29, 72, 0.32)');
-      radialNebula1.addColorStop(0.5, 'rgba(219, 39, 119, 0.15)');
-      radialNebula1.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = radialNebula1;
-      ctx.fillRect(0, 0, width, height);
+        // Quầng sáng tinh vân Rose Gold & Celestial Violet (Cosmic Nebula Glows)
+        const radialNebula1 = ctx.createRadialGradient(width * 0.5, 520, 40, width * 0.5, 520, 620);
+        radialNebula1.addColorStop(0, 'rgba(247, 168, 184, 0.22)');
+        radialNebula1.addColorStop(0.5, 'rgba(168, 85, 247, 0.13)');
+        radialNebula1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = radialNebula1;
+        ctx.fillRect(0, 0, width, height);
 
-      const radialNebula2 = ctx.createRadialGradient(width * 0.25, height * 0.72, 30, width * 0.25, height * 0.72, 500);
-      radialNebula2.addColorStop(0, 'rgba(139, 92, 246, 0.25)');
-      radialNebula2.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = radialNebula2;
-      ctx.fillRect(0, 0, width, height);
+        const radialNebula2 = ctx.createRadialGradient(width * 0.5, 1380, 40, width * 0.5, 1380, 560);
+        radialNebula2.addColorStop(0, 'rgba(255, 209, 164, 0.18)');
+        radialNebula2.addColorStop(0.5, 'rgba(219, 39, 119, 0.10)');
+        radialNebula2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = radialNebula2;
+        ctx.fillRect(0, 0, width, height);
 
-      const radialNebula3 = ctx.createRadialGradient(width * 0.75, height * 0.85, 30, width * 0.75, height * 0.85, 450);
-      radialNebula3.addColorStop(0, 'rgba(255, 215, 0, 0.18)');
-      radialNebula3.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = radialNebula3;
-      ctx.fillRect(0, 0, width, height);
+        const radialNebula3 = ctx.createRadialGradient(220, 240, 20, 220, 240, 420);
+        radialNebula3.addColorStop(0, 'rgba(255, 209, 164, 0.14)');
+        radialNebula3.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = radialNebula3;
+        ctx.fillRect(0, 0, width, height);
 
-      // Bụi sao & Tinh tú lấp lánh (Deterministic Stars)
-      ctx.save();
-      for (let i = 0; i < 110; i++) {
-        const starX = ((i * 137.5) % width);
-        const starY = ((i * 329.7) % height);
-        const starR = ((i % 5) * 0.6) + 0.8;
-        const starAlpha = ((i % 7) / 10) + 0.3;
+        // Bụi sao & Tinh tú lấp lánh (Deterministic Stardust & Cross Stars)
+        ctx.save();
+        for (let i = 0; i < 110; i++) {
+          const starX = ((i * 137.5) % width);
+          const starY = ((i * 329.7) % height);
+          const starR = ((i % 5) * 0.5) + 0.8;
+          const starAlpha = ((i % 7) / 10) + 0.25;
 
-        ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha})`;
-        ctx.beginPath();
-        ctx.arc(starX, starY, starR, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (i % 8 === 0) {
-          ctx.strokeStyle = `rgba(255, 215, 0, ${starAlpha * 0.8})`;
-          ctx.lineWidth = 1;
+          ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha})`;
           ctx.beginPath();
-          ctx.moveTo(starX - 6, starY);
-          ctx.lineTo(starX + 6, starY);
-          ctx.moveTo(starX, starY - 6);
-          ctx.lineTo(starX, starY + 6);
-          ctx.stroke();
+          ctx.arc(starX, starY, starR, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (i % 8 === 0) {
+            ctx.strokeStyle = `rgba(255, 209, 164, ${starAlpha * 0.85})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(starX - 6, starY);
+            ctx.lineTo(starX + 6, starY);
+            ctx.moveTo(starX, starY - 6);
+            ctx.lineTo(starX + 6, starY);
+            ctx.stroke();
+          }
         }
-      }
-      ctx.restore();
+        ctx.restore();
 
-      // Khung viền chỉ vàng hoàng gia đôi (Double Gold Royal Border)
-      ctx.save();
-      const margin = 42;
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
-      ctx.lineWidth = 2;
-      this.roundRect(ctx, margin, margin, width - margin * 2, height - margin * 2, 28);
-      ctx.stroke();
+        // 2. KHUNG VIỀN VIP CELESTIAL TICKET ÁNH KIM TINH XẢO
+        ctx.save();
+        const margin = 38;
+        const frameGrad = ctx.createLinearGradient(margin, margin, width - margin, height - margin);
+        frameGrad.addColorStop(0.00, 'rgba(255, 209, 164, 0.85)'); // Champagne Gold
+        frameGrad.addColorStop(0.35, 'rgba(247, 168, 184, 0.75)'); // Rose Gold
+        frameGrad.addColorStop(0.70, 'rgba(192, 132, 252, 0.65)'); // Celestial Lilac
+        frameGrad.addColorStop(1.00, 'rgba(255, 209, 164, 0.85)');
+        ctx.strokeStyle = frameGrad;
+        ctx.lineWidth = 2.5;
+        this.roundRect(ctx, margin, margin, width - margin * 2, height - margin * 2, 32);
+        ctx.stroke();
 
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
-      ctx.lineWidth = 1;
-      this.roundRect(ctx, margin + 8, margin + 8, width - (margin + 8) * 2, height - (margin + 8) * 2, 22);
-      ctx.stroke();
+        // Viền hairline bên trong tạo chiều sâu
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 1;
+        this.roundRect(ctx, 50, 50, width - 100, height - 100, 24);
+        ctx.stroke();
 
-      // Hoa văn 4 góc (Corner Flourish Accents)
-      const corners = [
-        [margin + 16, margin + 16],
-        [width - margin - 16, margin + 16],
-        [margin + 16, height - margin - 16],
-        [width - margin - 16, height - margin - 16]
-      ];
-      ctx.fillStyle = '#ffd700';
-      corners.forEach(([cx, cy]) => {
-        ctx.beginPath();
-        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-        ctx.fill();
-      });
-      ctx.restore();
+        // Họa tiết kim cương 4 góc (Corner Diamond Accents)
+        const corners = [
+          [58, 58],
+          [width - 58, 58],
+          [58, height - 58],
+          [width - 58, height - 58]
+        ];
+        ctx.fillStyle = '#ffd1a4';
+        corners.forEach(([cx, cy]) => {
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - 4);
+          ctx.lineTo(cx + 4, cy);
+          ctx.lineTo(cx, cy + 4);
+          ctx.lineTo(cx - 4, cy);
+          ctx.closePath();
+          ctx.fill();
+        });
+        ctx.restore();
 
-      // 2. HEADER: TIÊU ĐỀ THIỆP & BADGE
-      ctx.save();
-      ctx.textAlign = 'center';
-
-      // Top Tag Pill: ✦ FOREVER 12B1 • 20.10.2026 ✦
-      const pillW = 460;
-      const pillH = 46;
-      const pillX = (width - pillW) / 2;
-      const pillY = 125;
-      ctx.fillStyle = 'rgba(26, 6, 36, 0.85)';
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
-      ctx.lineWidth = 1.5;
-      this.roundRect(ctx, pillX, pillY, pillW, pillH, 999);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.font = '700 20px "Be Vietnam Pro", sans-serif';
-      ctx.fillStyle = '#ffd700';
-      ctx.fillText('✦ FOREVER 12B1 • 20.10.2026 ✦', width / 2, pillY + 30);
-
-      // Tiêu đề chính lớn: ĐÓA HOA RẠNG RỠ
-      ctx.font = '700 62px "Playfair Display", Georgia, serif';
-      const titleGrad = ctx.createLinearGradient(width / 2 - 250, 200, width / 2 + 250, 260);
-      titleGrad.addColorStop(0, '#ffffff');
-      titleGrad.addColorStop(0.35, '#fde68a');
-      titleGrad.addColorStop(0.7, '#f472b6');
-      titleGrad.addColorStop(1, '#ffd700');
-      ctx.fillStyle = titleGrad;
-      ctx.shadowColor = 'rgba(225, 29, 72, 0.6)';
-      ctx.shadowBlur = 25;
-      ctx.fillText('ĐÓA HOA RẠNG RỠ', width / 2, 235);
-      ctx.shadowBlur = 0;
-
-      // Phụ đề: GIỮA NGÂN HÀ THANH XUÂN
-      ctx.font = '600 26px "Montserrat", sans-serif';
-      ctx.fillStyle = '#fce7f3';
-      ctx.fillText('GIỮA NGÂN HÀ THANH XUÂN', width / 2, 280);
-
-      // Dấu ngắt trang trí
-      ctx.fillStyle = '#ffd700';
-      ctx.font = '20px serif';
-      ctx.fillText('◆  •  ◆', width / 2, 315);
-      ctx.restore();
-
-      // 3. THẺ ẢNH POLAROID CHÍNH GIỮA (CENTER PHOTO CARD)
-      const cardW = 780;
-      const cardH = 880;
-      const cardX = (width - cardW) / 2;
-      const cardY = 345;
-
-      ctx.save();
-      // Đổ bóng phát quang của khung thẻ
-      ctx.shadowColor = 'rgba(225, 29, 72, 0.5)';
-      ctx.shadowBlur = 45;
-      ctx.shadowOffsetY = 15;
-
-      // Nền khung thẻ polaroid màu ngọc trai sang trọng
-      const cardGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-      cardGrad.addColorStop(0, '#ffffff');
-      cardGrad.addColorStop(0.6, '#fff5f7');
-      cardGrad.addColorStop(1, '#fef2f4');
-      ctx.fillStyle = cardGrad;
-      this.roundRect(ctx, cardX, cardY, cardW, cardH, 26);
-      ctx.fill();
-
-      // Viền kim loại vàng hồng bao quanh khung thẻ
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.85)';
-      ctx.lineWidth = 3;
-      this.roundRect(ctx, cardX, cardY, cardW, cardH, 26);
-      ctx.stroke();
-
-      // Khung chứa ảnh chụp (Photo Inner Box)
-      const photoPadding = 32;
-      const photoX = cardX + photoPadding;
-      const photoY = cardY + photoPadding;
-      const photoW = cardW - photoPadding * 2;
-      const photoH = 680;
-      const photoRadius = 18;
-
-      ctx.save();
-      this.roundRect(ctx, photoX, photoY, photoW, photoH, photoRadius);
-      ctx.clip();
-
-      if (img && img.width > 0) {
-        const imgAspect = img.width / img.height;
-        const targetAspect = photoW / photoH;
-        let sx, sy, sWidth, sHeight;
-
-        if (imgAspect > targetAspect) {
-          sHeight = img.height;
-          sWidth = img.height * targetAspect;
-          sx = (img.width - sWidth) / 2;
-          sy = 0;
-        } else {
-          sWidth = img.width;
-          sHeight = img.width / targetAspect;
-          sx = 0;
-          const cropYPercent = typeof student.cropY === 'number' ? student.cropY : 0.20;
-          sy = Math.max(0, Math.min(img.height - sHeight, (img.height - sHeight) * cropYPercent * 2.2));
-        }
-
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, photoX, photoY, photoW, photoH);
-
-        // Lớp phủ ánh sáng gradient nhẹ trên bề mặt ảnh
-        const photoGlow = ctx.createLinearGradient(photoX, photoY, photoX, photoY + photoH);
-        photoGlow.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
-        photoGlow.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
-        photoGlow.addColorStop(1, 'rgba(0, 0, 0, 0.25)');
-        ctx.fillStyle = photoGlow;
-        ctx.fillRect(photoX, photoY, photoW, photoH);
-      } else {
-        ctx.fillStyle = '#20052d';
-        ctx.fillRect(photoX, photoY, photoW, photoH);
-        ctx.fillStyle = '#ffd700';
-        ctx.font = '40px sans-serif';
+        // 3. HEADER: TIÊU ĐỀ SERIF TRANG TRỌNG & CELESTIAL TICKET PILL
+        ctx.save();
         ctx.textAlign = 'center';
-        ctx.fillText(student.name, photoX + photoW / 2, photoY + photoH / 2);
-      }
-      ctx.restore();
 
-      // Viền trong bức ảnh
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
-      ctx.lineWidth = 1.5;
-      this.roundRect(ctx, photoX, photoY, photoW, photoH, photoRadius);
-      ctx.stroke();
+        // Top VIP Ticket Pill: ✦ CELESTIAL PHOTOCARD • 20.10.2026 ✦
+        const pillW = 470;
+        const pillH = 44;
+        const pillX = (width - pillW) / 2;
+        const pillY = 110;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
+        ctx.strokeStyle = 'rgba(255, 209, 164, 0.45)';
+        ctx.lineWidth = 1.2;
+        this.roundRect(ctx, pillX, pillY, pillW, pillH, 999);
+        ctx.fill();
+        ctx.stroke();
 
-      // Thông tin học sinh dưới tấm ảnh polaroid
-      ctx.textAlign = 'center';
+        ctx.font = '700 18px "Be Vietnam Pro", sans-serif';
+        ctx.fillStyle = '#ffd1a4';
+        ctx.fillText('✦ CELESTIAL PHOTOCARD • 20.10.2026 ✦', width / 2, pillY + 28);
 
-      // 1. Tên học sinh
-      ctx.font = '700 44px "Playfair Display", serif';
-      ctx.fillStyle = '#881337';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.15)';
-      ctx.shadowBlur = 5;
-      ctx.fillText(student.name, width / 2, cardY + 762);
-      ctx.shadowBlur = 0;
+        // Tiêu đề chính lớn font Serif ánh kim loại (Playfair Display)
+        ctx.font = '700 58px "Playfair Display", Georgia, serif';
+        const titleGrad = ctx.createLinearGradient(width / 2 - 260, 195, width / 2 + 260, 245);
+        titleGrad.addColorStop(0, '#ffffff');
+        titleGrad.addColorStop(0.45, '#ffd1a4');
+        titleGrad.addColorStop(0.85, '#f7a8b8');
+        titleGrad.addColorStop(1, '#ffffff');
+        ctx.fillStyle = titleGrad;
+        ctx.shadowColor = 'rgba(247, 168, 184, 0.45)';
+        ctx.shadowBlur = 20;
+        ctx.fillText('ĐÓA HOA THANH XUÂN', width / 2, 215);
+        ctx.shadowBlur = 0;
 
-      // 2. Danh hiệu & Ngày sinh
-      const badgeText = `✨ ${student.title} • ${student.dob}`;
-      ctx.font = '600 23px "Be Vietnam Pro", sans-serif';
-      const badgeMetrics = ctx.measureText(badgeText);
-      const bW = badgeMetrics.width + 36;
-      const bH = 40;
-      const bX = (width - bW) / 2;
-      const bY = cardY + 795;
+        // Phụ đề thanh lịch
+        ctx.font = '600 23px "Montserrat", sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+        ctx.fillText('GIỮA NGÂN HÀ 12B1', width / 2, 260);
 
-      ctx.fillStyle = 'rgba(244, 63, 94, 0.12)';
-      ctx.strokeStyle = 'rgba(225, 29, 72, 0.35)';
-      ctx.lineWidth = 1.5;
-      this.roundRect(ctx, bX, bY, bW, bH, 999);
-      ctx.fill();
-      ctx.stroke();
+        // Dấu ngắt trang trí kim cương
+        ctx.fillStyle = '#ffd1a4';
+        ctx.font = '18px serif';
+        ctx.fillText('◇   •   ◇', width / 2, 292);
+        ctx.restore();
 
-      ctx.fillStyle = '#be123c';
-      ctx.fillText(badgeText, width / 2, bY + 28);
-      ctx.restore();
+        // 4. KHUNG ẢNH ĐẠI DIỆN NGUYÊN KHỐI (VIP PHOTOCARD / NO POLAROID)
+        const photoW = 750;
+        const photoH = 700;
+        const photoX = (width - photoW) / 2;
+        const photoY = 328;
+        const photoRadius = 24;
 
-      // 4. KHUNG LỜI CHÚC TRÂN TRỌNG (HEARTFELT WISH BOX)
-      const wishW = 860;
-      const wishH = 340;
-      const wishX = (width - wishW) / 2;
-      const wishY = 1260;
+        ctx.save();
+        // Lớp Shadow phát sáng nhẹ & tạo khối sâu
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = 35;
+        ctx.shadowOffsetY = 16;
+        ctx.fillStyle = '#10051e';
+        this.roundRect(ctx, photoX, photoY, photoW, photoH, photoRadius);
+        ctx.fill();
+        ctx.restore();
 
-      ctx.save();
-      // Nền kính mờ huyền ảo
-      ctx.fillStyle = 'rgba(24, 7, 34, 0.85)';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-      ctx.shadowBlur = 30;
-      this.roundRect(ctx, wishX, wishY, wishW, wishH, 24);
-      ctx.fill();
-      ctx.shadowBlur = 0;
+        // Clip và vẽ ảnh đại diện bên trong
+        ctx.save();
+        this.roundRect(ctx, photoX, photoY, photoW, photoH, photoRadius);
+        ctx.clip();
 
-      // Viền vàng hồng quý phái
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.45)';
-      ctx.lineWidth = 1.5;
-      this.roundRect(ctx, wishX, wishY, wishW, wishH, 24);
-      ctx.stroke();
+        if (img && img.width > 0) {
+          const imgAspect = img.width / img.height;
+          const targetAspect = photoW / photoH;
+          let sx, sy, sWidth, sHeight;
 
-      // Dấu ngoặc kép trang trí mở
-      ctx.font = '700 70px "Playfair Display", Georgia, serif';
-      ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
-      ctx.textAlign = 'left';
-      ctx.fillText('“', wishX + 32, wishY + 68);
+          if (imgAspect > targetAspect) {
+            sHeight = img.height;
+            sWidth = img.height * targetAspect;
+            sx = (img.width - sWidth) / 2;
+            sy = 0;
+          } else {
+            sWidth = img.width;
+            sHeight = img.width / targetAspect;
+            sx = 0;
+            const cropYPercent = typeof student.cropY === 'number' ? student.cropY : 0.20;
+            sy = Math.max(0, Math.min(img.height - sHeight, (img.height - sHeight) * cropYPercent * 2.2));
+          }
 
-      // Dấu ngoặc kép trang trí đóng
-      ctx.textAlign = 'right';
-      ctx.fillText('”', wishX + wishW - 32, wishY + wishH - 50);
+          ctx.drawImage(img, sx, sy, sWidth, sHeight, photoX, photoY, photoW, photoH);
 
-      // Nội dung lời chúc (Tự động xuống dòng)
-      ctx.textAlign = 'center';
-      ctx.font = 'italic 500 27px "Be Vietnam Pro", sans-serif';
-      ctx.fillStyle = '#fff0f5';
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-      ctx.shadowBlur = 10;
-      this.wrapText(ctx, wishText, width / 2, wishY + 130, wishW - 120, 44);
-      ctx.shadowBlur = 0;
+          // Lớp phủ ánh sáng gradient nhẹ trên bề mặt ảnh
+          const photoGlow = ctx.createLinearGradient(photoX, photoY, photoX, photoY + photoH);
+          photoGlow.addColorStop(0, 'rgba(255, 255, 255, 0.10)');
+          photoGlow.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+          photoGlow.addColorStop(1, 'rgba(18, 5, 32, 0.35)');
+          ctx.fillStyle = photoGlow;
+          ctx.fillRect(photoX, photoY, photoW, photoH);
+        } else {
+          ctx.fillStyle = '#1c072e';
+          ctx.fillRect(photoX, photoY, photoW, photoH);
+          ctx.fillStyle = '#ffd1a4';
+          ctx.font = '40px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(student.name, photoX + photoW / 2, photoY + photoH / 2);
+        }
+        ctx.restore();
 
-      // Chữ ký tập thể nam 12B1
-      ctx.font = '700 23px "Dancing Script", cursive, "Be Vietnam Pro", sans-serif';
-      ctx.fillStyle = '#ffd700';
-      ctx.fillText('— Tập thể nam 12B1 thân tặng với tất cả sự trân trọng ❤️ —', width / 2, wishY + wishH - 30);
-      ctx.restore();
+        // Viền kim loại mảnh gradient vàng hồng chạy dọc mép ảnh
+        ctx.save();
+        const photoBorderGrad = ctx.createLinearGradient(photoX, photoY, photoX + photoW, photoY + photoH);
+        photoBorderGrad.addColorStop(0, '#ffd1a4');
+        photoBorderGrad.addColorStop(0.35, '#f7a8b8');
+        photoBorderGrad.addColorStop(0.70, '#d8b4fe');
+        photoBorderGrad.addColorStop(1, '#ffd1a4');
+        ctx.strokeStyle = photoBorderGrad;
+        ctx.lineWidth = 2.5;
+        this.roundRect(ctx, photoX, photoY, photoW, photoH, photoRadius);
+        ctx.stroke();
 
-      // 5. FOOTER: THÔNG ĐIỆP ĐOẠN KẾT
-      ctx.save();
-      ctx.textAlign = 'center';
+        // Viền hairline 1px inset bên trong ảnh
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.lineWidth = 1;
+        this.roundRect(ctx, photoX + 2, photoY + 2, photoW - 4, photoH - 4, photoRadius - 2);
+        ctx.stroke();
+        ctx.restore();
 
-      // 3 Ngôi sao nhỏ
-      ctx.font = '22px serif';
-      ctx.fillStyle = '#ffd700';
-      ctx.fillText('✦   ✦   ✦', width / 2, 1665);
+        // 5. TÊN BẠN NỮ & BADGE DANH HIỆU THỦY TINH MỜ
+        ctx.save();
+        ctx.textAlign = 'center';
 
-      // Tên tác phẩm
-      ctx.font = '600 22px "Montserrat", sans-serif';
-      ctx.fillStyle = 'rgba(253, 230, 138, 0.9)';
-      ctx.fillText('COSMIC 20.10 • ĐÓA HOA NỞ GIỮA NGÂN HÀ 12B1', width / 2, 1715);
+        // Tên bạn nữ: Màu trắng tinh khôi, kích thước nổi bật
+        ctx.font = '700 52px "Playfair Display", Georgia, serif';
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.55)';
+        ctx.shadowBlur = 18;
+        ctx.fillText(student.name, width / 2, 1085);
+        ctx.shadowBlur = 0;
 
-      // Thông điệp thanh xuân
-      ctx.font = '400 18px "Be Vietnam Pro", sans-serif';
-      ctx.fillStyle = 'rgba(252, 231, 243, 0.65)';
-      ctx.fillText('Mãi là những ký ức vô giá và tươi đẹp nhất của tuổi học trò', width / 2, 1750);
+        // Badge danh hiệu nhỏ bằng thủy tinh mờ (chữ vàng hồng)
+        const badgeText = `✨ ${student.title} • ${student.dob}`;
+        ctx.font = '600 23px "Be Vietnam Pro", sans-serif';
+        const badgeMetrics = ctx.measureText(badgeText);
+        const bW = badgeMetrics.width + 48;
+        const bH = 42;
+        const bX = (width - bW) / 2;
+        const bY = 1118;
 
-      // Watermark nhỏ góc đáy
-      ctx.font = '600 14px "Montserrat", sans-serif';
-      ctx.fillStyle = 'rgba(255, 215, 0, 0.4)';
-      ctx.fillText('HIGH RESOLUTION STORY CARD • 1080 × 1920 PX', width / 2, 1835);
-      ctx.restore();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.strokeStyle = 'rgba(255, 209, 164, 0.45)';
+        ctx.lineWidth = 1.2;
+        this.roundRect(ctx, bX, bY, bW, bH, 999);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffd1a4';
+        ctx.fillText(badgeText, width / 2, bY + 29);
+        ctx.restore();
+
+        // 6. KHUNG LỜI CHÚC TRÍCH DẪN NGHỆ THUẬT (ARTISTIC QUOTE BOX)
+        const wishW = 880;
+        const wishH = 355;
+        const wishX = (width - wishW) / 2;
+        const wishY = 1205;
+
+        ctx.save();
+        // Nền kính mờ huyền ảo
+        ctx.fillStyle = 'rgba(22, 8, 36, 0.72)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 30;
+        this.roundRect(ctx, wishX, wishY, wishW, wishH, 26);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Viền tinh tế gradient kính
+        const wishBorderGrad = ctx.createLinearGradient(wishX, wishY, wishX + wishW, wishY + wishH);
+        wishBorderGrad.addColorStop(0, 'rgba(255, 209, 164, 0.45)');
+        wishBorderGrad.addColorStop(0.5, 'rgba(247, 168, 184, 0.3)');
+        wishBorderGrad.addColorStop(1, 'rgba(255, 255, 255, 0.12)');
+        ctx.strokeStyle = wishBorderGrad;
+        ctx.lineWidth = 1.5;
+        this.roundRect(ctx, wishX, wishY, wishW, wishH, 26);
+        ctx.stroke();
+
+        // 2 Dấu ngoặc kép cách điệu phát sáng nhẹ
+        ctx.font = '700 80px "Playfair Display", Georgia, serif';
+        ctx.fillStyle = 'rgba(255, 209, 164, 0.75)';
+        ctx.shadowColor = 'rgba(255, 209, 164, 0.5)';
+        ctx.shadowBlur = 15;
+        ctx.textAlign = 'left';
+        ctx.fillText('“', wishX + 38, wishY + 74);
+
+        ctx.textAlign = 'right';
+        ctx.fillText('”', wishX + wishW - 38, wishY + wishH - 45);
+        ctx.shadowBlur = 0;
+
+        // Nội dung lời chúc thanh lịch, căn lề thoáng đãng
+        ctx.textAlign = 'center';
+        ctx.font = 'italic 400 27px "Be Vietnam Pro", sans-serif';
+        ctx.fillStyle = '#fff1f2';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 10;
+        this.wrapText(ctx, wishText, width / 2, wishY + 165, wishW - 140, 46);
+        ctx.shadowBlur = 0;
+
+        // Chữ ký tập thể nam 12B1 thân tặng
+        ctx.font = '600 22px "Dancing Script", cursive, "Be Vietnam Pro", sans-serif';
+        ctx.fillStyle = '#ffd1a4';
+        ctx.fillText('— Tập thể nam 12B1 thân tặng với tất cả sự trân trọng ❤️ —', width / 2, wishY + wishH - 28);
+        ctx.restore();
+
+        // 7. FOOTER & WATERMARK TINH TẾ Ở ĐÁY THIỆP
+        ctx.save();
+        ctx.textAlign = 'center';
+
+        // Watermark: COSMIC 12B1 • MEMORIES NEVER FADE
+        ctx.font = '600 22px "Montserrat", sans-serif';
+        ctx.fillStyle = 'rgba(255, 209, 164, 0.9)';
+        ctx.shadowColor = 'rgba(255, 209, 164, 0.4)';
+        ctx.shadowBlur = 10;
+        ctx.fillText('COSMIC 12B1 • MEMORIES NEVER FADE', width / 2, 1690);
+        ctx.shadowBlur = 0;
+
+        // Thông điệp thanh xuân 12B1
+        ctx.font = '400 18px "Be Vietnam Pro", sans-serif';
+        ctx.fillStyle = 'rgba(252, 231, 243, 0.65)';
+        ctx.fillText('✦ 20 Tháng 10 Năm 2026 • Đóa hoa ngát hương giữa dải ngân hà ✦', width / 2, 1735);
+
+        // Watermark quy cách ảnh Story HD
+        ctx.font = '600 13px "Montserrat", sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.fillText('PREMIUM STORY EDITION • 1080 × 1920 PX', width / 2, 1835);
+        ctx.restore();
       } catch (err) {
         console.error('Lỗi khi render Story Canvas:', err);
       }
