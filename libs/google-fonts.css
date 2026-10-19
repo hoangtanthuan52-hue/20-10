@@ -96,3 +96,17 @@
   font-display: swap;
   src: url(fonts/font_13.ttf) format('truetype');
 }
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/font_14.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url(fonts/font_15.ttf) format('truetype');
+}

@@ -984,7 +984,7 @@ body.universe-body {
   left: 0;
   right: 0;
   text-align: center;
-  font: italic 600 15px 'Fraunces', Georgia, serif;
+  font: italic 600 15px 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   color: #eec86e;
   letter-spacing: 0.04em;
 }
@@ -1080,7 +1080,7 @@ body.universe-body {
 
 .cal-hd b,
 .cal-stage .hd b {
-  font: 700 22px 'Fraunces', Georgia, serif;
+  font: 700 22px 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
 }
 
 .cal-hd span,
@@ -1111,7 +1111,7 @@ body.universe-body {
   flex: 1;
   display: grid;
   place-items: center;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-weight: 700;
   font-size: clamp(88px, 28vw, 150px);
   line-height: 1;
@@ -1144,7 +1144,7 @@ body.universe-body {
   align-items: center;
   gap: 12px;
   width: 100%;
-  font: 600 18px 'Fraunces', Georgia, serif;
+  font: 600 18px 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   color: #6b3a46;
 }
 
@@ -1170,7 +1170,7 @@ body.universe-body {
 
 .cal-ft b,
 .cal-stage .ft b {
-  font: italic 600 14px 'Fraunces', Georgia, serif;
+  font: italic 600 14px 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   color: #d03a66;
 }
 
@@ -1199,7 +1199,7 @@ body.universe-body {
 }
 
 .cal-cap {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-style: italic;
   font-weight: 600;
   font-size: clamp(24px, 5.2vw, 32px);
@@ -1231,7 +1231,7 @@ body.universe-body {
 
 .cal-msg h1 {
   margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-style: italic;
   font-weight: 700;
   font-size: clamp(30px, 4.8vw, 42px);
@@ -1316,7 +1316,7 @@ body.universe-body {
 .cal-veil p {
   margin: 0;
   max-width: 17em;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-style: italic;
   font-weight: 600;
   font-size: clamp(24px, 5.5vw, 36px);
@@ -1786,7 +1786,7 @@ body.universe-body {
   bottom: clamp(105px, 15vh, 150px);
   text-align: center;
   color: #ffffff;
-  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-size: clamp(1.2rem, 2.3vw, 2.4rem);
   font-style: italic;
   font-weight: 600;
@@ -2923,7 +2923,7 @@ body.universe-body {
 }
 
 .lightbox-caption h3 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-size: 1.35rem;
   color: #ffd700;
   margin: 0;
@@ -3301,7 +3301,7 @@ body.universe-body {
 }
 
 .finale-story-text {
-  font-family: 'Playfair Display', 'Fraunces', serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-style: italic;
   font-size: clamp(1.5rem, 3.6vw, 2.45rem);
   font-weight: 600;
@@ -3403,7 +3403,7 @@ body.universe-body {
 }
 
 .finale-title {
-  font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-size: clamp(20px, 2.2vw, 24px);
   font-weight: 700;
   line-height: 1.35;
@@ -3855,7 +3855,7 @@ body.universe-body {
 }
 
 .tour-student-name {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Playfair Display', 'Be Vietnam Pro', 'Times New Roman', serif;
   font-size: clamp(1.8rem, 2.6vw, 2.3rem);
   font-weight: 800;
   line-height: 1.25;
